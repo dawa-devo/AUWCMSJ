@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="om">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUWC - Registration Success</title>
+    <style>
+        /* 1. Background & Layout */
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* 2. Success Card */
+        .success-card {
+            background: rgba(255, 255, 255, 0.692);
+            width: 100%;
+            max-width: 420px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            padding: 30px;
+            text-align: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* 3. Top Progress (All Verified) */
+        .status-steps {
+            display: flex;
+            justify-content: space-between;
+            font-size: 35px;
+            text-align: center;
+            font-weight: bold;
+            color: #10b981; /* Green */
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        /* 4. Logo & Icon Area */
+        .logo-box { margin-bottom: 15px; }
+        .logo-box img { width: 50px; }
+        .logo-title {
+            font-weight: 900;
+            color: #065f46;
+            font-size: 14px;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #065f46;
+            margin: 20px 0;
+        }
+
+        /* 5. Text Content */
+        .thanks-msg {
+            font-size: 16px;
+            font-weight: 900;
+            color: #1e293b;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .user-name {
+            color: #065f46;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .info-text {
+            font-size: 11px;
+            color: #475569;
+            line-height: 1.6;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin: 15px 0;
+        }
+
+        .contact-info {
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        /* 6. Footer Links */
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 20px;
+        }
+
+        .footer-links a {
+            color: #065f46;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Animation for clock */
+        .animate-spin-slow {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .success-card {
+                max-width: 100%;
+            }
+            .footer-links {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                align-items: flex-start;
+                padding: 14px;
+            }
+            .success-card {
+                margin-top: 18px;
+                padding: 24px 16px;
+                border-radius: 14px;
+            }
+            .status-steps {
+                font-size: 24px;
+                justify-content: center;
+            }
+            .thanks-msg {
+                font-size: 14px;
+            }
+            .info-text {
+                font-size: 12px;
+                padding: 12px;
+            }
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 10px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="success-card">
+        <div class="status-steps">
+            <span> Account (✔)</span>
+        </div>
+
+        <div class="logo-box">
+            <div class="logo-title">AUWCMSJ</div>
+        </div>
+
+        <h2 class="thanks-msg">
+            THANK YOU FOR REGISTERING,
+            <span id="student-name" class="user-name">[Student's Name]</span>
+        </h2>
+
+        <div class="success-icon animate-spin-slow">🕒</div>
+
+        <div id="verify-status" class="info-text" style="display:none; margin-bottom: 12px;"></div>
+        <div class="info-text">
+            Your Jema'a application has been submitted successfully and is currently under review by our Admin team. This process typically takes up to <b>24 hours</b>. 
+            <br><br>
+            Please note: Full access to the student dashboard and features will be unlocked after admin activation.
+            If you received a verification email, open that link to confirm your email address.
+        </div>
+
+        <div class="footer-links">
+            <a onclick="logout()">Logout</a>
+            <span>|</span>
+            <a href="#">Help & Support</a>
+        </div>
+    </div>
+
+<script>
+async function fetchWithApiFallback(path, options) {
+    const host = window.location.hostname;
+    const candidates = [
+        'http://127.0.0.1:5000',
+        'http://localhost:5000',
+        host && host !== 'localhost' && host !== '127.0.0.1' ? `http://${host}:5000` : null
+    ].filter(Boolean);
+
+    let lastError = null;
+    for (const base of candidates) {
+        try {
+            return await fetch(`${base}${path}`, options);
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw lastError || new Error('Server connection failed.');
+}
+
+document.addEventListener("DOMContentLoaded", async function() {
+    const savedName = localStorage.getItem("fullName") || localStorage.getItem("tempFullName");
+
+    if (savedName && savedName.trim() !== "") {
+        document.getElementById("student-name").textContent = savedName;
+    } else {
+        document.getElementById("student-name").textContent = "User";
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const token = (params.get('token') || '').trim();
+    if (!token) return;
+
+    const statusEl = document.getElementById('verify-status');
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Checking verification token...';
+
+    try {
+        const res = await fetchWithApiFallback('/api/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            statusEl.style.background = '#ecfdf5';
+            statusEl.style.color = '#065f46';
+            statusEl.textContent = data.message || 'Email verified successfully.';
+        } else {
+            statusEl.style.background = '#fef2f2';
+            statusEl.style.color = '#991b1b';
+            statusEl.textContent = data.message || 'Verification failed.';
+        }
+    } catch (err) {
+        statusEl.style.background = '#fef2f2';
+        statusEl.style.color = '#991b1b';
+        statusEl.textContent = 'Could not reach the server to verify this token.';
+    }
+});
+
+// Logout function
+function logout() {
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("tempStudentId");
+    localStorage.removeItem("tempFullName");
+    window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>

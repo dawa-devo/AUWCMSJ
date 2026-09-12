@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="om">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUWCMSJ Next-Gen Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- 1. GLOBAL STYLES --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+            scroll-padding-top: 200px;
+        }
+
+        body {
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        :root {
+            --primary: #1b5e20;
+        }
+
+        /* --- 2. HEADER WITH DAILY AYAH & PROFILE --- */
+        .top-nav {
+            background-image: linear-gradient(rgba(27, 94, 32, 0.85), rgba(27, 94, 32, 0.85)), url('image_8073fa.png');
+            background-size: cover;
+            background-position: center;
+            height: 185px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1100;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+
+        .header-top-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: absolute;
+            top: 15px;
+            padding: 0 25px;
+            box-sizing: border-box;
+        }
+
+        #adminReturnBtn {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        #adminReturnBtn button {
+            max-width: 100%;
+            font-size: 0.8rem;
+            padding: 7px 12px;
+        }
+
+        .logo-menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logopic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .menu-icon {
+            font-size: 22px;
+            cursor: pointer;
+            padding-left: 5px;
+            transition: 0.3s;
+        }
+
+        .menu-icon:hover {
+            color: #4caf50;
+        }
+
+        .right-side {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #5c5f6b;
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid #4caf50;
+        }
+
+        .username {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .logo-ayah {
+            font-size: smaller;
+            color: white;
+        }
+
+        /* 1. Container Animation: Subtle floating motion */
+        .ayah-content {
+            max-width: auto;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            border-radius: 15px;
+            background: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* 2. Text Animation: Fade and slide up */
+        .ayah-content h2,
+        .ayah-content p {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .ayah-content p {
+            animation-delay: 0.5s;
+            /* Delay the translation slightly */
+        }
+
+        /* 3. Dhikr Tag Animation: Pulsing glow */
+        .dhikr-tag {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            color: #166534;
+            font-weight: bold;
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* --- Keyframe Definitions --- */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(187, 247, 208, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(187, 247, 208, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(187, 247, 208, 0);
+            }
+        }
+
+        /* --- 3. SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: #1b5e20;
+            color: white;
+            position: fixed;
+            left: -260px;
+            top: 0;
+            padding: 190px 20px 20px;
+            transition: 0.3s ease;
+            z-index: 1200;
+            /* Higher than header */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .nav-links {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-links li {
+            margin-bottom: 8px;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .nav-links a i {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* --- 4. MAIN CONTENT --- */
+        .main-content {
+            padding: 225px 40px 40px;
+            width: 100%;
+            transition: 0.3s;
+            flex: 1;
+        }
+
+        .section {
+            margin-bottom: 60px;
+            scroll-margin-top: 220px;
+        }
+
+        .section-header {
+            margin-bottom: 25px;
+            border-left: 5px solid #1b5e20;
+            padding-left: 15px;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: hsl(207, 15%, 88%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .card i {
+            font-size: 1.8rem;
+            color: #1b5e20;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background: hsl(207, 15%, 88%);
+            padding: 35px 25px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            text-align: center;
+            transition: 0.4s;
+            border: 1px solid #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: 0.4s;
+        }
+
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card i {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            background: #f1f8e9;
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            border-radius: 20px;
+            display: inline-block;
+            transition: 0.3s;
+        }
+
+        .card:hover i {
+            background: var(--primary);
+            color: white;
+            transform: rotateY(360deg);
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* --- PRAYER TIMES STYLES --- */
+        .prayer-container {
+            background: hsl(207, 15%, 88%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .prayer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .prayer-box {
+            background: #5c5f6b;
+            padding: 15px;
+            border-radius: 8px;
+            border-bottom: 4px solid #1b5e20;
+            transition: 0.3s;
+        }
+
+        .prayer-box h4 {
+            color: #1b5e20;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .prayer-box p {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .hijri-display {
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .location-tag {
+            font-size: 0.8rem;
+            color: #1b5e20;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Stats & Roadmap */
+        .stats-container {
+            background: hsl(207, 15%, 88%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .bar-wrapper {
+            background: #eee;
+            height: 20px;
+            border-radius: 10px;
+            margin: 10px 0 20px;
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 100%;
+            background: #1b5e20;
+        }
+
+        .roadmap-track {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .roadmap-track::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.596);
+            z-index: 1;
+        }
+
+        .step {
+            position: relative;
+            background: #87918e;
+            padding: 0 10px;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1b5e20;
+            color: rgb(175, 169, 169);
+            line-height: 40px;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+
+        /* --- 5. MODERN FOOTER --- */
+        .main-footer {
+            background-color: #1b5e20;
+            color: white;
+            padding: 50px 40px 20px;
+            margin-top: 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-col h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-col h4::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 2px;
+            background-color: #4caf50;
+        }
+
+        .footer-col p,
+        .footer-col ul {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-col ul li a {
+            color: inherit;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .footer-col ul li a:hover {
+            color: white;
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .social-links a:hover {
+            background: #4caf50;
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .username {
+                display: none;
+            }
+
+            .roadmap-track {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .roadmap-track::before {
+                display: none;
+            }
+        }
+
+        /* User section hunda mirga gubbaatti hiriirsuuf */
+        .user-profile-wrapper {
+            position: absolute;
+            /* Header keessatti mirgatti dhiibuuf */
+            top: 15px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            /* Profile gubbaa, Logout jala */
+            align-items: center;
+            gap: 5px;
+        }
+
+        .profile-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 50px;
+        }
+
+        .profile-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid white;
+        }
+
+        .profile-name {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Logout Button Profile jala jiru */
+        .logout-small-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.3s;
+        }
+
+        .logout-small-btn:hover {
+            background: #cc0000;
+        }
+
+        .translator-widget {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #1b5e20;
+            width: 170px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .translator-widget .translator-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .translator-widget .translator-select {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 12px;
+            color: #1f2937;
+            background: #fff;
+        }
+
+        .translator-widget #google_translate_element {
+            position: absolute;
+            left: -9999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        .translator-widget .goog-te-gadget {
+            font-family: inherit !important;
+            font-size: 11px !important;
+            color: #1b5e20 !important;
+        }
+
+        .translator-widget .goog-te-gadget-simple {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
+            padding: 4px 6px !important;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Jalqaba irratti listii dhoksuuf */
+        .file-list-container {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+        }
+
+        /* Card-ichi akka tuqamu danda'u beeksisuuf */
+        .card {
+            cursor: pointer;
+        }
+
+        /* Gaafa 'active' ta'u akka banamu */
+        .file-list-container.show {
+            display: block;
+        }
+
+        .account-panel {
+            background: hsl(207, 15%, 88%);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .account-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .account-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .account-card h3 {
+            color: #1b5e20;
+            margin-bottom: 12px;
+        }
+
+        .account-input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .account-input:focus {
+            border-color: #1b5e20;
+        }
+
+        .profile-preview {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #1b5e20;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .account-btn {
+            width: 100%;
+            padding: 11px 12px;
+            border: none;
+            border-radius: 8px;
+            background: #1b5e20;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .account-msg {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .library-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .library-notice {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #fff3cd;
+            color: #8a6d3b;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .library-notice.show {
+            display: inline-flex;
+        }
+
+        .library-card-badge {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            display: none;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 8px;
+            border-radius: 999px;
+            background: #d32f2f;
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 700;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 18px rgba(211, 47, 47, 0.25);
+        }
+
+        .library-card-badge.show {
+            display: inline-flex;
+        }
+
+        .message-center-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .message-center-card {
+            background: #dbe1e7;
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid #b8c1cc;
+        }
+
+        .message-center-card h3 {
+            margin-bottom: 8px;
+        }
+
+        .message-center-card p {
+            color: #4b5563;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .msg-input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            outline: none;
+        }
+
+        .msg-input:focus {
+            border-color: #1b5e20;
+        }
+
+        .msg-btn {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            background: #166534;
+            color: #fff;
+            font-weight: 700;
+            padding: 10px 12px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .msg-btn:hover {
+            opacity: 0.95;
+        }
+
+        .msg-status {
+            min-height: 1.1rem;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+
+        .mini-list {
+            margin-top: 12px;
+            max-height: 230px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .mini-item {
+            background: #fff;
+            border-left: 4px solid #1b5e20;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-size: 0.86rem;
+        }
+
+        .mini-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .msg-delete-btn {
+            flex-shrink: 0;
+            padding: 5px 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #b91c1c;
+            cursor: pointer;
+        }
+
+        .msg-delete-btn:hover {
+            background: #fecaca;
+        }
+
+        .msg-delete-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 992px) {
+            .top-nav {
+                height: 220px;
+                padding: 20px 16px;
+            }
+
+            .header-top-row {
+                padding: 0 16px;
+            }
+
+            .ayah-content {
+                width: 100%;
+                max-width: 620px;
+                margin: 32px auto 0;
+                padding: 16px;
+            }
+
+            .user-profile-wrapper {
+                top: 18px;
+                right: 16px;
+            }
+
+            .main-content {
+                padding: 260px 20px 24px;
+            }
+
+            .main-footer {
+                padding: 40px 20px 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html {
+                scroll-padding-top: 110px;
+            }
+
+            .top-nav {
+                height: auto;
+                min-height: 220px;
+                padding-bottom: 16px;
+            }
+
+            .header-top-row {
+                position: relative;
+                top: auto;
+                padding: 12px 12px 0;
+                justify-content: flex-start;
+            }
+
+            .header-logo h3 {
+                font-size: 1rem;
+            }
+
+            #adminReturnBtn {
+                width: 100%;
+                flex-basis: 100%;
+            }
+
+            #adminReturnBtn button {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .logopic {
+                width: 42px;
+                height: 42px;
+            }
+
+            .menu-icon {
+                font-size: 20px;
+            }
+
+            .ayah-content {
+                margin-top: 8px;
+                padding: 14px 12px;
+                border-radius: 12px;
+            }
+
+            .ayah-content h2 {
+                font-size: 1.25rem;
+                line-height: 1.4;
+            }
+
+            .logo-ayah {
+                font-size: 0.82rem;
+                line-height: 1.5;
+            }
+
+            .user-profile-wrapper {
+                position: static;
+                margin-top: 12px;
+            }
+
+            .profile-main {
+                padding: 5px 10px;
+            }
+
+            .main-content {
+                padding: 248px 14px 24px;
+            }
+
+            .section {
+                margin-bottom: 40px;
+                scroll-margin-top: 100px;
+            }
+
+            .section-header {
+                margin-bottom: 18px;
+            }
+
+            .section-header h1 {
+                font-size: 1.35rem;
+            }
+
+            .grid-cards,
+            .account-grid,
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .card,
+            .prayer-container,
+            .stats-container,
+            .account-panel {
+                padding: 18px 14px;
+                border-radius: 16px;
+            }
+
+            .card {
+                padding-top: 24px;
+            }
+
+            .card i {
+                width: 58px;
+                height: 58px;
+                line-height: 58px;
+                font-size: 1.8rem;
+                margin-bottom: 14px;
+            }
+
+            .prayer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .library-header {
+                align-items: flex-start;
+            }
+
+            .library-notice {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .profile-name {
+                max-width: 110px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .footer-col h4 {
+                margin-bottom: 14px;
+            }
+
+            .message-center-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            html {
+                scroll-padding-top: 96px;
+            }
+
+            .top-nav {
+                min-height: 240px;
+            }
+
+            .sidebar {
+                width: 82vw;
+                left: -82vw;
+                padding: 170px 16px 20px;
+            }
+
+            .main-content {
+                padding: 268px 10px 18px;
+            }
+
+            .header-logo h3 {
+                font-size: 0.95rem;
+                line-height: 1.25;
+                max-width: 52vw;
+                word-break: break-word;
+            }
+
+            .translator-widget {
+                width: 100%;
+            }
+
+            .user-profile-wrapper {
+                align-items: stretch;
+                width: 100%;
+                max-width: 280px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .section-header {
+                padding-left: 12px;
+                border-left-width: 4px;
+            }
+
+            .section-header h1 {
+                font-size: 1.2rem;
+            }
+
+            #newsDisplay {
+                word-break: break-word;
+                overflow-wrap: anywhere;
+                font-size: 0.92rem;
+                padding: 12px;
+            }
+
+            .mini-item-header {
+                flex-wrap: wrap;
+                align-items: flex-start;
+            }
+
+            .message-center-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .prayer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .prayer-box p {
+                font-size: 1rem;
+            }
+
+            .logout-small-btn,
+            .account-btn,
+            #submitBtn,
+            #levelSelect,
+            #progressDetail,
+            .account-input {
+                font-size: 16px;
+            }
+
+            .library-card-badge {
+                top: 12px;
+                right: 12px;
+            }
+
+            .main-footer {
+                padding: 32px 14px 18px;
+            }
+
+            .footer-bottom {
+                margin-top: 24px;
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="top-nav">
+        <div class="header-top-row">
+            <div class="logo-menu-container">
+                <div class="header-logo">
+                    <img src="logo.jpg" alt="Logo" class="logopic">
+                    <h3>AUWCMSJ</h3>
+                </div>
+                <div class="menu-icon" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            </div>
+            <div id="adminReturnBtn" style="display: none;">
+                <button onclick="returnToAdminView()"
+                    style="background: #1b5e20; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    <i class="fas fa-arrow-left"></i> Return to Admin View
+                </button>
+            </div>
+
+        </div>
+
+        <div class="ayah-content">
+            <h2 dir="rtl">وَقُل رَّبِّ زِدْنِي عِلْمًا</h2>
+            <p class="logo-ayah">"And say, 'My Lord, increase me in knowledge.'"</p>
+            <div class="logo-ayah">🤲 DAILY DHIKR: 100x Astaghfirullah 🤲</div>
+        </div>
+        <div class="user-profile-wrapper">
+            <div class="profile-main">
+                <img src="profile.png" alt="Profile" class="profile-circle" id="headerProfilePic">
+                <span class="profile-name">dawe</span>
+            </div>
+
+            <button id="logoutBtn" class="logout-small-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+            <div class="translator-widget">
+                <label for="languageDropdown" class="translator-label">Language</label>
+                <select id="languageDropdown" class="translator-select">
+                    <option value="en">English</option>
+                    <option value="am">Amharic</option>
+                    <option value="ar">Arabic</option>
+                    <option value="om">Oromo</option>
+                </select>
+                <div id="google_translate_element"></div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <ul class="nav-links">
+            <li><a href="#about" onclick="toggleSidebar()"><i class="fas fa-info-circle"></i> <span>About
+                        Jema'aa</span></a></li>
+            <li><a href="#prayer" onclick="toggleSidebar()"><i class="fas fa-clock"></i> <span>Prayer Times</span></a>
+            </li>
+            <li><a href="#library" onclick="toggleSidebar()"><i class="fas fa-book"></i> <span>Digital
+                        Library</span></a></li>
+            <li><a href="#stats" onclick="toggleSidebar()"><i class="fas fa-chart-bar"></i> <span>Statistics</span></a>
+            </li>
+            <li><a href="#roadmap" onclick="toggleSidebar()"><i class="fas fa-map-marked-alt"></i> <span>Qirath
+                        Roadmap</span></a></li>
+            <li><a href="#messages" onclick="toggleSidebar()"><i class="fas fa-envelope"></i> <span>Messages</span></a>
+            </li>
+            <li><a href="#account" onclick="toggleSidebar()"><i class="fas fa-user-cog"></i> <span>My Account</span></a>
+            </li>
+            <li><a href="#contact" onclick="toggleSidebar()"><i class="fas fa-envelope"></i> <span>Contact</span></a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div id="newsDisplay"
+            style="background: #fff9c4; padding: 15px; border-left: 5px solid #fbc02d; margin-bottom: 20px; border-radius: 8px; font-weight: bold; color: #333; line-height: 1.5;">
+            Beeksisni ammaan tana hin jiru.
+        </div>
+        <section id="about" class="section">
+            <div class="section-header">
+                <h1>About AUWCMSJ</h1>
+            </div>
+            <div class="grid-cards">
+                <div class="card"><i class="fas fa-history"></i>
+                    <h3>History</h3>
+                    <p>Serving since 2015</p>
+                </div>
+                <div class="card"><i class="fas fa-bullseye"></i>
+                    <h3>Mission</h3>
+                    <p>Excellence & Faith</p>
+                </div>
+                <div class="card"><i class="fas fa-hand-holding-heart"></i>
+                    <h3>Services</h3>
+                    <p>Student Support</p>
+                </div>
+                <div class="card"><i class="fas fa-gavel"></i>
+                    <h3>Rules</h3>
+                    <p>Jema'aa Ethics</p>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="prayer" class="section">
+            <div class="section-header">
+                <h1>Prayer Times</h1>
+            </div>
+            <div class="prayer-container">
+                <span id="loc-status" class="location-tag">Detecting location...</span>
+                <p class="hijri-display" id="hijri-date">-- -- ---- AH</p>
+                <div class="prayer-grid">
+                    <div class="prayer-box">
+                        <h4>Fajr</h4>
+                        <p id="fajr">--:--</p>
+                    </div>
+                    <div class="prayer-box">
+                        <h4>Dhuhr</h4>
+                        <p id="dhuhr">--:--</p>
+                    </div>
+                    <div class="prayer-box">
+                        <h4>Asr</h4>
+                        <p id="asr">--:--</p>
+                    </div>
+                    <div class="prayer-box">
+                        <h4>Maghrib</h4>
+                        <p id="maghrib">--:--</p>
+                    </div>
+                    <div class="prayer-box">
+                        <h4>Isha</h4>
+                        <p id="isha">--:--</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="library" class="section">
+            <div class="section-header">
+                <div class="library-header">
+                    <h1>Digital Library</h1>
+                    <div id="libraryNotice" class="library-notice">
+                        <i class="fas fa-bell"></i>
+                        <span>New material available</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card" data-category="Academic">
+                    <div class="library-card-badge" data-badge="Academic">New</div>
+                    <i class="fas fa-university"></i>
+                    <h3>Academic</h3>
+                    <div id="list-academic" class="file-list-container">
+                        <p style="font-size: 12px; color: #888;">Kitaabni hin jiru...</p>
+                    </div>
+                </div>
+
+                <div class="card" data-category="Religious">
+                    <div class="library-card-badge" data-badge="Religious">New</div>
+                    <i class="fas fa-mosque"></i>
+                    <h3>Religious</h3>
+                    <div id="list-religious" class="file-list-container">
+                        <p style="font-size: 12px; color: #888;">Kitaabni hin jiru...</p>
+                    </div>
+                </div>
+
+                <div class="card" data-category="General">
+                    <div class="library-card-badge" data-badge="General">New</div>
+                    <i class="fas fa-book-open"></i>
+                    <h3>General</h3>
+                    <div id="list-general" class="file-list-container">
+                        <p style="font-size: 12px; color: #888;">Kitaabni hin jiru...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="stats" class="section">
+            <div class="section-header">
+                <h1>Jema'aa Statistics</h1>
+            </div>
+            <div class="stats-container">
+                <p id="maleStatsLabel">Male Students (0)</p>
+                <div class="bar-wrapper">
+                    <div id="maleStatsBar" class="bar" style="width: 0%;"></div>
+                </div>
+                <p id="femaleStatsLabel">Female Students (0)</p>
+                <div class="bar-wrapper">
+                    <div id="femaleStatsBar" class="bar" style="width: 0%; background: #66bb6a;"></div>
+                </div>
+                <p id="totalStatsLabel" style="margin-top: 10px; font-weight: 700; color: #1b5e20;">Total Registered
+                    Students: 0</p>
+            </div>
+        </section>
+
+        <section id="roadmap" class="section">
+            <div class="section-header">
+                <h1>Qirath Progress Update</h1>
+            </div>
+
+            <div class="update-box"
+                style="  background: hsl(207, 15%, 88%);  padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 30px;">
+                <h3 style="color: #1b5e20; margin-bottom: 15px;">Submit Your Progress</h3>
+
+                <label>Select Level:</label>
+                <select id="levelSelect"
+                    style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px;">
+                    <option value="1">Basic (Noorani Qaida / Short Surahs)</option>
+                    <option value="2">Intermediate (Juz 1 - Juz 15)</option>
+                    <option value="3">Advanced (Juz 16 - Juz 30)</option>
+                </select>
+
+                <label>Describe your progress (e.g., "I finished Surah Al-Baqarah"):</label>
+                <textarea id="progressDetail" placeholder="Write exactly what you have completed..."
+                    style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; height: 80px;"></textarea>
+
+                <button onclick="submitToAdmin()" id="submitBtn"
+                    style="width: 100%; padding: 12px; background: #1b5e20; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    Send to Admin
+                </button>
+                <p id="statusMsg" style="margin-top: 10px; font-size: 0.85rem; color: #666;"></p>
+            </div>
+        </section>
+
+        <section id="messages" class="section">
+            <div class="section-header">
+                <h1>Message Center</h1>
+            </div>
+            <div class="message-center-grid">
+                <div class="message-center-card">
+                    <i class="fas fa-comment-dots"></i>
+                    <h3>Send Comment To Admin</h3>
+                    <p>Write any question, suggestion, or concern for the admin team.</p>
+                    <textarea id="adminCommentInput" class="msg-input" rows="4"
+                        placeholder="Write your comment to admin..."></textarea>
+                    <button id="sendCommentBtn" class="msg-btn" onclick="sendCommentToAdmin()">Send Comment</button>
+                    <p id="commentStatus" class="msg-status"></p>
+                </div>
+
+                <div class="message-center-card">
+                    <i class="fas fa-bell"></i>
+                    <h3>Notifications</h3>
+                    <p>You will see message confirmations and admin replies here.</p>
+                    <button class="msg-btn" style="width:auto; padding: 10px 14px;"
+                        onclick="markNotificationsRead()">Mark Notifications Read</button>
+                    <div id="notificationList" class="mini-list">
+                        <p style="color:#6b7280;">No notifications yet.</p>
+                    </div>
+                </div>
+
+                <div class="message-center-card">
+                    <i class="fas fa-inbox"></i>
+                    <h3>Your Conversation With Admin</h3>
+                    <p>Track sent messages and see admin replies.</p>
+                    <div id="conversationList" class="mini-list">
+                        <p style="color:#6b7280;">No conversation yet.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="account" class="section">
+            <div class="section-header">
+                <h1>My Account</h1>
+            </div>
+            <div class="account-panel">
+                <div class="account-grid">
+                    <div class="account-card">
+                        <h3>Upload Profile Photo</h3>
+                        <img src="profile.png" alt="Profile Preview" class="profile-preview" id="profilePreview">
+                        <input type="file" id="profileUploadInput" accept="image/*" class="account-input">
+                        <button class="account-btn" onclick="uploadProfilePhoto()" id="profileUploadBtn">Upload
+                            Photo</button>
+                        <p id="profileMsg" class="account-msg"></p>
+                    </div>
+                    <div class="account-card">
+                        <h3>Change Password</h3>
+                        <input type="password" id="currentPassword" class="account-input"
+                            placeholder="Current password">
+                        <input type="password" id="newPassword" class="account-input" placeholder="New password">
+                        <input type="password" id="confirmPassword" class="account-input"
+                            placeholder="Confirm new password">
+                        <button class="account-btn" onclick="changeMyPassword()" id="changePasswordBtn">Change
+                            Password</button>
+                        <p id="passwordMsg" class="account-msg"></p>
+                    </div>
+                    <div class="account-card" style="border: 2px solid #f59e0b; background: #fef3c7;">
+                        <h3 style="color: #d97706;">Delete Profile Photo</h3>
+                        <p style="color: #92400e; margin-bottom: 15px; font-size: 0.9rem;">Remove your current profile
+                            photo and revert to default.</p>
+                        <button class="account-btn" onclick="deleteProfilePhoto()" id="deletePhotoBtn"
+                            style="background: #f59e0b; color: white;">Delete Profile Photo</button>
+                        <p id="deletePhotoMsg" class="account-msg"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer" id="contact">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>AUWCMSJ</h4>
+                <p>Ambo University Woliso Campus Muslim Students Jema'aa. Building a strong community through faith and
+                    knowledge.</p>
+                <div class="social-links">
+                    <a href="https://t.me/waliso235" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+                        <i class="fab fa-telegram" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="https://www.facebook.com/YourPage" target="_blank" rel="noopener noreferrer"
+                        aria-label="Facebook">
+                        <i class="fab fa-facebook" aria-hidden="true"></i>
+                    </a>
+
+                    <a href="https://www.youtube.com/@YourChannel" target="_blank" rel="noopener noreferrer"
+                        aria-label="YouTube">
+                        <i class="fab fa-youtube" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#prayer">Prayer Times</a></li>
+                    <li><a href="#library">Digital Library</a></li>
+                    <li><a href="#stats">Statistics</a></li>
+                    <li><a href="#roadmap">Qirath Roadmap</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Contact Info</h4>
+                <ul>
+                    <li><i class="fas fa-map-marker-alt"></i> Woliso, Ethiopia</li>
+                    <li><i class="fas fa-envelope"></i> info@auwcm.com</li>
+                    <li><i class="fas fa-phone"></i> +251712363603</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 AUWCMSJ | Developed by AUWCMSJ DEVELOPERS | All Rights Reserved.</p>
+        </div>
+    </footer>
+    <script>
+
+        async function fetchWithApiFallback(path, options = {}) {
+            const host = window.location.hostname;
+            const token = sessionStorage.getItem('token') || '';
+            const headers = { ...(options.headers || {}) };
+            if (token && !headers.Authorization) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            const candidates = [
+                'http://127.0.0.1:5000',
+                'http://localhost:5000',
+                host && host !== 'localhost' && host !== '127.0.0.1' ? `http://${host}:5000` : null
+            ].filter(Boolean);
+
+            let lastError = null;
+            for (const base of candidates) {
+                try {
+                    return await fetch(`${base}${path}`, { ...options, headers });
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+
+            throw lastError || new Error('Server connection failed.');
+        }
+
+        function getAuthHeaders(extraHeaders = {}) {
+            const token = sessionStorage.getItem('token') || '';
+            return {
+                ...extraHeaders,
+                Authorization: `Bearer ${token}`
+            };
+        }
+
+        async function readApiResponse(res, fallbackMessage) {
+            const raw = await res.text();
+            const trimmed = (raw || '').trim();
+
+            const looksLikeHtml =
+                trimmed.startsWith('<!DOCTYPE') ||
+                trimmed.startsWith('<!doctype') ||
+                trimmed.startsWith('<html');
+
+            if (looksLikeHtml) {
+                throw new Error(
+                    'The server sent a web page instead of JSON. Another app may be using port 5000, or the browser is not talking to AUWCMSJ (node server.js). Close anything else on port 5000 and restart the backend, then reload this page.'
+                );
+            }
+
+            try {
+                return trimmed ? JSON.parse(trimmed) : {};
+            } catch {
+                throw new Error(trimmed || fallbackMessage);
+            }
+        }
+
+        // ===== 1. PAGE LOAD =====
+        async function verifyDashboardAccess() {
+            const token = sessionStorage.getItem('token') || '';
+            if (!token) return null;
+
+            try {
+                const response = await fetchWithApiFallback('/api/user/me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const user = await response.json().catch(() => ({}));
+                return response.ok ? user : null;
+            } catch (err) {
+                console.error('Dashboard access verification failed:', err);
+                return null;
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", async () => {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            const adminViewingAsUser = sessionStorage.getItem('isAdminView') === 'true';
+
+            if (!isLoggedIn) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const user = await verifyDashboardAccess();
+            if (!user) {
+                sessionStorage.clear();
+                window.location.href = "login.html";
+                return;
+            }
+
+            const isStudent = user.role === 'student' || user.role === 'teacher';
+            const isAdminPreview = user.role === 'admin' && adminViewingAsUser;
+
+            if (user.role === 'admin' && !adminViewingAsUser) {
+                window.location.href = "../admin/admin.html";
+                return;
+            }
+
+            if (!isStudent && !isAdminPreview) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const adminReturnBtn = document.getElementById('adminReturnBtn');
+            if (adminReturnBtn && adminViewingAsUser) {
+                adminReturnBtn.style.display = 'block';
+            }
+
+            setUser();
+            loadNews();
+            loadResources();
+            loadStats();
+            fetchPrayerTimes();
+            setupLibraryCards();
+            loadMyProfile();
+            loadMessages();
+
+            // Sidebar close when click main
+            const main = document.querySelector('.main-content');
+            if (main) {
+                main.addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.remove('active');
+                });
+            }
+
+            // Logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+        });
+
+
+        // ===== 2. USER =====
+        function setUser() {
+            const currentUser =
+                sessionStorage.getItem('userName') ||
+                localStorage.getItem('currentUser') ||
+                "User";
+
+            localStorage.setItem('currentUser', currentUser);
+            const el = document.querySelector('.profile-name');
+            if (el) el.innerText = currentUser;
+
+            const savedProfilePic = localStorage.getItem('currentProfilePic') || 'profile.png';
+            const headerProfilePic = document.getElementById('headerProfilePic');
+            const profilePreview = document.getElementById('profilePreview');
+
+            if (headerProfilePic) headerProfilePic.src = savedProfilePic;
+            if (profilePreview) profilePreview.src = savedProfilePic;
+        }
+
+
+        // ===== 3. NEWS =====
+        async function loadNews() {
+            try {
+                const res = await fetchWithApiFallback('/api/news');
+                if (!res.ok) throw new Error("News API error");
+
+                const data = await res.json();
+                document.getElementById('newsDisplay').innerText =
+                    data.news || "Beeksisni hin jiru.";
+
+            } catch (err) {
+                console.log(err);
+                document.getElementById('newsDisplay').innerText = "News hin fe'amne!";
+            }
+        }
+
+
+        // ===== 4. RESOURCES =====
+        async function loadResources() {
+            try {
+                const res = await fetchWithApiFallback('/api/resources');
+                if (!res.ok) throw new Error("Resource API error");
+
+                const resources = await res.json();
+                const previousSignature = localStorage.getItem('libraryResourceSignature') || '';
+                const previousResources = previousSignature ? JSON.parse(previousSignature) : [];
+                const currentSignature = JSON.stringify(
+                    resources.map(({ title, category, fileUrl }) => ({ title, category, fileUrl }))
+                );
+                const hasNewMaterials = previousSignature && previousSignature !== currentSignature;
+                const newCategories = hasNewMaterials
+                    ? [...new Set(
+                        resources
+                            .filter(resource => !previousResources.some(prev =>
+                                prev.title === resource.title &&
+                                prev.category === resource.category &&
+                                prev.fileUrl === resource.fileUrl
+                            ))
+                            .map(resource => resource.category)
+                    )]
+                    : [];
+
+                const lists = {
+                    Academic: document.getElementById('list-academic'),
+                    Religious: document.getElementById('list-religious'),
+                    General: document.getElementById('list-general')
+                };
+
+                Object.values(lists).forEach(l => {
+                    if (l) l.innerHTML = "";
+                });
+
+                if (resources.length === 0) {
+                    Object.values(lists).forEach(list => {
+                        if (list) list.innerHTML = '<p style="font-size: 12px; color: #888;">No resources yet.</p>';
+                    });
+                    return;
+                }
+
+                resources.forEach(r => {
+                    const target = lists[r.category];
+                    if (target) {
+                        const title = escapeConversationHtml(r.title || 'Untitled resource');
+                        let resourceUrl = '#';
+                        try {
+                            const parsedUrl = new URL(r.fileUrl || '', window.location.href);
+                            if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+                                resourceUrl = escapeConversationHtml(parsedUrl.href);
+                            }
+                        } catch {
+                            resourceUrl = '#';
+                        }
+                        target.innerHTML += `
+                    <div style="margin:5px 0;">
+                        ${title}
+                        <a href="${resourceUrl}" target="_blank" rel="noopener noreferrer">Download</a>
+                    </div>`;
+                    }
+                });
+
+                updateLibraryNotifications(hasNewMaterials, newCategories);
+                localStorage.setItem('libraryResourceSignature', currentSignature);
+
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function updateLibraryNotifications(hasNewMaterials, categories = []) {
+            const notice = document.getElementById('libraryNotice');
+            if (notice) {
+                notice.classList.toggle('show', hasNewMaterials);
+            }
+
+            document.querySelectorAll('.library-card-badge').forEach(badge => {
+                const category = badge.dataset.badge;
+                badge.classList.toggle('show', hasNewMaterials && categories.includes(category));
+            });
+        }
+
+        function setupLibraryCards() {
+            document.querySelectorAll('#library .card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const fileList = card.querySelector('.file-list-container');
+                    if (fileList) fileList.classList.toggle('show');
+
+                    const badge = card.querySelector('.library-card-badge');
+                    if (badge) badge.classList.remove('show');
+
+                    const visibleBadges = document.querySelectorAll('.library-card-badge.show').length;
+                    const notice = document.getElementById('libraryNotice');
+                    if (notice && visibleBadges === 0) {
+                        notice.classList.remove('show');
+                    }
+                });
+            });
+        }
+
+        async function loadMyProfile() {
+            try {
+                const res = await fetchWithApiFallback('/api/user/me', {
+                    headers: getAuthHeaders()
+                });
+                const user = await readApiResponse(res, 'Profile load failed.');
+                if (!res.ok) throw new Error(user.message || 'Profile load failed.');
+                const profilePic = user.profilePic || localStorage.getItem('currentProfilePic') || 'profile.png';
+
+                sessionStorage.setItem('userName', user.name || sessionStorage.getItem('userName') || 'User');
+                sessionStorage.setItem('studentId', user.studentId || sessionStorage.getItem('studentId') || '');
+                localStorage.setItem('currentUser', user.name || 'User');
+                localStorage.setItem('currentProfilePic', profilePic);
+                setUser();
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        async function uploadProfilePhoto() {
+            const input = document.getElementById('profileUploadInput');
+            const msg = document.getElementById('profileMsg');
+            const button = document.getElementById('profileUploadBtn');
+            const file = input?.files?.[0];
+
+            if (!file) {
+                msg.style.color = 'red';
+                msg.innerText = 'Please choose an image first.';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    button.disabled = true;
+                    button.innerText = 'Uploading...';
+
+                    const profilePic = String(reader.result || '');
+                    const res = await fetchWithApiFallback('/api/user/profile-photo', {
+                        method: 'PUT',
+                        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({ profilePic })
+                    });
+                    const data = await readApiResponse(res, 'Profile upload failed.');
+
+                    if (!res.ok) throw new Error(data.message || 'Profile upload failed.');
+
+                    localStorage.setItem('currentProfilePic', data.profilePic || profilePic);
+                    setUser();
+                    msg.style.color = 'green';
+                    msg.innerText = data.message || 'Profile photo updated.';
+                    input.value = '';
+                } catch (err) {
+                    msg.style.color = 'red';
+                    msg.innerText = err.message || 'Profile upload failed.';
+                } finally {
+                    button.disabled = false;
+                    button.innerText = 'Upload Photo';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function changeMyPassword() {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const msg = document.getElementById('passwordMsg');
+            const button = document.getElementById('changePasswordBtn');
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                msg.style.color = 'red';
+                msg.innerText = 'Please fill all password fields.';
+                return;
+            }
+
+            if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+                msg.style.color = 'red';
+                msg.innerText = 'New password must be at least 8 characters and include a letter and a number.';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                msg.style.color = 'red';
+                msg.innerText = 'New password and confirm password do not match.';
+                return;
+            }
+
+            try {
+                button.disabled = true;
+                button.innerText = 'Saving...';
+
+                const res = await fetchWithApiFallback('/api/user/change-password', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+                const data = await readApiResponse(res, 'Password change failed.');
+
+                if (!res.ok) throw new Error(data.message || 'Password change failed.');
+                if (data.token) sessionStorage.setItem('token', data.token);
+
+                msg.style.color = 'green';
+                msg.innerText = data.message || 'Password changed successfully.';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } catch (err) {
+                msg.style.color = 'red';
+                msg.innerText = err.message || 'Password change failed.';
+            } finally {
+                button.disabled = false;
+                button.innerText = 'Change Password';
+            }
+        }
+
+
+        // ===== 5. PROGRESS =====
+        async function submitToAdmin() {
+            const level = document.getElementById('levelSelect').value;
+            const detail = document.getElementById('progressDetail').value.trim();
+            const msg = document.getElementById('statusMsg');
+            const submitBtn = document.getElementById('submitBtn');
+            const student =
+                sessionStorage.getItem('userName') ||
+                localStorage.getItem('currentUser') ||
+                "Unknown";
+
+            if (!detail) {
+                msg.style.color = "red";
+                msg.innerText = "Write something!";
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Sending...";
+                const res = await fetchWithApiFallback('/api/progress', {
+                    method: 'POST',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ student, level, detail })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Submit failed");
+
+                msg.style.color = "green";
+                msg.innerText = data.message || "Sent successfully!";
+                document.getElementById('progressDetail').value = "";
+
+            } catch (err) {
+                console.log(err);
+                msg.style.color = "red";
+                msg.innerText = err.message || "Server hin hojjenne!";
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Send to Admin";
+            }
+        }
+
+
+        // ===== 6. STATS =====
+        async function loadStats() {
+            try {
+                const res = await fetchWithApiFallback('/api/statistics');
+                if (!res.ok) throw new Error("Stats error");
+
+                const data = await res.json();
+                const total = Number(data.total || 0);
+                const male = Number(data.male || 0);
+                const female = Number(data.female || 0);
+                const malePercent = total > 0 ? (male / total) * 100 : 0;
+                const femalePercent = total > 0 ? (female / total) * 100 : 0;
+
+                const maleLabel = document.getElementById('maleStatsLabel');
+                const femaleLabel = document.getElementById('femaleStatsLabel');
+                const totalLabel = document.getElementById('totalStatsLabel');
+                const maleBar = document.getElementById('maleStatsBar');
+                const femaleBar = document.getElementById('femaleStatsBar');
+
+                if (maleLabel) maleLabel.innerText = `Male Students (${male})`;
+                if (femaleLabel) femaleLabel.innerText = `Female Students (${female})`;
+                if (totalLabel) totalLabel.innerText = `Total Registered Students: ${total}`;
+                if (maleBar) maleBar.style.width = `${malePercent}%`;
+                if (femaleBar) femaleBar.style.width = `${femalePercent}%`;
+
+            } catch (err) {
+                console.log("Stats hin fe'amne");
+            }
+        }
+
+
+        // ===== 7. PRAYER =====
+        async function fetchPrayerTimes() {
+            try {
+                const locStatus = document.getElementById('loc-status');
+                const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Woliso&country=Ethiopia&method=3`);
+                const json = await res.json();
+
+                const t = json.data.timings;
+                const h = json.data.date.hijri;
+
+                document.getElementById('fajr').innerText = t.Fajr;
+                document.getElementById('dhuhr').innerText = t.Dhuhr;
+                document.getElementById('asr').innerText = t.Asr;
+                document.getElementById('maghrib').innerText = t.Maghrib;
+                document.getElementById('isha').innerText = t.Isha;
+                document.getElementById('hijri-date').innerText =
+                    `${h.day} ${h.month.en} ${h.year} AH`;
+                if (locStatus) locStatus.innerText = "Woliso, Ethiopia";
+
+            } catch {
+                console.log("Prayer error");
+                const locStatus = document.getElementById('loc-status');
+                if (locStatus) locStatus.innerText = "Prayer times unavailable";
+            }
+        }
+
+
+        // ===== 8. SIDEBAR =====
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+
+        // ===== 9. MESSAGES =====
+        async function loadMessages() {
+            try {
+                const res = await fetchWithApiFallback('/api/user/messages', {
+                    headers: getAuthHeaders()
+                });
+                const data = await readApiResponse(res, 'Messages load failed.');
+
+                if (!res.ok) throw new Error(data.message || 'Messages load failed.');
+
+                renderNotifications(data.notifications || []);
+                renderConversation(data.messages || []);
+            } catch (err) {
+                console.error('Messages load error:', err);
+                const notificationList = document.getElementById('notificationList');
+                const conversationList = document.getElementById('conversationList');
+                if (notificationList) notificationList.innerHTML = '<p style="color:#dc2626;">Failed to load notifications.</p>';
+                if (conversationList) conversationList.innerHTML = '<p style="color:#dc2626;">Failed to load conversation.</p>';
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+
+            if (!Array.isArray(notifications) || notifications.length === 0) {
+                list.innerHTML = '<p style="color:#6b7280;">No notifications yet.</p>';
+                return;
+            }
+
+            list.innerHTML = notifications.map(item => `
+        <div class="mini-item">
+            <strong>Admin Reply</strong>
+            <div>${item.text || 'You have a new update.'}</div>
+            <small style="color:#6b7280;">${new Date(item.repliedAt || Date.now()).toLocaleString()}</small>
+        </div>
+    `).join('');
+        }
+
+        function escapeConversationHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function renderConversation(messages) {
+            const list = document.getElementById('conversationList');
+            if (!list) return;
+
+            if (!Array.isArray(messages) || messages.length === 0) {
+                list.innerHTML = '<p style="color:#6b7280;">No conversation yet.</p>';
+                return;
+            }
+
+            list.innerHTML = messages.map(msg => {
+                const id = String(msg._id || '');
+                const dateStr = escapeConversationHtml(new Date(msg.createdAt || Date.now()).toLocaleString());
+                const youLine = escapeConversationHtml(msg.content || '');
+                const adminLine = escapeConversationHtml(msg.reply || 'No reply yet.');
+                return `
+        <div class="mini-item">
+            <div class="mini-item-header">
+                <small style="color:#6b7280;">${dateStr}</small>
+                <button type="button" class="msg-delete-btn" data-msg-id="${id}" title="Remove this thread from your view">Delete</button>
+            </div>
+            <div style="margin-bottom:6px;"><strong>You:</strong> ${youLine}</div>
+            <div style="margin-bottom:6px;"><strong>Admin:</strong> ${adminLine}</div>
+        </div>`;
+            }).join('');
+
+            list.querySelectorAll('.msg-delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteConversationMessage(btn.getAttribute('data-msg-id'), btn));
+            });
+        }
+
+        async function deleteConversationMessage(messageId, buttonEl) {
+            if (!messageId) return;
+            if (!confirm('Delete this message from your conversation? This cannot be undone.')) return;
+
+            try {
+                if (buttonEl) buttonEl.disabled = true;
+                const res = await fetchWithApiFallback('/api/user/messages/delete', {
+                    method: 'POST',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ messageId })
+                });
+                const data = await readApiResponse(res, 'Delete failed.');
+                if (!res.ok) throw new Error(data.message || 'Delete failed.');
+                await loadMessages();
+            } catch (err) {
+                alert(err.message || 'Could not delete message.');
+                if (buttonEl) buttonEl.disabled = false;
+            }
+        }
+
+        async function sendCommentToAdmin() {
+            const input = document.getElementById('adminCommentInput');
+            const button = document.getElementById('sendCommentBtn');
+            const statusEl = document.getElementById('commentStatus');
+            const content = (input?.value || '').trim();
+            const studentName =
+                sessionStorage.getItem('userName') ||
+                localStorage.getItem('currentUser') ||
+                'Student';
+
+            if (!content) {
+                statusEl.style.color = '#dc2626';
+                statusEl.innerText = 'Please write a comment first.';
+                return;
+            }
+
+            try {
+                button.disabled = true;
+                button.innerText = 'Sending...';
+
+                const res = await fetchWithApiFallback('/api/user/messages', {
+                    method: 'POST',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ content, studentName })
+                });
+                const data = await readApiResponse(res, 'Comment send failed.');
+                if (!res.ok) throw new Error(data.message || 'Comment send failed.');
+
+                statusEl.style.color = '#166534';
+                statusEl.innerText = data.message || 'Comment sent.';
+                input.value = '';
+                loadMessages();
+            } catch (err) {
+                statusEl.style.color = '#dc2626';
+                statusEl.innerText = err.message || 'Comment send failed.';
+            } finally {
+                button.disabled = false;
+                button.innerText = 'Send Comment';
+            }
+        }
+
+        async function markNotificationsRead() {
+            try {
+                const res = await fetchWithApiFallback('/api/user/messages/mark-read', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' })
+                });
+                const data = await readApiResponse(res, 'Failed to mark notifications.');
+                if (!res.ok) throw new Error(data.message || 'Failed to mark notifications.');
+                loadMessages();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ===== 10. TRANSLATE PAGE =====
+        function setGoogleTranslateCookie(lang) {
+            const value = `/en/${lang}`;
+            const oneYear = 365 * 24 * 60 * 60;
+            document.cookie = `googtrans=${value}; path=/; max-age=${oneYear}`;
+            document.cookie = `googtrans=${value}; domain=.${location.hostname}; path=/; max-age=${oneYear}`;
+        }
+
+        function getSavedGoogleTranslateLang() {
+            const match = document.cookie.match(/(?:^|;\s*)googtrans=\/[^/]+\/([^;]+)/);
+            return match ? match[1] : 'en';
+        }
+
+        function applyOromoStaticTranslations() {
+            const translations = [
+                ['.translator-label', 'Language', 'Afaan'],
+                ['#logoutBtn', 'Logout', 'Ba\'i'],
+                ['.sidebar a[href="#about"] span', "About Jema'aa", "Waa'ee Jema'aa"],
+                ['.sidebar a[href="#prayer"] span', 'Prayer Times', 'Yeroo Salaata'],
+                ['.sidebar a[href="#library"] span', 'Digital Library', 'Mana Kitaabaa Dijitaalaa'],
+                ['.sidebar a[href="#stats"] span', 'Statistics', 'Istaatistiksii'],
+                ['.sidebar a[href="#roadmap"] span', 'Qirath Roadmap', 'Karoora Qiraa\'aa'],
+                ['.sidebar a[href="#messages"] span', 'Messages', 'Ergaa'],
+                ['.sidebar a[href="#account"] span', 'My Account', 'Akkaawuntii Koo'],
+                ['.sidebar a[href="#contact"] span', 'Contact', 'Nu Quunnamaa'],
+                ['#about .section-header h1', 'About AUWCMSJ', 'Waa\'ee AUWCMSJ'],
+                ['#prayer .section-header h1', 'Prayer Times', 'Yeroo Salaata'],
+                ['#library .library-header h1', 'Digital Library', 'Mana Kitaabaa Dijitaalaa'],
+                ['#stats .section-header h1', "Jema'aa Statistics", "Istaatistiksii Jema'aa"],
+                ['#roadmap .section-header h1', 'Qirath Progress Update', 'Fooyya\'insa Qiraa\'aa'],
+                ['#messages .section-header h1', 'Messages', 'Ergaa'],
+                ['#account .section-header h1', 'My Account', 'Akkaawuntii Koo'],
+                ['#roadmap h3', 'Submit Your Progress', 'Fooyya\'insa Kee Ergi'],
+                ['#roadmap label', 'Select Level:', 'Sadarkaa Filadhu:'],
+                ['#submitBtn', 'Send to Admin', 'Geggeessaa Ergi'],
+                ['#messages #messageList p', 'Loading messages...', 'Ergaan fe\'amaa jira...'],
+                ['#account h3', 'Upload Profile Photo', 'Suuraa Piroofaayilii Olkaa\'i'],
+                ['#profileUploadBtn', 'Upload Photo', 'Suuraa Olkaa\'i'],
+                ['#account h3', 'Change Password', 'Jecha Iccitii Jijjiiri'],
+                ['#changePasswordBtn', 'Change Password', 'Jecha Iccitii Jijjiiri'],
+                ['#account h3', 'Delete Profile Photo', 'Suuraa Piroofaayilii Haqi'],
+                ['#deletePhotoBtn', 'Delete Profile Photo', 'Suuraa Piroofaayilii Haqi'],
+                ['.footer-col a[href="#prayer"]', 'Prayer Times', 'Yeroo Salaata'],
+                ['.footer-col a[href="#library"]', 'Digital Library', 'Mana Kitaabaa Dijitaalaa'],
+                ['.footer-col a[href="#stats"]', 'Statistics', 'Istaatistiksii'],
+                ['.footer-col a[href="#roadmap"]', 'Qirath Roadmap', 'Karoora Qiraa\'aa'],
+                ['.footer-col a[href="#about"]', 'About Us', 'Waa\'ee Keenya']
+            ];
+
+            translations.forEach(([selector, enText, omText]) => {
+                document.querySelectorAll(selector).forEach((el) => {
+                    const current = (el.textContent || '').trim();
+                    if (current === enText) {
+                        el.textContent = omText;
+                    }
+                });
+            });
+        }
+
+        function applySelectedLanguage(lang) {
+            if (lang === 'om') {
+                // Custom Oromo mode for key static UI texts.
+                setGoogleTranslateCookie('en');
+                localStorage.setItem('preferredLanguage', 'om');
+                applyOromoStaticTranslations();
+                return;
+            }
+
+            setGoogleTranslateCookie(lang);
+            localStorage.setItem('preferredLanguage', lang);
+            window.location.reload();
+        }
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement(
+                {
+                    pageLanguage: 'en',
+                    includedLanguages: 'en,am,ar,om',
+                    autoDisplay: false,
+                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                },
+                'google_translate_element'
+            );
+
+            const languageDropdown = document.getElementById('languageDropdown');
+            if (!languageDropdown) return;
+
+            // Keep selector synced to the current translated language.
+            const savedLang = localStorage.getItem('preferredLanguage') || getSavedGoogleTranslateLang();
+            languageDropdown.value = ['en', 'am', 'ar', 'om'].includes(savedLang) ? savedLang : 'en';
+            if (savedLang === 'om') {
+                applyOromoStaticTranslations();
+            }
+
+            // Re-apply through cookie + reload (more reliable than hidden widget select events).
+            languageDropdown.addEventListener('change', () => {
+                const selectedLang = languageDropdown.value || 'en';
+                applySelectedLanguage(selectedLang);
+            });
+        }
+
+        window.googleTranslateElementInit = googleTranslateElementInit;
+
+        (function syncSavedLanguagePreference() {
+            const preferredLang = localStorage.getItem('preferredLanguage');
+            if (preferredLang) {
+                setGoogleTranslateCookie(preferredLang === 'om' ? 'en' : preferredLang);
+            }
+        })();
+
+        (function loadGoogleTranslateScript() {
+            if (document.getElementById('googleTranslateScript')) return;
+            const script = document.createElement('script');
+            script.id = 'googleTranslateScript';
+            script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+            script.async = true;
+            document.head.appendChild(script);
+        })();
+
+        // ===== 11. DELETE PROFILE PHOTO =====
+        async function deleteProfilePhoto() {
+            const msg = document.getElementById('deletePhotoMsg');
+            const button = document.getElementById('deletePhotoBtn');
+
+            if (!confirm("Are you sure you want to delete your profile photo? This will revert to the default photo.")) {
+                return;
+            }
+
+            try {
+                button.disabled = true;
+                button.innerText = 'Deleting...';
+                msg.style.color = '#92400e';
+                msg.innerText = 'Deleting profile photo...';
+
+                const res = await fetchWithApiFallback('/api/user/delete-profile-photo', {
+                    method: 'POST',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({})
+                });
+
+                const data = await readApiResponse(res, 'Failed to delete profile photo.');
+                if (!res.ok) {
+                    throw new Error(data.message || 'Failed to delete profile photo');
+                }
+
+                // Update local storage and UI
+                localStorage.removeItem('currentProfilePic');
+
+                // Update profile preview to default
+                document.getElementById('profilePreview').src = 'profile.png';
+
+                msg.style.color = 'green';
+                msg.innerText = 'Profile photo deleted successfully!';
+
+                // Update user display
+                setUser();
+
+            } catch (err) {
+                console.error('Profile photo deletion error:', err);
+                msg.style.color = 'red';
+                msg.innerText = err.message || 'Failed to delete profile photo. Please try again.';
+            } finally {
+                button.disabled = false;
+                button.innerText = 'Delete Profile Photo';
+            }
+        }
+
+        // ===== 10. LOGOUT =====
+        function logout(e) {
+            if (e) e.preventDefault();
+            if (confirm("Are you sure?")) {
+                const token = sessionStorage.getItem('token');
+                if (token) {
+                    fetchWithApiFallback('/api/logout', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` }
+                    }).catch(() => { });
+                }
+                sessionStorage.clear();
+                localStorage.removeItem('currentUser');
+                window.location.href = "login.html";
+            }
+        }
+
+        // --- ADMIN VIEW FUNCTIONS ---
+        function returnToAdminView() {
+            const returnUrl = sessionStorage.getItem('adminReturnUrl') || '../admin/admin.html';
+            sessionStorage.removeItem('isAdminView');
+            sessionStorage.removeItem('adminReturnUrl');
+            window.location.href = returnUrl;
+        }
+
+    </script>
+</body>
+
+</html>

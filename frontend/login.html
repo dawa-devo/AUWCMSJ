@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUWCMSJ | Portal Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* FIXED: Wrapped your properties into the correct selector */
+        .login-card { 
+            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 35px; 
+            text-align: center; 
+             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .top-logo-container img { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #059669; margin-bottom: 10px; }
+        .top-logo-container h1 { font-size: 24px; color: #064e3b; margin-bottom: 5px; }
+        .title-section p { font-size: 13px; color: #475569; margin-bottom: 25px; }
+    
+        .notice-box {
+            background-color: #fee2e2; color: #b91c1c; padding: 12px;
+            border-radius: 10px; font-size: 13px; margin-bottom: 20px;
+            display: none; border-left: 5px solid #b91c1c;
+            text-align: left;
+        }
+
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i.main-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #059669; }
+        .input-group input {
+            width: 100%; padding: 14px 45px;
+            border: 1.5px solid #cbd5e1; border-radius: 12px; outline: none; transition: 0.3s;
+        }
+        .input-group input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+
+        .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; }
+        
+        .login-btn {
+            width: 100%; background-color: #059669; color: white;
+            padding: 14px; border: none; border-radius: 12px;
+            font-size: 17px; font-weight: 600; cursor: pointer; margin-bottom: 15px; transition: 0.3s;
+        }
+        .login-btn:hover { background-color: #047857; transform: translateY(-2px); }
+
+        .signup-text { font-size: 13px; color: #64748b; }
+        .signup-text a { color: #059669; text-decoration: none; font-weight: 700; }
+
+        @media (max-width: 768px) {
+            .login-card {
+                max-width: 100%;
+                padding: 28px 22px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 14px;
+                align-items: flex-start;
+            }
+            .login-card {
+                margin-top: 24px;
+                padding: 26px 18px;
+                border-radius: 16px;
+            }
+            .top-logo-container img {
+                width: 76px;
+                height: 76px;
+            }
+            .top-logo-container h1 {
+                font-size: 21px;
+            }
+            .title-section p,
+            .signup-text,
+            .notice-box {
+                font-size: 12px;
+            }
+            .input-group input,
+            .login-btn {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="top-logo-container">
+            <img src="logo.jpg" alt="Logo">
+            <h1>AUWCMSJ</h1>
+        </div>
+        <div class="title-section">
+            <p>Jema'a Portal Login</p>
+        </div>
+        
+        <div id="notice-box" class="notice-box"></div>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <i class="fa-solid fa-user main-icon"></i>
+                <input type="text" id="userId" placeholder="ID Number (AU/123/15)" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock main-icon"></i>
+                <input type="password" id="passwordField" placeholder="Password" required>
+                <i class="fa-solid fa-eye password-toggle" id="toggleIcon" onclick="togglePassword()"></i>
+            </div>
+            <button type="submit" id="loginBtn" class="login-btn">Login</button>
+        </form>
+        <p class="signup-text">Don't have an account? <a href="register.html">Sign Up (Register Now)</a></p>
+    </div>
+
+    <script>
+      
+    // Password agarsiisuu fi dhoksuuf
+function togglePassword() {
+    const pwField = document.getElementById('passwordField');
+    const icon = document.getElementById('toggleIcon');
+    if (pwField.type === 'password') {
+        pwField.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        pwField.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+// Hojii Login raawwachuuf
+async function handleLogin(event) {
+    event.preventDefault(); // Fuulli akka hin 'refresh' goone
+
+    const noticeBox = document.getElementById('notice-box');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    // Ragaalee input irraa fuuchuu (IDs sirreeffamaniiru)
+    const studentId = document.getElementById('userId').value.trim();
+    const password = document.getElementById('passwordField').value.trim();
+
+    loginBtn.innerText = "Checking...";
+    loginBtn.disabled = true;
+
+    try {
+        const apiBases = ['http://127.0.0.1:5000', 'http://localhost:5000'];
+        let res = null;
+        let lastFetchErr = null;
+        for (const base of apiBases) {
+            try {
+                res = await fetch(`${base}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, password })
+                });
+                break;
+            } catch (e) {
+                lastFetchErr = e;
+            }
+        }
+        if (!res) throw lastFetchErr || new Error('Cannot reach API');
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Success response irrattis data barbaachisaa jiraachuu mirkaneessi
+            const hasRequiredSessionData =
+                typeof data?.name === 'string' &&
+                data.name.trim() !== '' &&
+                (data?.role === 'admin' || data?.role === 'student' || data?.role === 'teacher') &&
+                typeof data?.token === 'string' &&
+                data.token.trim() !== '';
+
+            if (!hasRequiredSessionData) {
+                noticeBox.style.display = "block";
+                noticeBox.innerText = "Server response guutuu miti. Maaloo irra deebi'ii yaali.";
+                loginBtn.innerText = "Login";
+                loginBtn.disabled = false;
+                return;
+            }
+
+            // Ragaalee kuusuu
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userName', data.name);
+            sessionStorage.setItem('role', data.role);
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('studentId', data.studentId || '');
+            localStorage.setItem('currentUser', data.name);
+            localStorage.setItem('currentProfilePic', data.profilePic || '');
+
+            // Gara Dashboard-itti dabarsuu
+            if (data.role === 'admin') {
+                window.location.href = '../admin/admin.html';
+            } else {
+                window.location.href = 'userdashboard.html';
+            }
+       } else {
+    // Backend 'message' deebisa yoo ta'e data.message fayyadami
+    noticeBox.style.display = "block";
+    noticeBox.innerText = data.message || data.error || "Login hin milkoofne!";
+    loginBtn.innerText = "Login";
+    loginBtn.disabled = false;
+}
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Server waliin wal quunnamuun hin danda'amne!");
+        loginBtn.innerText = "Login";
+        loginBtn.disabled = false;
+    }
+}
+</script>
+</body>
+</html>

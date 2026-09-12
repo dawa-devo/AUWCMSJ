@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUWCMSJ | Admin Next-Gen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. MODERN DESIGN --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            display: flex;
+            background: #f0f2f5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #064e3b;
+            color: white;
+            padding: 25px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100%;
+            max-height: 100vh;
+            transition: left 0.3s ease, box-shadow 0.3s ease;
+            z-index: 1200;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .nav-item {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .active-nav {
+            background: #059669;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 30px;
+            width: calc(100% - 260px);
+        }
+
+        /* Analytics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stat-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #064e3b;
+        }
+
+        /* Controls & Search Bar */
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        /* MODERN SEARCH BAR STYLE */
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #059669;
+        }
+
+        .dark-theme {
+            background-color: #1a202c !important;
+            color: #e2e8f0 !important;
+        }
+
+        .dark-theme .card,
+        .dark-theme .stat-card {
+            background-color: #2d3748 !important;
+            color: white !important;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 15px;
+        }
+
+        .search-bar:focus {
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-export {
+            background: #1e293b;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 6px 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 15px;
+            text-align: left;
+            color: #64748b;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        #progress-admin {
+            overflow-x: auto;
+        }
+
+        #progress-admin table,
+        #manageResourcesCard table,
+        #userTable,
+        #allMembersTable,
+        #commentsTable {
+            min-width: 640px;
+        }
+
+        #userTable th:nth-child(2),
+        #userTable td:nth-child(2),
+        #allMembersTable th:nth-child(2),
+        #allMembersTable td:nth-child(2) {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #userTable td:nth-child(2) .btn,
+        #allMembersTable td:nth-child(2) .btn {
+            display: inline-flex;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .quick-admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-top: 16px;
+        }
+
+        .quick-admin-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px;
+            background: #fff;
+        }
+
+        .quick-admin-card h5 {
+            font-size: 24px;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .quick-admin-card p {
+            color: #475569;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+        }
+
+        .quick-admin-card .search-bar {
+            margin-bottom: 12px;
+            padding-left: 12px;
+        }
+
+        .quick-admin-card .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .quick-admin-status {
+            margin-top: 8px;
+            font-size: 0.86rem;
+            min-height: 1.2rem;
+            color: #475569;
+        }
+
+        .admin-reply-box {
+            width: 100%;
+            min-height: 70px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 10px;
+            resize: vertical;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Bilbila irratti akka dhokatuuf CSS kana dabaladhu */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: min(280px, 86vw);
+                left: calc(-1 * min(280px, 86vw));
+                padding: 52px 18px 24px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .hamburger-btn {
+                display: block !important;
+                /* Bilbila irratti qofa mul'ata */
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                background: #064e3b;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1100;
+            }
+        }
+
+        /* Computer irratti akka hin mul'anneef */
+        .hamburger-btn {
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            .main {
+                padding: 24px 18px;
+            }
+
+            #addUserSection>div,
+            #uploadSection>div,
+            .card div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                display: block;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 74px 14px 20px;
+            }
+
+            .card {
+                padding: 18px 14px;
+                border-radius: 12px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-wrapper {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .controls .btn,
+            .button-group .btn,
+            #addUserSection .btn,
+            #uploadSection .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stat-card p {
+                font-size: 20px;
+            }
+
+            th,
+            td {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+
+            td {
+                white-space: normal;
+                word-break: break-word;
+            }
+
+            #userTable td:nth-child(2),
+            #allMembersTable td:nth-child(2) {
+                white-space: nowrap;
+            }
+
+            .access-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            #progress-admin h2 {
+                font-size: 20px;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 70px 10px 16px;
+            }
+
+            .card {
+                padding: 16px 12px;
+            }
+
+            .sidebar h2 {
+                font-size: 18px;
+            }
+
+            .nav-item {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .hamburger-btn {
+                top: 10px;
+                left: 10px;
+                padding: 9px 12px;
+            }
+
+            .search-bar,
+            textarea,
+            select,
+            input {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hamburger-btn" onclick="toggleMenu()">
+        <i class="fa fa-bars"></i>
+    </div>
+
+    <div class="sidebar" id="mySidebar">
+        <h2><i class="fa fa-shield-halved"></i> AUWCMSJ Admin</h2>
+        <div class="nav-item active-nav"><i class="fa fa-home"></i> Dashboard</div>
+        <div class="nav-item" onclick="toggleUpload(); toggleMenu();"><i class="fa fa-file-pdf"></i> Upload Resources
+        </div>
+        <div class="nav-item" onclick="showUsers(); toggleMenu();"><i class="fa fa-users"></i> Students</div>
+        <div class="nav-item" onclick="showAllMembers(); toggleMenu();"><i class="fa fa-list"></i> All Members</div>
+        <div class="nav-item" onclick="showComments(); toggleMenu();"><i class="fa fa-comments"></i> Comments</div>
+        <div class="nav-item" onclick="showAdminMessages(); toggleMenu();"><i class="fa fa-envelope-open-text"></i>
+            Message Center</div>
+        <div class="nav-item" onclick="showRoleAccess(); toggleMenu();"><i class="fa fa-user-shield"></i> Role & Access
+        </div>
+        <div class="nav-item" onclick="switchToUserView(); toggleMenu();"><i class="fa fa-exchange-alt"></i> Switch to
+            User View</div>
+        <div class="nav-item" onclick="toggleDarkMode()"><i class="fa fa-moon"></i> Dark Mode</div>
+        <div class="nav-item" onclick="toggleManageResources(); toggleMenu();"><i class="fa fa-folder-open"></i> Manage
+            Resources</div>
+        <div class="nav-item" style="margin-top: 50px;" onclick="logout()"><i class="fa fa-sign-out-alt"></i> Logout
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Students</h3>
+                <p id="count-total">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Approved Students</h3>
+                <p id="count-active" style="color: #059669;">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Pending Approval</h3>
+                <p id="count-pending" style="color: #d97706;">0</p>
+            </div>
+        </div>
+
+        <div id="addUserSection" class="card" style="display:none; border: 1px solid #059669;">
+            <h3><i class="fa fa-user-plus"></i> Add New Student</h3><br>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="text" id="newId" placeholder="Student ID (AU/123/15)" class="search-bar"
+                    style="padding-left:15px;">
+                <input type="text" id="newName" placeholder="Full Name" class="search-bar" style="padding-left:15px;">
+                <input type="password" id="newPassword" placeholder="Password" class="search-bar"
+                    style="padding-left:15px;">
+                <button class="btn btn-primary" onclick="addNewUser()">Save Student</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="controls">
+                <div class="search-wrapper">
+                    <i class="fa fa-search"></i>
+                    <input type="text" id="searchInput" onkeyup="searchTable()" class="search-bar"
+                        placeholder="Search student...">
+                </div>
+                <button class="btn btn-export" onclick="toggleExportColumns()"><i class="fa fa-file-excel"></i> Export
+                    Excel</button>
+                <button class="btn btn-primary" onclick="toggleAddUser()"><i class="fa fa-plus"></i> Add User</button>
+            </div>
+
+            <div id="exportColumnsSection"
+                style="display:none; margin-bottom: 20px; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px;">
+                <div
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                    <label><input type="checkbox" class="export-col" value="1" checked> Student ID</label>
+                    <label><input type="checkbox" class="export-col" value="3" checked> Full Name</label>
+                    <label><input type="checkbox" class="export-col" value="4" checked> Email</label>
+                    <label><input type="checkbox" class="export-col" value="5" checked> Emergency Contact</label>
+                    <label><input type="checkbox" class="export-col" value="6" checked> Family Contact</label>
+                    <label><input type="checkbox" class="export-col" value="7" checked> Academic Skills</label>
+                    <label><input type="checkbox" class="export-col" value="8" checked> Spiritual Skills</label>
+                    <label><input type="checkbox" class="export-col" value="9" checked> Contribution</label>
+                    <label><input type="checkbox" class="export-col" value="10" checked> Status</label>
+                </div>
+                <button class="btn btn-export" onclick="exportToCSV()">Download Selected Columns</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="userTable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Actions</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Emergency Contact</th>
+                            <th>Family Contact</th>
+                            <th>Academic Skills</th>
+                            <th>Spiritual Skills</th>
+                            <th>Contribution</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- ALL MEMBERS SECTION -->
+        <div id="allMembersSection" class="card" style="display:none;">
+            <h3><i class="fa fa-list"></i> All Members Directory</h3><br>
+
+            <!-- Member Statistics -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <h3>Total Members</h3>
+                    <p id="members-total">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Members</h3>
+                    <p id="members-active" style="color: #059669;">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending Members</h3>
+                    <p id="members-pending" style="color: #d97706;">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Blocked Members</h3>
+                    <p id="members-blocked" style="color: #ef4444;">0</p>
+                </div>
+            </div>
+
+            <!-- Advanced Search and Filters -->
+            <div class="controls" style="margin-bottom: 20px;">
+                <div class="search-wrapper" style="flex: 2;">
+                    <i class="fa fa-search"></i>
+                    <input type="text" id="allMembersSearch" onkeyup="searchAllMembers()" class="search-bar"
+                        placeholder="Search members by name, ID, email...">
+                </div>
+                <select id="statusFilter" onchange="filterAllMembers()" class="search-bar"
+                    style="width: 150px; padding-left: 10px;">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="blocked">Blocked</option>
+                </select>
+                <select id="roleFilter" onchange="filterAllMembers()" class="search-bar"
+                    style="width: 150px; padding-left: 10px;">
+                    <option value="">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button class="btn btn-export" onclick="exportAllMembers()"><i class="fa fa-file-excel"></i> Export
+                    All</button>
+            </div>
+
+            <!-- Members Table -->
+            <div style="overflow-x: auto;">
+                <table id="allMembersTable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Actions</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Emergency Contact</th>
+                            <th>Family Contact</th>
+                            <th>Academic Skills</th>
+                            <th>Spiritual Skills</th>
+                            <th>Contribution</th>
+                            <th>Status</th>
+                            <th>Registration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allMembersList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COMMENTS MANAGEMENT SECTION -->
+        <div id="commentsSection" class="card" style="display:none;">
+            <h3><i class="fa fa-comments"></i> User Comments & Progress Reports</h3><br>
+
+            <!-- Comment Statistics -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <h3>Total Comments</h3>
+                    <p id="comments-total">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Today's Comments</h3>
+                    <p id="comments-today" style="color: #059669;">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>This Week</h3>
+                    <p id="comments-week" style="color: #d97706;">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending Review</h3>
+                    <p id="comments-pending" style="color: #ef4444;">0</p>
+                </div>
+            </div>
+
+            <!-- Comment Filters -->
+            <div class="controls" style="margin-bottom: 20px;">
+                <div class="search-wrapper" style="flex: 2;">
+                    <i class="fa fa-search"></i>
+                    <input type="text" id="commentsSearch" onkeyup="searchComments()" class="search-bar"
+                        placeholder="Search comments by student name or content...">
+                </div>
+                <select id="commentLevelFilter" onchange="filterComments()" class="search-bar"
+                    style="width: 150px; padding-left: 10px;">
+                    <option value="">All Levels</option>
+                    <option value="1">Basic</option>
+                    <option value="2">Intermediate</option>
+                    <option value="3">Advanced</option>
+                </select>
+                <select id="commentDateFilter" onchange="filterComments()" class="search-bar"
+                    style="width: 150px; padding-left: 10px;">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                </select>
+                <button class="btn btn-export" onclick="exportComments()"><i class="fa fa-file-excel"></i>
+                    Export</button>
+            </div>
+
+            <!-- Comments Table -->
+            <div style="overflow-x: auto;">
+                <table id="commentsTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Level</th>
+                            <th>Progress Detail</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commentsList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="adminMessagesSection" class="card" style="display:none;">
+            <h3><i class="fa fa-envelope-open-text"></i> Admin Message Center</h3><br>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Comment</th>
+                            <th>Reply</th>
+                            <th>Sent At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminMessagesList">
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding: 18px;">Loading messages...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ROLE & ACCESS MANAGEMENT SECTION -->
+        <div id="roleAccessSection" class="card" style="display:none;">
+            <h3><i class="fa fa-user-shield"></i> Role & Access Management</h3><br>
+
+            <!-- Role Management -->
+            <div class="role-management" style="margin-bottom: 30px;">
+                <h4><i class="fa fa-users-cog"></i> User Role Management</h4>
+
+                <!-- Search and Filter -->
+                <div class="controls" style="margin-bottom: 20px;">
+                    <div class="search-wrapper" style="flex: 2;">
+                        <i class="fa fa-search"></i>
+                        <input type="text" id="roleSearch" onkeyup="searchRoleUsers()" class="search-bar"
+                            placeholder="Search users by name or ID...">
+                    </div>
+                    <select id="roleFilter" onchange="filterRoleUsers()" class="search-bar"
+                        style="width: 150px; padding-left: 10px;">
+                        <option value="">All Roles</option>
+                        <option value="student">Student</option>
+                        <option value="admin">Admin</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+
+                <!-- Users Table for Role Management -->
+                <div style="overflow-x: auto;">
+                    <table id="roleUsersTable">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Current Role</th>
+                                <th>Status</th>
+                                <th>Change Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roleUsersList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h4><i class="fa fa-bolt"></i> Quick User Actions</h4>
+                <div class="quick-admin-grid">
+                    <div class="quick-admin-card">
+                        <h5><i class="fa fa-user-pen"></i> Update User Information</h5>
+                        <p>Edit user profile details from admin panel.</p>
+                        <input type="text" id="quickUpdateStudentId" class="search-bar" placeholder="Student ID">
+                        <input type="text" id="quickUpdateFullName" class="search-bar"
+                            placeholder="Full Name (optional)">
+                        <input type="email" id="quickUpdateEmail" class="search-bar" placeholder="Email (optional)">
+                        <select id="quickUpdateStatus" class="search-bar">
+                            <option value="">Keep current status</option>
+                            <option value="active">Set Active</option>
+                            <option value="pending">Set Pending</option>
+                            <option value="blocked">Set Blocked</option>
+                        </select>
+                        <select id="quickUpdateRole" class="search-bar">
+                            <option value="">Keep current role</option>
+                            <option value="student">Set Student</option>
+                            <option value="admin">Set Admin</option>
+                            <option value="teacher">Set Teacher</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="saveQuickUserInfo()"><i class="fa fa-save"></i> Save
+                            User Info</button>
+                        <p id="quickUpdateMsg" class="quick-admin-status"></p>
+                    </div>
+
+                    <div class="quick-admin-card">
+                        <h5><i class="fa fa-key"></i> Reset User Password</h5>
+                        <p>Set a new password for a user account.</p>
+                        <input type="text" id="quickResetStudentId" class="search-bar" placeholder="Student ID">
+                        <input type="password" id="quickResetPassword" class="search-bar"
+                            placeholder="New Password (min 6 chars)">
+                        <button class="btn btn-primary" onclick="resetUserPasswordByAdmin()"><i
+                                class="fa fa-rotate"></i> Reset Password</button>
+                        <p id="quickResetMsg" class="quick-admin-status"></p>
+                    </div>
+
+                    <div class="quick-admin-card">
+                        <h5><i class="fa fa-shield-virus"></i> Spam Protection</h5>
+                        <p>Enable or disable spam prevention mode.</p>
+                        <label style="display:flex; align-items:center; gap:10px; margin-top: 6px;">
+                            <input type="checkbox" id="spamProtectionToggle"
+                                onchange="toggleSpamProtectionMode(this.checked)">
+                            <span id="spamProtectionLabel">Spam protection is OFF</span>
+                        </label>
+                        <p id="spamProtectionMsg" class="quick-admin-status"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Rules Management -->
+            <div class="access-rules-management">
+                <h4><i class="fa fa-lock"></i> Access Rules Control</h4>
+
+                <div class="access-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <!-- Student Access Rules -->
+                    <div class="access-card"
+                        style="background: #f8fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                        <h5 style="color: #1e40af; margin-bottom: 15px;">Student Access</h5>
+                        <div class="access-rules">
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="studentUpload" checked
+                                    onchange="updateAccessRule('student', 'upload', this.checked)">
+                                <span>Upload Resources</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="studentComment" checked
+                                    onchange="updateAccessRule('student', 'comment', this.checked)">
+                                <span>Submit Comments</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="studentLibrary" checked
+                                    onchange="updateAccessRule('student', 'library', this.checked)">
+                                <span>Access Library</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="studentProgress" checked
+                                    onchange="updateAccessRule('student', 'progress', this.checked)">
+                                <span>Submit Progress</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Admin Access Rules -->
+                    <div class="access-card"
+                        style="background: #fef3c7; padding: 20px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                        <h5 style="color: #d97706; margin-bottom: 15px;">Admin Access</h5>
+                        <div class="access-rules">
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="adminUserManagement" checked
+                                    onchange="updateAccessRule('admin', 'userManagement', this.checked)">
+                                <span>User Management</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="adminResourceManagement" checked
+                                    onchange="updateAccessRule('admin', 'resourceManagement', this.checked)">
+                                <span>Resource Management</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="adminRoleManagement" checked
+                                    onchange="updateAccessRule('admin', 'roleManagement', this.checked)">
+                                <span>Role Management</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="adminSystemSettings" checked
+                                    onchange="updateAccessRule('admin', 'systemSettings', this.checked)">
+                                <span>System Settings</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Access Rules -->
+                    <div class="access-card"
+                        style="background: #f0fdf4; padding: 20px; border-radius: 10px; border-left: 4px solid #22c55e;">
+                        <h5 style="color: #16a34a; margin-bottom: 15px;">Teacher Access</h5>
+                        <div class="access-rules">
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="teacherUpload" checked
+                                    onchange="updateAccessRule('teacher', 'upload', this.checked)">
+                                <span>Upload Resources</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="teacherReview" checked
+                                    onchange="updateAccessRule('teacher', 'review', this.checked)">
+                                <span>Review Progress</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="teacherLibrary" checked
+                                    onchange="updateAccessRule('teacher', 'library', this.checked)">
+                                <span>Manage Library</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="teacherGrading" checked
+                                    onchange="updateAccessRule('teacher', 'grading', this.checked)">
+                                <span>Grade Students</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Access Rules Status -->
+                <div style="margin-top: 30px; padding: 15px; background: #e0f2fe; border-radius: 8px;">
+                    <h5 style="color: #0c4a6e; margin-bottom: 10px;">Access Rules Status</h5>
+                    <p id="accessRulesStatus" style="color: #075985; font-size: 0.9rem;">Access rules are active and
+                        being enforced.</p>
+                </div>
+            </div>
+        </div>
+
+        <section id="progress-admin">
+            <h2>Student Qirath Progress</h2>
+            <table border="10px" style="width:100%; border-collapse: collapse; margin-top: 20px; text-align: left;">
+                <thead style="background: #1b5e20; color: white;">
+                    <tr>
+                        <th style="padding: 10px;">Student Name</th>
+                        <th style="padding: 10px;">Level</th>
+                        <th style="padding: 10px;">Progress Detail</th>
+                        <th style="padding: 10px;">Time Sent</th>
+                        <th style="padding: 10px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminProgressTable">
+                </tbody>
+            </table>
+        </section>
+        <div id="uploadSection" class="card" style="display:none;">
+            <h3><i class="fa fa-file-upload"></i> Upload Resources</h3><br>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="text" id="resourceTitle" placeholder="Maqaa Kitaabaa" class="search-bar"
+                    style="padding-left: 15px;">
+
+                <select id="resourceCategory" class="search-bar" style="padding-left: 10px;">
+                    <option value="Academic">Academic</option>
+                    <option value="Religious">Religious</option>
+                    <option value="General">General</option>
+                </select>
+
+                <input type="file" id="fileInput" class="search-bar" style="padding: 8px;">
+                <button class="btn btn-primary" onclick="uploadResource()">Upload Now</button>
+            </div>
+            <div id="uploadStatus" style="margin-top:10px; color: #059669;"></div>
+        </div>
+        <div class="card" id="manageResourcesCard" style="display:none;">
+            <h3><i class="fa fa-folder-open"></i> Manage Resources</h3><br>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>File Name</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminResourceList"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <h3><i class="fa fa-key"></i> Change Admin Password</h3><br>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="password" id="oldPass" placeholder="Old Password" class="search-bar"
+                    style="padding-left:15px;">
+                <input type="password" id="newAdminPass" placeholder="New Password" class="search-bar"
+                    style="padding-left:15px;">
+                <button class="btn btn-primary" onclick="changeAdminPassword()">Change Password</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Dashboard Announcement (CMS)</h3><br>
+            <textarea id="newsContent"
+                style="width: 100%; height: 80px; padding: 10px; border-radius: 10px; border: 1px solid #ddd;"
+                placeholder="Write new announcement here..."></textarea><br><br>
+            <button class="btn btn-primary" onclick="updateNews()">Update News</button>
+        </div>
+    </div>
+    <script>
+        async function fetchWithApiFallback(path, options = {}) {
+            const host = window.location.hostname;
+            const token = sessionStorage.getItem('token') || '';
+            const headers = { ...(options.headers || {}) };
+            if (token && !headers.Authorization) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            const candidates = [
+                'http://127.0.0.1:5000',
+                'http://localhost:5000',
+                host && host !== 'localhost' && host !== '127.0.0.1' ? `http://${host}:5000` : null
+            ].filter(Boolean);
+
+            let lastError = null;
+            for (const base of candidates) {
+                try {
+                    const res = await fetch(`${base}${path}`, { ...options, headers });
+                    if (res.status === 401) {
+                        sessionStorage.clear();
+                        window.location.href = '../frontend/login.html';
+                    }
+                    return res;
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+
+            throw lastError || new Error('Server connection failed.');
+        }
+
+        function formatProgressTime(value) {
+            if (!value) return '---';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString();
+        }
+
+        // --- 1. DARK MODE LOGIC ---
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
+        }
+
+        // --- 2. SIDEBAR TOGGLE ---
+        function toggleMenu() {
+            const sidebar = document.getElementById('mySidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // --- 3. SECTIONS DHOKSUU FI AGARSIISUU ---
+        function toggleAddUser() {
+            const section = document.getElementById('addUserSection');
+            section.style.display = (section.style.display === "none" || section.style.display === "") ? "block" : "none";
+        }
+
+        function toggleUpload() {
+            const section = document.getElementById('uploadSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleManageResources() {
+            const section = document.getElementById('manageResourcesCard');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            if (section.style.display === 'block') loadResources();
+        }
+
+        function loadResources() {
+            const list = document.getElementById('adminResourceList');
+            if (!list) return;
+
+            const resources = JSON.parse(localStorage.getItem('adminResources') || '[]');
+            list.innerHTML = '';
+
+            if (resources.length === 0) {
+                list.innerHTML = '<tr><td colspan="4">No resources uploaded yet.</td></tr>';
+                return;
+            }
+
+            resources.forEach((resource, index) => {
+                list.innerHTML += `
+            <tr>
+                <td>${safeTableText(resource.title)}</td>
+                <td>${safeTableText(resource.category)}</td>
+                <td>${safeTableText(resource.fileName)}</td>
+                <td>
+                    <button class="btn btn-danger" onclick="deleteResource(${index})">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+            });
+        }
+
+        function deleteResource(index) {
+            const resources = JSON.parse(localStorage.getItem('adminResources') || '[]');
+            resources.splice(index, 1);
+            localStorage.setItem('adminResources', JSON.stringify(resources));
+            loadResources();
+        }
+
+        async function uploadResource() {
+            const title = document.getElementById('resourceTitle').value;
+            const category = document.getElementById('resourceCategory').value;
+            const file = document.getElementById('fileInput').files[0];
+
+            if (!title.trim()) {
+                alert("Please enter a resource title.");
+                return;
+            }
+
+            if (!file) {
+                alert("Please choose a file before uploading.");
+                return;
+            }
+
+            const res = await fetchWithApiFallback('/api/admin/resources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    category,
+                    fileName: file.name
+                })
+            });
+
+            if (!res.ok) {
+                alert("Upload failed.");
+                return;
+            }
+
+            alert("Uploaded!");
+        }
+
+        async function changeAdminPassword() {
+            const oldPass = document.getElementById('oldPass').value;
+            const newPass = document.getElementById('newAdminPass').value;
+
+            if (!oldPass || !newPass) {
+                alert('Please fill both password fields.');
+                return;
+            }
+
+            if (newPass.length < 8 || !/[A-Za-z]/.test(newPass) || !/\d/.test(newPass)) {
+                alert('New password must be at least 8 characters and include a letter and a number.');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/user/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: oldPass, newPassword: newPass })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Password change failed.');
+                if (data.token) sessionStorage.setItem('token', data.token);
+                alert(data.message || 'Password changed successfully.');
+                document.getElementById('oldPass').value = '';
+                document.getElementById('newAdminPass').value = '';
+            } catch (err) {
+                alert(err.message || 'Password change failed.');
+            }
+        }
+
+        async function addNewUser() {
+            const studentId = document.getElementById('newId').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+
+            if (!studentId.trim() || !name.trim() || !password.trim()) {
+                alert("Please fill in student ID, full name, and password.");
+                return;
+            }
+
+            if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+                alert("Password must be at least 8 characters and include a letter and a number.");
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/add-student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, name, password, status: 'active' })
+                });
+
+                if (res.ok) {
+                    alert("Barataa haaraa galmeeffameera!");
+
+                    // SEARCH BAR QULQULLEESSI (Suuraa kee irratti rakkoo kan uume kanadha)
+                    document.getElementById('searchInput').value = "";
+
+                    document.getElementById('newId').value = "";
+                    document.getElementById('newName').value = "";
+                    document.getElementById('newPassword').value = "";
+                    toggleAddUser();
+
+                    // Ragaa haaraa battalumatti fidi
+                    await loadStudents();
+                }
+            } catch (err) {
+                alert("Error!");
+            }
+        }
+        // --- 5. BARATAA BALLEESSUU (DELETE) ---
+        async function deleteStudent(id) {
+            console.log("Deleting student with ID:", id);
+
+            // Mirkaneessuuf
+            if (!confirm(`Barataa ID: ${id} qabu balleessuu barbaadduu?`)) return;
+
+            try {
+                console.log("Sending delete request for student:", id);
+                const res = await fetchWithApiFallback(`/api/admin/delete/${encodeURIComponent(id)}`, {
+                    method: 'DELETE',
+                });
+
+                console.log("Delete response status:", res.status);
+                const data = await res.json();
+                console.log("Delete response data:", data);
+
+                if (res.ok) {
+                    alert(data.message);
+                    loadStudents(); // Table-icha irra deebii refresh gochuuf
+                } else {
+                    alert("Balleessuun hin danda'amne: " + data.message);
+                }
+            } catch (err) {
+                console.error("Delete error:", err);
+                alert("Server waliin wal-qunnamuun hin danda'amne: " + err.message);
+            }
+        }
+        // --- 6. BARATTOOTA FIDUU (TABLE LOAD) ---
+        async function loadStudents() {
+            try {
+                const res = await fetchWithApiFallback('/api/admin/students');
+                const students = await res.json();
+
+                const list = document.getElementById('userList');
+                list.innerHTML = "";
+
+                students.forEach(user => {
+                    // Backend irraa maqaa dhufeen walitti fidi
+                    const displayId = user.universityId || user.studentId || "---";
+                    const displayName = user.fullName || user.name || "---";
+                    const emergencyContact = `${user.eName || '---'} ${user.ePhone ? `(${user.ePhone})` : ''}`.trim();
+                    const familyContact = `${user.fName || '---'} ${user.fPhone ? `(${user.fPhone})` : ''}`.trim();
+                    const status = String(user.status || 'pending').trim().toLowerCase();
+                    const actionId = encodeURIComponent(String(displayId));
+
+                    list.innerHTML += `
+                <tr>
+                    <td><b>${safeTableText(displayId)}</b></td>
+                    <td>
+                        ${status === 'pending' ? `
+                        <button type="button" class="btn btn-primary" title="Approve" onclick="approveStudent(decodeURIComponent('${actionId}'), this)">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        ` : ''}
+                        <button type="button" class="btn btn-danger" title="Delete student" onclick="deleteStudent(decodeURIComponent('${actionId}'))">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+                    </td>
+                    <td>${safeTableText(displayName)}</td>
+                    <td>${safeTableText(user.email)}</td>
+                    <td>${safeTableText(emergencyContact)}</td>
+                    <td>${safeTableText(familyContact)}</td>
+                    <td>${safeTableText(user.academicSkill)}</td>
+                    <td>${safeTableText(user.spiritualSkill)}</td>
+                    <td>${safeTableText(user.contribution)}</td>
+                    <td><span class="badge ${status === 'active' ? 'badge-active' : 'badge-pending'}">${safeTableText(status)}</span></td>
+                </tr>`;
+                });
+
+                // Lakkoofsa gubbaa update gochuuf
+                document.getElementById('count-total').innerText = students.length;
+                document.getElementById('count-active').innerText = students.filter(s => String(s.status || '').trim().toLowerCase() === 'active').length;
+                document.getElementById('count-pending').innerText = students.filter(s => String(s.status || '').trim().toLowerCase() === 'pending').length;
+
+            } catch (err) {
+                console.error("Dashboard ragaa fiduu dadhabe:", err);
+            }
+        }
+        // --- 7. MIRKANEESSUU (APPROVE) ---
+        async function approveStudent(id, buttonEl) {
+            const cleanId = String(id || '').trim();
+            console.log("Approving student with ID:", cleanId);
+
+            if (!confirm("Mirkaneessuu barbaadduu?")) return;
+            if (!cleanId) {
+                alert("Student ID is missing.");
+                return;
+            }
+
+            if (buttonEl) {
+                buttonEl.disabled = true;
+                buttonEl.style.opacity = '0.7';
+            }
+
+            try {
+                console.log("Sending approve request for student:", cleanId);
+                const res = await fetchWithApiFallback(`/api/admin/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: cleanId })
+                });
+
+                console.log("Response status:", res.status);
+                const raw = await res.text();
+                console.log("Raw response:", raw);
+
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch {
+                    data = { message: raw || "Unknown server response." };
+                }
+
+                if (res.ok) {
+                    alert(data.message || "Barataa mirkanaa'eera!");
+                    loadStudents();
+                } else {
+                    alert(data.message || "Pending student could not be approved.");
+                }
+            } catch (err) {
+                console.error("Approval error:", err);
+                alert("Error: " + err.message);
+            } finally {
+                if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.style.opacity = '';
+                }
+            }
+        }
+
+        // C. Announcement Update
+        async function updateNews() {
+            const content = document.getElementById('newsContent').value;
+
+            await fetchWithApiFallback('/api/admin/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ news: content })
+            });
+
+            alert("News updated!");
+        }
+
+        // D. Logout
+        function logout() {
+            const token = sessionStorage.getItem('token');
+            if (token) {
+                fetchWithApiFallback('/api/logout', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                }).catch(() => { });
+            }
+            sessionStorage.clear();
+            window.location.href = "../frontend/login.html";
+        }
+
+        function showUsers() {
+            const usersCard = document.getElementById('userTable');
+            if (usersCard) {
+                usersCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function searchTable() {
+            const input = document.getElementById('searchInput');
+            const filter = (input?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#userList tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        function toggleExportColumns() {
+            const section = document.getElementById('exportColumnsSection');
+            if (!section) return;
+            section.style.display = section.style.display === 'none' || section.style.display === '' ? 'block' : 'none';
+        }
+
+        async function loadProgressMessages() {
+            const table = document.getElementById('adminProgressTable');
+            if (!table) return;
+
+            try {
+                const res = await fetchWithApiFallback('/api/progress');
+                const contentType = res.headers.get('content-type') || '';
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(errorText || 'Progress load failed');
+                }
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Progress response was not JSON. Restart the Node server and try again.');
+                }
+
+                const rows = await res.json();
+                table.innerHTML = '';
+
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    table.innerHTML = '<tr><td colspan="5" style="padding: 10px;">No progress messages yet.</td></tr>';
+                    return;
+                }
+
+                rows.slice().reverse().forEach((item, index) => {
+                    const originalIndex = rows.length - 1 - index;
+                    table.innerHTML += `
+                <tr>
+                    <td style="padding: 10px;">${safeTableText(item.student, 'Unknown')}</td>
+                    <td style="padding: 10px;">${safeTableText(item.level)}</td>
+                    <td style="padding: 10px;">${safeTableText(item.detail)}</td>
+                    <td style="padding: 10px;">${safeTableText(formatProgressTime(item.createdAt))}</td>
+                    <td style="padding: 10px;">
+                        <button class="btn btn-danger" onclick="deleteProgressMessage(${originalIndex})">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+                });
+            } catch (err) {
+                console.error(err);
+                table.innerHTML = `<tr><td colspan="5" style="padding: 10px;">${err.message || 'Progress messages could not be loaded.'}</td></tr>`;
+            }
+        }
+
+        async function deleteProgressMessage(progressIndex) {
+            if (!Number.isInteger(progressIndex) || progressIndex < 0) {
+                alert("Progress index is missing.");
+                return;
+            }
+
+            if (!confirm("Delete this progress message?")) return;
+
+            try {
+                const res = await fetchWithApiFallback(`/api/progress/${progressIndex}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.message || "Progress delete failed.");
+                    return;
+                }
+
+                alert(data.message || "Progress deleted successfully.");
+                loadProgressMessages();
+            } catch (err) {
+                console.error(err);
+                alert("Progress delete failed.");
+            }
+        }
+
+        // --- 9. INITIALIZE ON LOAD ---
+        async function verifyAdminPageAccess() {
+            const token = sessionStorage.getItem('token') || '';
+            if (!token) return false;
+
+            try {
+                const response = await fetchWithApiFallback('/api/user/me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const user = await response.json().catch(() => ({}));
+                return response.ok && user.role === 'admin' && user.status !== 'blocked';
+            } catch (err) {
+                console.error('Admin access verification failed:', err);
+                return false;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                window.location.href = '../frontend/login.html';
+                return;
+            }
+
+            if (!await verifyAdminPageAccess()) {
+                sessionStorage.clear();
+                window.location.href = '../frontend/userdashboard.html';
+                return;
+            }
+
+            loadStudents();
+            loadProgressMessages();
+
+            // Dark Mode Check
+            if (localStorage.getItem('adminTheme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+        function exportToCSV() {
+            const table = document.getElementById("userTable");
+            const selectedColumns = Array.from(document.querySelectorAll('.export-col:checked'))
+                .map(input => Number(input.value));
+            const rowsToExport = Array.from(table.querySelectorAll('#userList tr'))
+                .filter(row => row.style.display !== 'none');
+
+            if (selectedColumns.length === 0) {
+                alert("Please select at least one column to export.");
+                return;
+            }
+
+            const csv = [];
+            const headers = selectedColumns.map(index => {
+                const th = table.querySelectorAll('thead th')[index - 1];
+                return `"${th.innerText.trim()}"`;
+            });
+            csv.push(headers.join(","));
+
+            rowsToExport.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const values = selectedColumns.map(index => {
+                    const col = cells[index - 1];
+                    return `"${(col?.innerText || '').replace(/"/g, '""').trim()}"`;
+                });
+                csv.push(values.join(","));
+            });
+
+            if (csv.length === 1) {
+                alert("Please select at least one student or make sure the table has visible rows.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Barattoota_AUWCMSJ.csv");
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        // --- ALL MEMBERS SECTION FUNCTIONS ---
+        function showAllMembers() {
+            // Hide other sections
+            document.getElementById('allMembersSection').style.display = 'block';
+            document.getElementById('addUserSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('manageResourcesCard').style.display = 'none';
+            document.getElementById('commentsSection').style.display = 'none';
+            document.getElementById('roleAccessSection').style.display = 'none';
+            document.getElementById('adminMessagesSection').style.display = 'none';
+
+            // Load all members data
+            loadAllMembers();
+
+            // Scroll to the section
+            document.getElementById('allMembersSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function loadAllMembers() {
+            try {
+                const res = await fetchWithApiFallback('/api/admin/students');
+                const members = await res.json();
+
+                const list = document.getElementById('allMembersList');
+                list.innerHTML = "";
+
+                members.forEach(member => {
+                    const displayId = member.universityId || member.studentId || "---";
+                    const displayName = member.fullName || member.name || "---";
+                    const emergencyContact = `${member.eName || '---'} ${member.ePhone ? `(${member.ePhone})` : ''}`.trim();
+                    const familyContact = `${member.fName || '---'} ${member.fPhone ? `(${member.fPhone})` : ''}`.trim();
+                    const status = String(member.status || 'pending').trim().toLowerCase();
+                    const role = String(member.role || 'student').trim().toLowerCase();
+                    const registrationDate = member.createdAt ? new Date(member.createdAt).toLocaleDateString() : '---';
+                    const actionId = encodeURIComponent(String(displayId));
+
+                    list.innerHTML += `
+                <tr>
+                    <td><b>${safeTableText(displayId)}</b></td>
+                    <td>
+                        ${status === 'pending' ? `
+                        <button type="button" class="btn btn-primary" title="Approve" onclick="approveStudent(decodeURIComponent('${actionId}'), this)">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        ` : ''}
+                        ${status === 'active' ? `
+                        <button type="button" class="btn btn-export" title="Block" onclick="blockMember(decodeURIComponent('${actionId}'))">
+                            <i class="fa fa-ban"></i>
+                        </button>
+                        ` : ''}
+                        ${status === 'blocked' ? `
+                        <button type="button" class="btn btn-primary" title="Unblock" onclick="unblockMember(decodeURIComponent('${actionId}'))">
+                            <i class="fa fa-unlock"></i>
+                        </button>
+                        ` : ''}
+                        <button type="button" class="btn btn-danger" title="Delete member" onclick="deleteStudent(decodeURIComponent('${actionId}'))">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+                    </td>
+                    <td>${safeTableText(displayName)}</td>
+                    <td>${safeTableText(member.email)}</td>
+                    <td><span class="badge ${role === 'admin' ? 'badge-active' : 'badge-pending'}">${safeTableText(role)}</span></td>
+                    <td>${safeTableText(emergencyContact)}</td>
+                    <td>${safeTableText(familyContact)}</td>
+                    <td>${safeTableText(member.academicSkill)}</td>
+                    <td>${safeTableText(member.spiritualSkill)}</td>
+                    <td>${safeTableText(member.contribution)}</td>
+                    <td><span class="badge ${status === 'active' ? 'badge-active' : status === 'blocked' ? 'badge-danger' : 'badge-pending'}">${safeTableText(status)}</span></td>
+                    <td>${safeTableText(registrationDate)}</td>
+                </tr>`;
+                });
+
+                // Update member statistics
+                document.getElementById('members-total').innerText = members.length;
+                document.getElementById('members-active').innerText = members.filter(m => String(m.status || '').trim().toLowerCase() === 'active').length;
+                document.getElementById('members-pending').innerText = members.filter(m => String(m.status || '').trim().toLowerCase() === 'pending').length;
+                document.getElementById('members-blocked').innerText = members.filter(m => String(m.status || '').trim().toLowerCase() === 'blocked').length;
+
+            } catch (err) {
+                console.error("All members load error:", err);
+                document.getElementById('allMembersList').innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px;">Error loading members data</td></tr>';
+            }
+        }
+
+        function searchAllMembers() {
+            const input = document.getElementById('allMembersSearch');
+            const filter = (input?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#allMembersList tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        function filterAllMembers() {
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#allMembersList tr');
+
+            rows.forEach(row => {
+                const statusCell = row.cells[10]?.innerText.toLowerCase() || '';
+                const roleCell = row.cells[4]?.innerText.toLowerCase() || '';
+
+                const statusMatch = !statusFilter || statusCell.includes(statusFilter);
+                const roleMatch = !roleFilter || roleCell.includes(roleFilter);
+
+                row.style.display = (statusMatch && roleMatch) ? '' : 'none';
+            });
+        }
+
+        async function blockMember(id) {
+            if (!confirm(`Block member ID: ${id}?`)) return;
+
+            try {
+                const res = await fetchWithApiFallback(`/api/admin/block`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: id })
+                });
+
+                if (res.ok) {
+                    alert("Member blocked successfully!");
+                    loadAllMembers();
+                } else {
+                    alert("Failed to block member.");
+                }
+            } catch (err) {
+                console.error("Block error:", err);
+                alert("Error blocking member!");
+            }
+        }
+
+        async function unblockMember(id) {
+            if (!confirm(`Unblock member ID: ${id}?`)) return;
+
+            try {
+                const res = await fetchWithApiFallback(`/api/admin/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: id })
+                });
+
+                if (res.ok) {
+                    alert("Member unblocked successfully!");
+                    loadAllMembers();
+                } else {
+                    alert("Failed to unblock member.");
+                }
+            } catch (err) {
+                console.error("Unblock error:", err);
+                alert("Error unblocking member!");
+            }
+        }
+
+        function exportAllMembers() {
+            const table = document.getElementById("allMembersTable");
+            const rows = Array.from(table.querySelectorAll('#allMembersList tr'))
+                .filter(row => row.style.display !== 'none');
+
+            if (rows.length === 0) {
+                alert("No members to export.");
+                return;
+            }
+
+            const csv = [];
+            const headers = ["Student ID", "Full Name", "Email", "Role", "Emergency Contact", "Family Contact", "Academic Skills", "Spiritual Skills", "Contribution", "Status", "Registration Date"];
+            csv.push(headers.map(h => `"${h}"`).join(","));
+
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const values = [
+                    cells[0]?.innerText.trim() || '',
+                    cells[2]?.innerText.trim() || '',
+                    cells[3]?.innerText.trim() || '',
+                    cells[4]?.innerText.trim() || '',
+                    cells[5]?.innerText.trim() || '',
+                    cells[6]?.innerText.trim() || '',
+                    cells[7]?.innerText.trim() || '',
+                    cells[8]?.innerText.trim() || '',
+                    cells[9]?.innerText.trim() || '',
+                    cells[10]?.innerText.trim() || '',
+                    cells[11]?.innerText.trim() || ''
+                ].map(val => `"${val.replace(/"/g, '""')}"`);
+                csv.push(values.join(","));
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `All_Members_AUWCMSJ_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        // --- COMMENTS MANAGEMENT FUNCTIONS ---
+        function showComments() {
+            // Hide other sections
+            document.getElementById('commentsSection').style.display = 'block';
+            document.getElementById('allMembersSection').style.display = 'none';
+            document.getElementById('addUserSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('manageResourcesCard').style.display = 'none';
+            document.getElementById('roleAccessSection').style.display = 'none';
+            document.getElementById('adminMessagesSection').style.display = 'none';
+
+            // Load comments data
+            loadComments();
+
+            // Scroll to the section
+            document.getElementById('commentsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showAdminMessages() {
+            document.getElementById('adminMessagesSection').style.display = 'block';
+            document.getElementById('commentsSection').style.display = 'none';
+            document.getElementById('allMembersSection').style.display = 'none';
+            document.getElementById('roleAccessSection').style.display = 'none';
+            document.getElementById('addUserSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('manageResourcesCard').style.display = 'none';
+
+            loadAdminMessages();
+            document.getElementById('adminMessagesSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function loadComments() {
+            try {
+                const res = await fetchWithApiFallback('/api/progress');
+                const comments = await res.json();
+
+                const list = document.getElementById('commentsList');
+                list.innerHTML = "";
+
+                if (!Array.isArray(comments) || comments.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No comments found</td></tr>';
+                    updateCommentStats([]);
+                    return;
+                }
+
+                comments.forEach((comment, index) => {
+                    const levelText = comment.level === '1' ? 'Basic' : comment.level === '2' ? 'Intermediate' : 'Advanced';
+                    const status = 'reviewed'; // All comments are considered reviewed when loaded
+                    const formattedDate = comment.createdAt ? new Date(comment.createdAt).toLocaleString() : '---';
+
+                    list.innerHTML += `
+                <tr>
+                    <td><b>${safeTableText(comment.student, 'Unknown')}</b></td>
+                    <td><span class="badge ${comment.level === '1' ? 'badge-pending' : comment.level === '2' ? 'badge-active' : 'badge-danger'}">${levelText}</span></td>
+                    <td style="max-width: 300px; word-wrap: break-word;">${safeTableText(comment.detail)}</td>
+                    <td>${safeTableText(formattedDate)}</td>
+                    <td><span class="badge badge-active">${status}</span></td>
+                    <td>
+                        <button class="btn btn-primary" onclick="viewCommentDetail(${index})">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteComment(${index})">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                });
+
+                updateCommentStats(comments);
+
+            } catch (err) {
+                console.error("Comments load error:", err);
+                document.getElementById('commentsList').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Error loading comments</td></tr>';
+            }
+        }
+
+        function updateCommentStats(comments) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            const todayComments = comments.filter(c => {
+                const commentDate = new Date(c.createdAt);
+                return commentDate >= today;
+            });
+
+            const weekComments = comments.filter(c => {
+                const commentDate = new Date(c.createdAt);
+                return commentDate >= weekAgo;
+            });
+
+            document.getElementById('comments-total').innerText = comments.length;
+            document.getElementById('comments-today').innerText = todayComments.length;
+            document.getElementById('comments-week').innerText = weekComments.length;
+            document.getElementById('comments-pending').innerText = '0'; // All are considered reviewed
+        }
+
+        function searchComments() {
+            const input = document.getElementById('commentsSearch');
+            const filter = (input?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#commentsList tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        function filterComments() {
+            const levelFilter = document.getElementById('commentLevelFilter').value;
+            const dateFilter = document.getElementById('commentDateFilter').value;
+            const rows = document.querySelectorAll('#commentsList tr');
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            rows.forEach(row => {
+                const levelCell = row.cells[1]?.innerText.toLowerCase() || '';
+                const dateCell = row.cells[3]?.innerText || '';
+
+                let levelMatch = !levelFilter || levelCell.includes(levelFilter === '1' ? 'basic' : levelFilter === '2' ? 'intermediate' : 'advanced');
+                let dateMatch = true;
+
+                if (dateFilter === 'today') {
+                    const commentDate = new Date(dateCell);
+                    dateMatch = commentDate >= today;
+                } else if (dateFilter === 'week') {
+                    const commentDate = new Date(dateCell);
+                    dateMatch = commentDate >= weekAgo;
+                } else if (dateFilter === 'month') {
+                    const commentDate = new Date(dateCell);
+                    dateMatch = commentDate >= monthAgo;
+                }
+
+                row.style.display = (levelMatch && dateMatch) ? '' : 'none';
+            });
+        }
+
+        function viewCommentDetail(index) {
+            // This would open a modal or detailed view of the comment
+            alert('Comment detail view would be implemented here');
+        }
+
+        async function deleteComment(index) {
+            if (!confirm("Delete this comment?")) return;
+
+            try {
+                const res = await fetchWithApiFallback(`/api/progress/${index}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.message || "Comment delete failed.");
+                    return;
+                }
+
+                alert(data.message || "Comment deleted successfully.");
+                loadComments();
+            } catch (err) {
+                console.error(err);
+                alert("Comment delete failed.");
+            }
+        }
+
+        function exportComments() {
+            const table = document.getElementById("commentsTable");
+            const rows = Array.from(table.querySelectorAll('#commentsList tr'))
+                .filter(row => row.style.display !== 'none');
+
+            if (rows.length === 0) {
+                alert("No comments to export.");
+                return;
+            }
+
+            const csv = [];
+            const headers = ["Student Name", "Level", "Progress Detail", "Date & Time", "Status"];
+            csv.push(headers.map(h => `"${h}"`).join(","));
+
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const values = [
+                    cells[0]?.innerText.trim() || '',
+                    cells[1]?.innerText.trim() || '',
+                    cells[2]?.innerText.trim() || '',
+                    cells[3]?.innerText.trim() || '',
+                    cells[4]?.innerText.trim() || ''
+                ].map(val => `"${val.replace(/"/g, '""')}"`);
+                csv.push(values.join(","));
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `User_Comments_AUWCMSJ_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function safeTableText(value, fallback = '---') {
+            const text = value == null || value === '' ? fallback : String(value);
+            return escapeHtml(text);
+        }
+
+        async function loadAdminMessages() {
+            const list = document.getElementById('adminMessagesList');
+            if (!list) return;
+
+            list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 18px;">Loading messages...</td></tr>';
+            try {
+                const res = await fetchWithApiFallback('/api/admin/messages');
+                const data = await res.json();
+                const messages = Array.isArray(data.messages) ? data.messages : [];
+
+                if (!res.ok) throw new Error(data.message || 'Could not load messages.');
+
+                if (messages.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 18px;">No user comments yet.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = messages.map((item) => {
+                    const messageId = escapeHtml(item._id || '');
+                    const studentId = escapeHtml(item.studentId || '---');
+                    const studentName = escapeHtml(item.studentName || 'Unknown');
+                    const content = escapeHtml(item.content || '---');
+                    const reply = escapeHtml(item.reply || '');
+                    const sentAt = item.createdAt ? new Date(item.createdAt).toLocaleString() : '---';
+
+                    return `
+                <tr>
+                    <td><b>${studentId}</b></td>
+                    <td>${studentName}</td>
+                    <td style="max-width: 280px; white-space: normal;">${content}</td>
+                    <td style="min-width: 260px;">
+                        <textarea id="reply_${messageId}" class="admin-reply-box" placeholder="Write reply to student...">${reply}</textarea>
+                    </td>
+                    <td>${sentAt}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="sendAdminReply('${messageId}')">
+                            <i class="fa fa-paper-plane"></i> Reply
+                        </button>
+                    </td>
+                </tr>
+            `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 18px; color: #dc2626;">${escapeHtml(err.message || 'Message load failed.')}</td></tr>`;
+            }
+        }
+
+        async function sendAdminReply(messageId) {
+            const replyInput = document.getElementById(`reply_${messageId}`);
+            const reply = String(replyInput?.value || '').trim();
+
+            if (!reply) {
+                alert('Please write a reply first.');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/messages/reply', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageId, reply })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Reply failed.');
+
+                alert(data.message || 'Reply sent.');
+                loadAdminMessages();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Reply failed.');
+            }
+        }
+
+
+
+        // --- ROLE & ACCESS MANAGEMENT FUNCTIONS ---
+        function showRoleAccess() {
+            // Hide other sections
+            document.getElementById('roleAccessSection').style.display = 'block';
+            document.getElementById('commentsSection').style.display = 'none';
+            document.getElementById('allMembersSection').style.display = 'none';
+            document.getElementById('addUserSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('manageResourcesCard').style.display = 'none';
+            document.getElementById('adminMessagesSection').style.display = 'none';
+
+            // Load role and access data
+            loadRoleUsers();
+            loadAccessRules();
+            loadSpamProtectionStatus();
+
+            // Scroll to the section
+            document.getElementById('roleAccessSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function loadRoleUsers() {
+            try {
+                const res = await fetchWithApiFallback('/api/admin/students');
+                const users = await res.json();
+
+                const list = document.getElementById('roleUsersList');
+                list.innerHTML = "";
+
+                if (!Array.isArray(users) || users.length === 0) {
+                    list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No users found</td></tr>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const roleBadge = getRoleBadge(user.role || 'student');
+                    const statusBadge = getStatusBadge(user.status || 'pending');
+                    const studentId = String(user.studentId || '');
+                    const encodedStudentId = encodeURIComponent(studentId);
+                    const encodedName = encodeURIComponent(String(user.name || ''));
+
+                    list.innerHTML += `
+                <tr>
+                    <td><b>${safeTableText(studentId)}</b></td>
+                    <td>${safeTableText(user.name)}</td>
+                    <td>${safeTableText(user.email)}</td>
+                    <td>${roleBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <select id="roleSelect_${encodedStudentId}" class="search-bar" style="width: 120px; padding: 5px;">
+                            <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>Teacher</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" onclick="changeUserRole(decodeURIComponent('${encodedStudentId}'), decodeURIComponent('${encodedName}'))">
+                            <i class="fa fa-save"></i> Update
+                        </button>
+                    </td>
+                </tr>`;
+                });
+
+            } catch (err) {
+                console.error("Role users load error:", err);
+                document.getElementById('roleUsersList').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Error loading users</td></tr>';
+            }
+        }
+
+        function getRoleBadge(role) {
+            const badges = {
+                'student': '<span class="badge badge-pending">Student</span>',
+                'admin': '<span class="badge badge-danger">Admin</span>',
+                'teacher': '<span class="badge badge-active">Teacher</span>'
+            };
+            return badges[role] || badges['student'];
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'active': '<span class="badge badge-active">Active</span>',
+                'pending': '<span class="badge badge-pending">Pending</span>',
+                'blocked': '<span class="badge badge-danger">Blocked</span>'
+            };
+            return badges[status] || badges['pending'];
+        }
+
+        async function changeUserRole(studentId, userName) {
+            const roleSelect = document.getElementById(`roleSelect_${encodeURIComponent(studentId)}`);
+            const newRole = roleSelect.value;
+
+            if (!confirm(`Change role for ${userName} (${studentId}) to ${newRole}?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/change-role', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, newRole })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || "Failed to change role");
+                }
+
+                alert(`Role changed successfully for ${userName}`);
+                loadRoleUsers(); // Refresh the list
+
+            } catch (err) {
+                console.error("Role change error:", err);
+                alert("Failed to change role: " + err.message);
+            }
+        }
+
+        function searchRoleUsers() {
+            const input = document.getElementById('roleSearch');
+            const filter = (input?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#roleUsersList tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        function filterRoleUsers() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const rows = document.querySelectorAll('#roleUsersList tr');
+
+            rows.forEach(row => {
+                const roleCell = row.cells[3]?.innerText.toLowerCase() || '';
+                const matches = !roleFilter || roleCell.includes(roleFilter);
+                row.style.display = matches ? '' : 'none';
+            });
+        }
+
+        function loadAccessRules() {
+            // Load access rules from localStorage or backend
+            const savedRules = JSON.parse(localStorage.getItem('accessRules') || '{}');
+
+            // Set checkbox states based on saved rules
+            const rules = {
+                student: ['upload', 'comment', 'library', 'progress'],
+                admin: ['userManagement', 'resourceManagement', 'roleManagement', 'systemSettings'],
+                teacher: ['upload', 'review', 'library', 'grading']
+            };
+
+            Object.keys(rules).forEach(role => {
+                rules[role].forEach(rule => {
+                    const checkboxId = `${role}${rule.charAt(0).toUpperCase() + rule.slice(1)}`;
+                    const checkbox = document.getElementById(checkboxId);
+                    if (checkbox) {
+                        checkbox.checked = savedRules[role]?.[rule] !== false; // Default to true
+                    }
+                });
+            });
+        }
+
+        function updateAccessRule(role, rule, enabled) {
+            try {
+                // Get current rules
+                const savedRules = JSON.parse(localStorage.getItem('accessRules') || '{}');
+
+                // Update the specific rule
+                if (!savedRules[role]) {
+                    savedRules[role] = {};
+                }
+                savedRules[role][rule] = enabled;
+
+                // Save to localStorage
+                localStorage.setItem('accessRules', JSON.stringify(savedRules));
+
+                // Update status message
+                const statusEl = document.getElementById('accessRulesStatus');
+                statusEl.innerText = `Access rule updated: ${role} - ${rule} is now ${enabled ? 'enabled' : 'disabled'}`;
+                statusEl.style.color = enabled ? '#059669' : '#dc2626';
+
+                // In a real application, you would also send this to the backend
+                console.log(`Access rule updated: ${role}.${rule} = ${enabled}`);
+
+            } catch (err) {
+                console.error("Access rule update error:", err);
+            }
+        }
+
+        async function saveQuickUserInfo() {
+            const studentId = document.getElementById('quickUpdateStudentId').value.trim();
+            const fullName = document.getElementById('quickUpdateFullName').value.trim();
+            const email = document.getElementById('quickUpdateEmail').value.trim();
+            const status = document.getElementById('quickUpdateStatus').value;
+            const role = document.getElementById('quickUpdateRole').value;
+            const msgEl = document.getElementById('quickUpdateMsg');
+
+            if (!studentId) {
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = 'Student ID is required.';
+                return;
+            }
+
+            const payload = { studentId };
+            if (fullName) payload.name = fullName;
+            if (email) payload.email = email;
+            if (status) payload.status = status;
+            if (role) payload.role = role;
+
+            if (Object.keys(payload).length === 1) {
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = 'Provide at least one field to update.';
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/update-user', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to update user.');
+
+                msgEl.style.color = '#059669';
+                msgEl.innerText = 'User info updated successfully.';
+                loadRoleUsers();
+                loadStudents();
+            } catch (err) {
+                console.error(err);
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = err.message || 'Update failed.';
+            }
+        }
+
+        async function resetUserPasswordByAdmin() {
+            const studentId = document.getElementById('quickResetStudentId').value.trim();
+            const newPassword = document.getElementById('quickResetPassword').value.trim();
+            const msgEl = document.getElementById('quickResetMsg');
+
+            if (!studentId || !newPassword) {
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = 'Student ID and new password are required.';
+                return;
+            }
+
+            if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = 'Password must be at least 8 characters and include a letter and a number.';
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/reset-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, newPassword })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Password reset failed.');
+
+                document.getElementById('quickResetPassword').value = '';
+                msgEl.style.color = '#059669';
+                msgEl.innerText = 'Password reset successfully.';
+            } catch (err) {
+                console.error(err);
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = err.message || 'Password reset failed.';
+            }
+        }
+
+        async function loadSpamProtectionStatus() {
+            const toggle = document.getElementById('spamProtectionToggle');
+            const label = document.getElementById('spamProtectionLabel');
+            const msgEl = document.getElementById('spamProtectionMsg');
+            if (!toggle || !label) return;
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/spam-protection');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Could not load spam protection status.');
+
+                const enabled = Boolean(data.enabled);
+                toggle.checked = enabled;
+                label.innerText = `Spam protection is ${enabled ? 'ON' : 'OFF'}`;
+                msgEl.innerText = '';
+            } catch (err) {
+                console.error(err);
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = 'Could not load status.';
+            }
+        }
+
+        async function toggleSpamProtectionMode(enabled) {
+            const label = document.getElementById('spamProtectionLabel');
+            const msgEl = document.getElementById('spamProtectionMsg');
+            label.innerText = `Spam protection is ${enabled ? 'ON' : 'OFF'}`;
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/spam-protection', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: Boolean(enabled) })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Could not save spam protection setting.');
+
+                msgEl.style.color = '#059669';
+                msgEl.innerText = `Saved: spam protection ${enabled ? 'enabled' : 'disabled'}.`;
+            } catch (err) {
+                console.error(err);
+                msgEl.style.color = '#dc2626';
+                msgEl.innerText = err.message || 'Save failed.';
+            }
+        }
+
+        // --- SWITCH TO USER VIEW FUNCTION ---
+        function switchToUserView() {
+            sessionStorage.setItem('isAdminView', 'true');
+            sessionStorage.setItem('adminReturnUrl', window.location.href);
+            window.location.href = '../frontend/userdashboard.html';
+        }
+    </script>
+</body>
+
+</html>

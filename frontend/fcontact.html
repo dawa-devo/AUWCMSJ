@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="om">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 2: Emergency & Family Contacts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 20px;
+            overflow-x: hidden;
+        }
+        .form-card {
+            background: rgba(255, 255, 255, 0.9);
+            width: 100%; max-width: 550px;
+            border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .step-tabs { background: #065f46; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+        .section-title { font-size: 15px; font-weight: 800; color: #114ba7; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin: 15px 0; }
+        .form-row { display: flex; align-items: center; margin-bottom: 12px; }
+        .form-row label { width: 140px; font-size: 13px; font-weight: 700; color: #334155; }
+        .input-field { flex: 1; padding: 10px; border: 2px solid #cbd5e1; border-radius: 6px; outline: none; transition: 0.3s; }
+        
+        /* Restriction style */
+        .input-field.invalid { border-color: #b91c1c; background-color: #fff1f1; }
+        
+        .helper-text { font-size: 11px; color: #64748b; margin-top: -8px; margin-bottom: 12px; margin-left: 140px; font-style: italic; }
+
+        .button-group { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: space-between; 
+            margin-top: 30px; 
+        }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
+        
+        .btn-back { background: #64748b; color: white; flex: 1; }
+        .btn-next { background: #065f46; color: white; flex: 2; }
+
+        .btn-back:hover { background: #475569; }
+        .btn-next:hover { background: #047857; }
+
+        @media (max-width: 768px) {
+            .form-card {
+                max-width: 100%;
+                padding: 24px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                align-items: flex-start;
+                padding: 14px;
+            }
+            .form-card {
+                padding: 24px 16px;
+                margin-top: 18px;
+            }
+            .form-row { flex-direction: column; align-items: flex-start; }
+            .form-row label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            .input-field {
+                width: 100%;
+                font-size: 16px;
+            }
+            .helper-text { margin-left: 0; }
+            .button-group {
+                flex-direction: column-reverse;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <div class="step-tabs"><h2>Family & Emergency Contacts</h2></div>
+    <form id="step2Form">
+        <div class="section-title">Emergency Contact (Local)</div>
+        <div class="form-row">
+            <label for="eName">Full Name</label>
+            <input type="text" id="eName" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        <div class="form-row">
+            <label for="ePhone">Phone Number</label>
+            <input type="tel" id="ePhone" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        <div class="form-row">
+            <label for="eRelationship">Relationship</label>
+            <input type="text" id="eRelationship" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        <p class="helper-text">Reach this person in case of campus emergency.</p>
+
+        <div class="section-title">Family Contact (Home)</div>
+        <div class="form-row">
+            <label for="fName">Full Name</label>
+            <input type="text" id="fName" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        <div class="form-row">
+            <label for="fPhone">Phone Number</label>
+            <input type="tel" id="fPhone" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        <div class="form-row">
+            <label for="fRelationship">Relationship</label>
+            <input type="text" id="fRelationship" class="input-field" oninput="this.classList.remove('invalid')">
+        </div>
+        
+        <div class="button-group">
+            <button type="button" class="btn btn-back" onclick="goBack()">Back</button>
+            <button type="button" class="btn btn-next" onclick="checkAndGo()">Next Step</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function goBack() {
+    window.location.href = 'register.html';
+}
+
+async function fetchWithApiFallback(path, options) {
+    const host = window.location.hostname;
+    const candidates = [
+        'http://127.0.0.1:5000',
+        'http://localhost:5000',
+        host && host !== 'localhost' && host !== '127.0.0.1' ? `http://${host}:5000` : null
+    ].filter(Boolean);
+
+    let lastError = null;
+    for (const base of candidates) {
+        try {
+            return await fetch(`${base}${path}`, options);
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw lastError || new Error('Server connection failed.');
+}
+
+   async function checkAndGo() {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const phoneRegex = /^[0-9]{10,13}$/;
+
+    // 1. ID barataa localStorage irraa fiduu
+    const studentId = localStorage.getItem('tempStudentId');
+
+    const data = {
+        universityId: studentId,
+        registrationToken: sessionStorage.getItem('registrationToken') || '',
+        eName: document.getElementById('eName').value.trim(),
+        ePhone: document.getElementById('ePhone').value.trim(),
+        eRel: document.getElementById('eRelationship').value.trim(),
+        fName: document.getElementById('fName').value.trim(),
+        fPhone: document.getElementById('fPhone').value.trim(),
+        fRel: document.getElementById('fRelationship').value.trim()
+    };
+
+    // Validation
+    if (!studentId) {
+        alert("Ragaan Step 1 hin jiru. Maaloo irra deebi'ii galmaa'i.");
+        window.location.href = 'register.html';
+        return;
+    }
+
+    if (!data.eName || !data.ePhone || !data.fName || !data.fPhone) {
+        alert("Maaloo, ragaa hunda guutaa!");
+        return;
+    }
+
+    try {
+        const nextBtn = document.querySelector(".btn-next");
+        nextBtn.disabled = true;
+        nextBtn.innerText = "Ergamaa jira...";
+
+        const response = await fetchWithApiFallback('/api/register-step2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            if (result.emailSent) {
+                alert("Step 2 milkaa'eera! Password kee email keerratti siif ergameera.");
+            } else {
+                const fallbackPassword = result.generatedPassword ? `\nTemporary password: ${result.generatedPassword}` : "";
+                const fallbackReason = result.emailError ? `\nReason: ${result.emailError}` : "";
+                alert(`Step 2 milkaa'eera, garuu email hin ergamne.${fallbackReason}${fallbackPassword}`);
+            }
+            window.location.href = 'skill.html'; 
+        } else {
+            // Database error yoo ta'e asitti sitti hima
+            alert("Rakkon uumame: " + (result.error || "Ragaan hin fudhatamne"));
+            nextBtn.disabled = false;
+            nextBtn.innerText = "Next Step";
+        }
+    } catch (error) {
+        alert("Error: Server waliin wal quunnamuun hin danda'amne!");
+        console.error(error);
+        const nextBtn = document.querySelector(".btn-next");
+        nextBtn.disabled = false;
+        nextBtn.innerText = "Next Step";
+    }
+}
+</script>
+</body>
+</html>
