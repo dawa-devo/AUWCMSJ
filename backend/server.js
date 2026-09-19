@@ -21,6 +21,14 @@ const {
     sanitizeRequest
 } = require('./utils/security');
 
+let ExcelJS;
+try {
+    ExcelJS = require('exceljs');
+} catch (err) {
+    ExcelJS = null;
+    console.warn('Excel export is unavailable until backend dependencies are installed.');
+}
+
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
@@ -77,6 +85,20 @@ const userSchema = new mongoose.Schema({
     yearOfEntry: { type: String, default: '' },
     phone: { type: String, default: '' },
     profilePic: { type: String, default: '' },
+    profile: {
+        fullName: { type: String, default: '' },
+        email: { type: String, default: '' },
+        phone: { type: String, default: '' },
+        profileImage: { type: String, default: '' }
+    },
+    preferences: {
+        emailNotifications: { type: Boolean, default: true },
+        registrationNotifications: { type: Boolean, default: true },
+        approvalNotifications: { type: Boolean, default: true },
+        systemNotifications: { type: Boolean, default: true },
+        darkMode: { type: Boolean, default: false },
+        compactSidebar: { type: Boolean, default: false }
+    },
     password: { type: String, required: true },
     role: { type: String, enum: ALLOWED_ROLES, default: 'student' },
     status: { type: String, enum: ALLOWED_STATUS, default: 'pending' },
@@ -101,6 +123,70 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(User);
+
+function buildAdminSettingsPayload(user) {
+    const plain = user && typeof user.toObject === 'function' ? user.toObject() : { ...(user || {}) };
+    const profile = plain.profile || {};
+    const preferences = plain.preferences || {};
+
+    return {
+        userId: String(plain._id || ''),
+        name: String(plain.name || profile.fullName || '').trim(),
+        fullName: String(profile.fullName || plain.name || '').trim(),
+        email: String(plain.email || profile.email || '').trim(),
+        phone: String(profile.phone || plain.phone || '').trim(),
+        profileImage: String(profile.profileImage || plain.profilePic || '').trim(),
+        role: plain.role || 'admin',
+        status: plain.status || 'active',
+        preferences: {
+            emailNotifications: Boolean(preferences.emailNotifications ?? true),
+            registrationNotifications: Boolean(preferences.registrationNotifications ?? true),
+            approvalNotifications: Boolean(preferences.approvalNotifications ?? true),
+            systemNotifications: Boolean(preferences.systemNotifications ?? true),
+            darkMode: Boolean(preferences.darkMode ?? false),
+            compactSidebar: Boolean(preferences.compactSidebar ?? false)
+        },
+        system: {
+            applicationName: 'AUWCMSJ',
+            userRole: 'Admin',
+            backendStatus: 'online',
+            databaseStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+            applicationVersion: String(process.env.APP_VERSION || '1.0.0').trim() || '1.0.0'
+        }
+    };
+}
+
+function buildUserSettingsPayload(user) {
+    const plain = user && typeof user.toObject === 'function' ? user.toObject() : { ...(user || {}) };
+    const profile = plain.profile || {};
+    const preferences = plain.preferences || {};
+
+    return {
+        userId: String(plain._id || ''),
+        fullName: String(profile.fullName || plain.name || '').trim(),
+        name: String(plain.name || profile.fullName || '').trim(),
+        email: String(profile.email || plain.email || '').trim(),
+        phone: String(profile.phone || plain.phone || '').trim(),
+        studentId: String(plain.studentId || '').trim(),
+        department: String(plain.department || '').trim(),
+        yearOfEntry: String(plain.yearOfEntry || '').trim(),
+        profileImage: String(profile.profileImage || plain.profilePic || '').trim(),
+        role: plain.role || 'student',
+        status: plain.status || 'active',
+        emailVerified: Boolean(plain.emailVerified),
+        registrationDate: plain.createdAt ? new Date(plain.createdAt).toISOString() : null,
+        preferences: {
+            emailNotifications: Boolean(preferences.emailNotifications ?? true),
+            eventNotifications: Boolean(preferences.eventNotifications ?? true),
+            resourceNotifications: Boolean(preferences.resourceNotifications ?? true),
+            accountNotifications: Boolean(preferences.accountNotifications ?? true),
+            systemNotifications: Boolean(preferences.systemNotifications ?? true),
+            darkMode: Boolean(preferences.darkMode ?? false),
+            compactSidebar: Boolean(preferences.compactSidebar ?? false),
+            language: String(preferences.language || 'en').trim() || 'en'
+        }
+    };
+}
 
 let spamProtectionEnabled = false;
 
@@ -510,13 +596,386 @@ app.post('/api/logout', authenticate, async (req, res) => {
 
 app.get('/api/user/me', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('name studentId email profilePic role status emailVerified');
+        const user = await User.findById(req.user._id).select('name studentId email profilePic role status emailVerified profile preferences department yearOfEntry phone createdAt');
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
         res.json(user);
     } catch (err) {
         res.status(500).json({ message: 'User profile could not be loaded.' });
+    }
+});
+
+app.get('/api/user/settings', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        res.json({
+            message: 'User settings loaded successfully.',
+            settings: buildUserSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'User settings could not be loaded.' });
+    }
+});
+
+app.put('/api/user/settings/profile', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const fullName = String(req.body.fullName || user.profile?.fullName || user.name || '').trim();
+        const email = String(req.body.email || user.profile?.email || user.email || '').trim().toLowerCase();
+        const phone = String(req.body.phone || user.profile?.phone || user.phone || '').trim();
+        const department = String(req.body.department || user.department || '').trim();
+        const yearOfEntry = String(req.body.yearOfEntry || user.yearOfEntry || '').trim();
+        const profileImage = String(req.body.profileImage || req.body.profilePic || user.profile?.profileImage || user.profilePic || '').trim();
+
+        if (!fullName) {
+            return res.status(400).json({ message: 'Full name is required.' });
+        }
+        if (email && !isValidEmail(email)) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+        if (profileImage && !profileImage.startsWith('data:image/') && !/^https?:\/\//i.test(profileImage)) {
+            return res.status(400).json({ message: 'Profile image must be a valid image URL or base64 image.' });
+        }
+
+        if (email) {
+            const duplicateEmailUser = await User.findOne({ email, _id: { $ne: user._id } });
+            if (duplicateEmailUser) {
+                return res.status(409).json({ message: 'This email is already assigned to another user.' });
+            }
+        }
+
+        if (user.role !== 'admin') {
+            user.name = fullName;
+            user.email = email || user.email || '';
+            user.phone = phone;
+            user.department = department;
+            user.yearOfEntry = yearOfEntry;
+            user.profilePic = profileImage || user.profilePic || '';
+            user.profile = {
+                ...(user.profile || {}),
+                fullName,
+                email: email || user.profile?.email || user.email || '',
+                phone,
+                profileImage: profileImage || user.profile?.profileImage || user.profilePic || ''
+            };
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            message: 'Profile updated successfully.',
+            settings: buildUserSettingsPayload(updatedUser)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Profile could not be updated.' });
+    }
+});
+
+app.put('/api/user/settings/password', authenticate, async (req, res) => {
+    try {
+        const currentPassword = String(req.body.currentPassword || '');
+        const newPassword = String(req.body.newPassword || '');
+        const confirmPassword = String(req.body.confirmPassword || '');
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: 'Current password, new password, and confirm password are required.' });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match.' });
+        }
+        if (!isStrongPassword(newPassword)) {
+            return res.status(400).json({ message: 'Password does not meet security requirements.' });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect current password.' });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 12);
+        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
+        await user.save();
+
+        const token = signUserToken(user);
+        res.json({ message: 'Password changed successfully.', token });
+    } catch (err) {
+        res.status(500).json({ message: 'Password could not be changed.' });
+    }
+});
+
+app.put('/api/user/settings/notifications', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const previous = user.preferences || {};
+        user.preferences = {
+            ...previous,
+            emailNotifications: Boolean(req.body.emailNotifications ?? previous.emailNotifications ?? true),
+            eventNotifications: Boolean(req.body.eventNotifications ?? previous.eventNotifications ?? true),
+            resourceNotifications: Boolean(req.body.resourceNotifications ?? previous.resourceNotifications ?? true),
+            accountNotifications: Boolean(req.body.accountNotifications ?? previous.accountNotifications ?? true),
+            systemNotifications: Boolean(req.body.systemNotifications ?? previous.systemNotifications ?? true),
+            language: String(req.body.language || previous.language || 'en').trim() || 'en'
+        };
+        await user.save();
+
+        res.json({
+            message: 'Notification settings updated successfully.',
+            settings: buildUserSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Notification settings could not be updated.' });
+    }
+});
+
+app.put('/api/user/settings/appearance', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const previous = user.preferences || {};
+        user.preferences = {
+            ...previous,
+            darkMode: Boolean(req.body.darkMode ?? previous.darkMode ?? false),
+            compactSidebar: Boolean(req.body.compactSidebar ?? previous.compactSidebar ?? false)
+        };
+        await user.save();
+
+        res.json({
+            message: 'Appearance settings updated successfully.',
+            settings: buildUserSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Appearance settings could not be updated.' });
+    }
+});
+
+app.put('/api/user/settings/language', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const language = String(req.body.language || '').trim().toLowerCase();
+        if (!['en', 'om'].includes(language)) {
+            return res.status(400).json({ message: 'Language preference is invalid.' });
+        }
+
+        const previous = user.preferences || {};
+        user.preferences = {
+            ...previous,
+            language
+        };
+        await user.save();
+
+        res.json({
+            message: 'Language preference updated successfully.',
+            settings: buildUserSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Language preference could not be updated.' });
+    }
+});
+
+app.get('/api/admin/settings', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+        res.json({
+            message: 'Settings loaded successfully.',
+            settings: buildAdminSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Admin settings could not be loaded.' });
+    }
+});
+
+app.put('/api/admin/settings/profile', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+
+        const fullName = String(req.body.fullName || req.body.name || user.profile?.fullName || user.name || '').trim();
+        const email = String(req.body.email || user.email || '').trim().toLowerCase();
+        const phone = String(req.body.phone || user.profile?.phone || user.phone || '').trim();
+        const profileImage = String(req.body.profileImage || req.body.profilePic || user.profile?.profileImage || user.profilePic || '').trim();
+
+        if (!fullName) {
+            return res.status(400).json({ message: 'Admin full name is required.' });
+        }
+        if (email && !isValidEmail(email)) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+        if (profileImage && !profileImage.startsWith('data:image/') && !/^https?:\/\//i.test(profileImage)) {
+            return res.status(400).json({ message: 'Profile image must be a valid image URL or base64 image.' });
+        }
+
+        const duplicateEmailUser = email ? await User.findOne({ email, _id: { $ne: user._id } }) : null;
+        if (duplicateEmailUser) {
+            return res.status(409).json({ message: 'This email is already assigned to another user.' });
+        }
+
+        const nextProfile = {
+            ...(user.profile || {}),
+            fullName,
+            email,
+            phone,
+            profileImage
+        };
+
+        const updateData = {
+            name: fullName,
+            email: email || user.email || '',
+            phone,
+            profilePic: profileImage,
+            profile: nextProfile,
+            ...(phone || !user.phone ? {} : {})
+        };
+
+        if (email) {
+            updateData.email = email;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
+        res.json({
+            message: 'Profile updated successfully.',
+            settings: buildAdminSettingsPayload(updatedUser)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Profile could not be updated.' });
+    }
+});
+
+app.put('/api/admin/settings/password', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const currentPassword = String(req.body.currentPassword || '');
+        const newPassword = String(req.body.newPassword || '');
+        const confirmPassword = String(req.body.confirmPassword || '');
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: 'Current password, new password, and confirm password are required.' });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: 'New password and confirm password do not match.' });
+        }
+        if (!isStrongPassword(newPassword)) {
+            return res.status(400).json({ message: 'New password must be at least 8 characters and include a letter and a number.' });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect.' });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 12);
+        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
+        await user.save();
+
+        const token = signUserToken(user);
+        res.json({ message: 'Password changed successfully.', token });
+    } catch (err) {
+        res.status(500).json({ message: 'Password could not be changed.' });
+    }
+});
+
+app.put('/api/admin/settings/notifications', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+
+        const preferences = user.preferences || {};
+        const updates = {
+            emailNotifications: Boolean(req.body.emailNotifications ?? preferences.emailNotifications ?? true),
+            registrationNotifications: Boolean(req.body.registrationNotifications ?? preferences.registrationNotifications ?? true),
+            approvalNotifications: Boolean(req.body.approvalNotifications ?? preferences.approvalNotifications ?? true),
+            systemNotifications: Boolean(req.body.systemNotifications ?? preferences.systemNotifications ?? true)
+        };
+
+        user.preferences = {
+            ...preferences,
+            ...updates
+        };
+        await user.save();
+
+        res.json({
+            message: 'Notification settings updated.',
+            settings: buildAdminSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Notification settings could not be updated.' });
+    }
+});
+
+app.put('/api/admin/settings/appearance', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+
+        const preferences = user.preferences || {};
+        const nextPreferences = {
+            ...preferences,
+            darkMode: Boolean(req.body.darkMode ?? preferences.darkMode ?? false),
+            compactSidebar: Boolean(req.body.compactSidebar ?? preferences.compactSidebar ?? false)
+        };
+
+        user.preferences = nextPreferences;
+        await user.save();
+
+        res.json({
+            message: 'Appearance settings updated.',
+            settings: buildAdminSettingsPayload(user)
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Appearance settings could not be updated.' });
+    }
+});
+
+app.put('/api/admin/settings/logout-all-sessions', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'Admin user not found.' });
+        }
+
+        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
+        await user.save();
+
+        res.json({ message: 'All sessions were logged out successfully.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Sessions could not be logged out.' });
     }
 });
 
@@ -710,9 +1169,181 @@ app.put('/api/admin/messages/reply', authenticate, requireAdmin, async (req, res
 
 app.get('/', (req, res) => res.send('Server is running'));
 
+function buildAdminStudentFilters(query = {}) {
+    const filters = {};
+    const department = String(query.department || '').trim();
+    const search = String(query.search || '').trim();
+    const status = String(query.status || '').trim().toLowerCase();
+    const role = String(query.role || '').trim().toLowerCase();
+    const year = String(query.year || '').trim();
+    const verified = String(query.verified || '').trim().toLowerCase();
+
+    if (department) filters.department = new RegExp(`^\\s*${escapeRegex(department)}\\s*$`, 'i');
+    if (status && ALLOWED_STATUS.includes(status)) filters.status = status;
+    if (role && ALLOWED_ROLES.includes(role)) filters.role = role;
+    if (year) filters.yearOfEntry = new RegExp(`^${escapeRegex(year)}$`, 'i');
+    if (verified === 'true' || verified === 'false') filters.emailVerified = verified === 'true';
+    if (search) {
+        const searchRegex = new RegExp(escapeRegex(search), 'i');
+        filters.$or = [
+            { studentId: searchRegex },
+            { name: searchRegex },
+            { email: searchRegex },
+            { phone: searchRegex }
+        ];
+    }
+
+    return filters;
+}
+
+app.get('/api/admin/departments', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const departments = await User.aggregate([
+            { $project: { department: { $trim: { input: { $ifNull: ['$department', ''] } } } } },
+            { $match: { department: { $ne: '' } } },
+            {
+                $group: {
+                    _id: { $toLower: '$department' },
+                    department: { $first: '$department' },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { department: 1 } },
+            { $project: { _id: 0, department: 1, count: 1 } }
+        ]);
+
+        res.json(departments);
+    } catch (err) {
+        console.error('Department aggregation error:', err);
+        res.status(500).json({ message: 'Departments could not be loaded.' });
+    }
+});
+
+app.get('/api/admin/departments/:department/students', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const department = decodeURIComponent(String(req.params.department || '')).trim();
+        if (!department) {
+            return res.status(400).json({ message: 'Department is required.' });
+        }
+
+        const filters = buildAdminStudentFilters({ ...req.query, department });
+        const students = await User.find(filters)
+            .sort({ createdAt: -1 })
+            .select('-password -emailVerifyTokenHash -registrationTokenHash -tokenVersion')
+            .lean();
+        const contactIds = students
+            .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
+            .map((student) => student.studentId)
+            .filter(Boolean);
+        const contacts = contactIds.length
+            ? await ContactEmergency.find({ universityId: { $in: contactIds } }).lean()
+            : [];
+        const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
+        const merged = students.map((student) => {
+            const contact = contactsById.get(String(student.studentId)) || {};
+            return {
+                ...student,
+                eName: student.eName || contact.eName || '',
+                ePhone: student.ePhone || contact.ePhone || '',
+                eRel: student.eRel || contact.eRel || '',
+                fName: student.fName || contact.fName || '',
+                fPhone: student.fPhone || contact.fPhone || '',
+                fRel: student.fRel || contact.fRel || ''
+            };
+        });
+
+        res.json(merged);
+    } catch (err) {
+        console.error('Department students load error:', err);
+        res.status(500).json({ message: 'Department students could not be loaded.' });
+    }
+});
+
+app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, res) => {
+    try {
+        if (!ExcelJS) {
+            return res.status(503).json({ message: 'Excel export is unavailable. Run npm install in the backend directory.' });
+        }
+        const students = await User.find(buildAdminStudentFilters(req.query))
+            .sort({ createdAt: -1 })
+            .select('studentId name email phone department yearOfEntry eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution role status emailVerified createdAt')
+            .lean();
+        const contactIds = students
+            .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
+            .map((student) => student.studentId)
+            .filter(Boolean);
+        const contacts = contactIds.length
+            ? await ContactEmergency.find({ universityId: { $in: contactIds } }).lean()
+            : [];
+        const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Students', { views: [{ state: 'frozen', ySplit: 1 }] });
+        worksheet.columns = [
+            { header: 'Student ID', key: 'studentId' },
+            { header: 'Full Name', key: 'fullName' },
+            { header: 'Email', key: 'email' },
+            { header: 'Phone', key: 'phone' },
+            { header: 'Department', key: 'department' },
+            { header: 'Year of Entry', key: 'year' },
+            { header: 'Family Contact', key: 'familyContact' },
+            { header: 'Emergency Contact', key: 'emergencyContact' },
+            { header: 'Academic Skills', key: 'academicSkills' },
+            { header: 'Spiritual Skills', key: 'spiritualSkills' },
+            { header: 'Contribution', key: 'contribution' },
+            { header: 'Role', key: 'role' },
+            { header: 'Status', key: 'status' },
+            { header: 'Verification Status', key: 'verification' },
+            { header: 'Registration Date', key: 'registrationDate' }
+        ];
+        students.forEach((student) => {
+            const contact = contactsById.get(String(student.studentId)) || {};
+            worksheet.addRow({
+                studentId: student.studentId || '',
+                fullName: student.name || '',
+                email: student.email || '',
+                phone: student.phone || '',
+                department: String(student.department || '').trim(),
+                year: student.yearOfEntry || '',
+                familyContact: [student.fName || contact.fName, student.fPhone || contact.fPhone, student.fRel || contact.fRel].filter(Boolean).join(' '),
+                emergencyContact: [student.eName || contact.eName, student.ePhone || contact.ePhone, student.eRel || contact.eRel].filter(Boolean).join(' '),
+                academicSkills: student.academicSkill || '',
+                spiritualSkills: student.spiritualSkill || '',
+                contribution: student.contribution || '',
+                role: student.role || '',
+                status: student.status || '',
+                verification: student.emailVerified ? 'Verified' : 'Not verified',
+                registrationDate: student.createdAt || null
+            });
+        });
+        worksheet.autoFilter = { from: 'A1', to: `O${Math.max(students.length + 1, 1)}` };
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B5E20' } };
+        worksheet.getColumn('registrationDate').numFmt = 'yyyy-mm-dd hh:mm';
+        worksheet.columns.forEach((column) => {
+            let width = column.header.length + 2;
+            column.eachCell({ includeEmpty: true }, (cell) => {
+                width = Math.min(Math.max(width, String(cell.value || '').length + 2), 45);
+                cell.alignment = { vertical: 'top', wrapText: true };
+            });
+            column.width = width;
+        });
+        const department = String(req.query.department || '').trim();
+        const filenamePart = department ? department.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') : 'All';
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="AUWCMSJ_${filenamePart || 'All'}_Students_${new Date().toISOString().slice(0, 10)}.xlsx"`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Student export error:', err);
+        res.status(500).json({ message: 'Students could not be exported.' });
+    }
+});
+
 app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
     try {
-        const students = await User.find().sort({ createdAt: -1 }).select('-password -emailVerifyTokenHash -registrationTokenHash -tokenVersion');
+        const students = await User.find(buildAdminStudentFilters(req.query))
+            .sort({ createdAt: -1 })
+            .select('-password -emailVerifyTokenHash -registrationTokenHash -tokenVersion');
 
         const merged = await Promise.all(
             students.map(async (student) => {

@@ -1263,6 +1263,8 @@
             </li>
             <li><a href="#account" onclick="toggleSidebar()"><i class="fas fa-user-cog"></i> <span>My Account</span></a>
             </li>
+            <li><a href="#settings" onclick="openUserSettingsSection(); toggleSidebar();"><i class="fas fa-gear"></i>
+                    <span>Settings</span></a></li>
             <li><a href="#contact" onclick="toggleSidebar()"><i class="fas fa-envelope"></i> <span>Contact</span></a>
             </li>
         </ul>
@@ -1455,6 +1457,136 @@
             </div>
         </section>
 
+        <section id="settings" class="section">
+            <div class="section-header">
+                <h1>Settings</h1>
+            </div>
+            <div class="settings-panel">
+                <div class="settings-card">
+                    <h3>My Profile</h3>
+                    <div class="settings-row">
+                        <div>
+                            <label for="settingsFullName">Full Name</label>
+                            <input id="settingsFullName" type="text" placeholder="Full name">
+                        </div>
+                        <div>
+                            <label for="settingsEmail">Email</label>
+                            <input id="settingsEmail" type="email" placeholder="Email address">
+                        </div>
+                        <div>
+                            <label for="settingsPhone">Phone Number</label>
+                            <input id="settingsPhone" type="tel" placeholder="Phone number">
+                        </div>
+                        <div>
+                            <label for="settingsStudentId">Student ID</label>
+                            <input id="settingsStudentId" type="text" readonly>
+                        </div>
+                        <div>
+                            <label for="settingsDepartment">Department</label>
+                            <input id="settingsDepartment" type="text" placeholder="Department">
+                        </div>
+                        <div>
+                            <label for="settingsYearOfEntry">Year of Entry</label>
+                            <input id="settingsYearOfEntry" type="text" placeholder="Year of entry">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="settingsProfileImage">Profile Image URL</label>
+                        <input id="settingsProfileImage" type="text" placeholder="Profile image URL or data URL">
+                    </div>
+                    <div class="settings-actions">
+                        <button class="account-btn" onclick="saveUserProfileSettings()">Save Profile Changes</button>
+                    </div>
+                    <div id="settingsProfileStatus" class="settings-status"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Change Password</h3>
+                    <div class="password-wrap">
+                        <label for="settingsCurrentPassword">Current Password</label>
+                        <input id="settingsCurrentPassword" type="password" placeholder="Current password">
+                        <button class="toggle-password" type="button"
+                            onclick="toggleUserPasswordVisibility('settingsCurrentPassword')">Show</button>
+                    </div>
+                    <div class="password-wrap">
+                        <label for="settingsNewPassword">New Password</label>
+                        <input id="settingsNewPassword" type="password" placeholder="New password">
+                        <button class="toggle-password" type="button"
+                            onclick="toggleUserPasswordVisibility('settingsNewPassword')">Show</button>
+                    </div>
+                    <div class="password-wrap">
+                        <label for="settingsConfirmPassword">Confirm New Password</label>
+                        <input id="settingsConfirmPassword" type="password" placeholder="Confirm new password">
+                        <button class="toggle-password" type="button"
+                            onclick="toggleUserPasswordVisibility('settingsConfirmPassword')">Show</button>
+                    </div>
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="userSettingsStrengthBar"></div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="account-btn" onclick="saveUserPasswordSettings()">Change Password</button>
+                    </div>
+                    <div id="settingsPasswordStatus" class="settings-status"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Notification Settings</h3>
+                    <div class="toggle-row"><span>Email Notifications</span><input id="prefEmailNotifications"
+                            type="checkbox"></div>
+                    <div class="toggle-row"><span>New Event Notifications</span><input id="prefEventNotifications"
+                            type="checkbox"></div>
+                    <div class="toggle-row"><span>New Resource Notifications</span><input id="prefResourceNotifications"
+                            type="checkbox"></div>
+                    <div class="toggle-row"><span>Account Notifications</span><input id="prefAccountNotifications"
+                            type="checkbox"></div>
+                    <div class="toggle-row"><span>Important System Notifications</span><input
+                            id="prefSystemNotifications" type="checkbox"></div>
+                    <div class="settings-actions">
+                        <button class="account-btn" onclick="saveUserNotificationSettings()">Save Notifications</button>
+                    </div>
+                    <div id="settingsNotificationStatus" class="settings-status"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Appearance</h3>
+                    <div class="toggle-row"><span>Light Mode</span><input id="themeLightMode" type="radio"
+                            name="themeChoice" value="light"></div>
+                    <div class="toggle-row"><span>Dark Mode</span><input id="themeDarkMode" type="radio"
+                            name="themeChoice" value="dark"></div>
+                    <div class="toggle-row"><span>Compact Sidebar</span><input id="compactSidebarToggle"
+                            type="checkbox"></div>
+                    <div class="settings-actions">
+                        <button class="account-btn" onclick="saveUserAppearanceSettings()">Apply Appearance</button>
+                    </div>
+                    <div id="settingsAppearanceStatus" class="settings-status"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Language</h3>
+                    <label for="settingsLanguage">Preferred Language</label>
+                    <select id="settingsLanguage">
+                        <option value="en">English</option>
+                        <option value="om">Afaan Oromoo</option>
+                    </select>
+                    <div class="settings-actions">
+                        <button class="account-btn" onclick="saveUserLanguageSettings()">Save Language</button>
+                    </div>
+                    <div id="settingsLanguageStatus" class="settings-status"></div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Account Information</h3>
+                    <ul class="system-info-list">
+                        <li><span>Account status</span><strong id="settingsAccountStatus">Active</strong></li>
+                        <li><span>Student ID</span><strong id="settingsInfoStudentId">-</strong></li>
+                        <li><span>Role</span><strong id="settingsInfoRole">Student</strong></li>
+                        <li><span>Registration date</span><strong id="settingsInfoDate">-</strong></li>
+                        <li><span>Email verification</span><strong id="settingsInfoEmailVerified">No</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
         <section id="account" class="section">
             <div class="section-header">
                 <h1>My Account</h1>
@@ -1598,6 +1730,240 @@
             }
         }
 
+        function setSettingsMessage(elementId, message, type = 'success') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = message || '';
+            el.className = 'settings-status';
+            if (type === 'error') el.classList.add('error');
+            if (type === 'success') el.classList.add('success');
+        }
+
+        function updateUserSettingsStrength(password) {
+            const bar = document.getElementById('userSettingsStrengthBar');
+            if (!bar) return;
+            let score = 0;
+            if (password.length >= 8) score += 35;
+            if (/[A-Za-z]/.test(password)) score += 30;
+            if (/\d/.test(password)) score += 25;
+            if (/[^A-Za-z0-9]/.test(password)) score += 10;
+            const width = Math.min(score, 100);
+            bar.style.width = `${width}%`;
+            bar.style.background = width < 50 ? '#ef4444' : width < 80 ? '#f59e0b' : '#10b981';
+        }
+
+        function toggleUserPasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const button = input.parentElement.querySelector('.toggle-password');
+            const nextType = input.type === 'password' ? 'text' : 'password';
+            input.type = nextType;
+            if (button) button.textContent = nextType === 'password' ? 'Show' : 'Hide';
+        }
+
+        function applyThemePreference(isDark) {
+            document.body.classList.toggle('dark-mode', isDark);
+            localStorage.setItem('userThemePreference', isDark ? 'dark' : 'light');
+            const lightRadio = document.getElementById('themeLightMode');
+            const darkRadio = document.getElementById('themeDarkMode');
+            if (lightRadio) lightRadio.checked = !isDark;
+            if (darkRadio) darkRadio.checked = isDark;
+        }
+
+        function openUserSettingsSection() {
+            const settingsSection = document.getElementById('settings');
+            if (settingsSection) {
+                settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            loadUserSettings();
+        }
+
+        async function loadUserSettings() {
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings', {
+                    headers: getAuthHeaders()
+                });
+                const data = await readApiResponse(res, 'Settings load failed.');
+                if (!res.ok) throw new Error(data.message || 'Settings load failed.');
+
+                const settings = data.settings || {};
+                const preferences = settings.preferences || {};
+                document.getElementById('settingsFullName').value = settings.fullName || '';
+                document.getElementById('settingsEmail').value = settings.email || '';
+                document.getElementById('settingsPhone').value = settings.phone || '';
+                document.getElementById('settingsStudentId').value = settings.studentId || '';
+                document.getElementById('settingsDepartment').value = settings.department || '';
+                document.getElementById('settingsYearOfEntry').value = settings.yearOfEntry || '';
+                document.getElementById('settingsProfileImage').value = settings.profileImage || '';
+
+                document.getElementById('prefEmailNotifications').checked = Boolean(preferences.emailNotifications ?? true);
+                document.getElementById('prefEventNotifications').checked = Boolean(preferences.eventNotifications ?? true);
+                document.getElementById('prefResourceNotifications').checked = Boolean(preferences.resourceNotifications ?? true);
+                document.getElementById('prefAccountNotifications').checked = Boolean(preferences.accountNotifications ?? true);
+                document.getElementById('prefSystemNotifications').checked = Boolean(preferences.systemNotifications ?? true);
+                document.getElementById('settingsLanguage').value = ['en', 'om'].includes(String(preferences.language || 'en')) ? String(preferences.language || 'en') : 'en';
+                document.getElementById('compactSidebarToggle').checked = Boolean(preferences.compactSidebar ?? false);
+
+                const darkMode = Boolean(preferences.darkMode ?? false);
+                applyThemePreference(darkMode);
+                document.body.classList.toggle('sidebar-compact', Boolean(preferences.compactSidebar ?? false));
+
+                const statusText = settings.status || 'active';
+                const statusLabel = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+                document.getElementById('settingsAccountStatus').textContent = statusLabel;
+                document.getElementById('settingsInfoStudentId').textContent = settings.studentId || '-';
+                document.getElementById('settingsInfoRole').textContent = settings.role || 'Student';
+                document.getElementById('settingsInfoDate').textContent = settings.registrationDate ? new Date(settings.registrationDate).toLocaleDateString() : '-';
+                document.getElementById('settingsInfoEmailVerified').textContent = settings.emailVerified ? 'Verified' : 'Not verified';
+
+                const currentUserName = settings.fullName || settings.name || 'User';
+                sessionStorage.setItem('userName', currentUserName);
+                localStorage.setItem('currentUser', currentUserName);
+                setUser();
+            } catch (err) {
+                console.error('loadUserSettings failed:', err);
+                setSettingsMessage('settingsProfileStatus', err.message || 'Could not load settings.', 'error');
+            }
+        }
+
+        async function saveUserProfileSettings() {
+            const payload = {
+                fullName: document.getElementById('settingsFullName').value.trim(),
+                email: document.getElementById('settingsEmail').value.trim(),
+                phone: document.getElementById('settingsPhone').value.trim(),
+                department: document.getElementById('settingsDepartment').value.trim(),
+                yearOfEntry: document.getElementById('settingsYearOfEntry').value.trim(),
+                profileImage: document.getElementById('settingsProfileImage').value.trim()
+            };
+
+            if (!payload.fullName) {
+                setSettingsMessage('settingsProfileStatus', 'Full name is required.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings/profile', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payload)
+                });
+                const data = await readApiResponse(res, 'Profile update failed.');
+                if (!res.ok) throw new Error(data.message || 'Profile update failed.');
+                setSettingsMessage('settingsProfileStatus', data.message || 'Profile updated successfully.', 'success');
+                if (data.settings?.fullName) {
+                    sessionStorage.setItem('userName', data.settings.fullName);
+                    localStorage.setItem('currentUser', data.settings.fullName);
+                    setUser();
+                }
+            } catch (err) {
+                setSettingsMessage('settingsProfileStatus', err.message || 'Profile update failed.', 'error');
+            }
+        }
+
+        async function saveUserPasswordSettings() {
+            const payload = {
+                currentPassword: document.getElementById('settingsCurrentPassword').value,
+                newPassword: document.getElementById('settingsNewPassword').value,
+                confirmPassword: document.getElementById('settingsConfirmPassword').value
+            };
+
+            if (!payload.currentPassword || !payload.newPassword || !payload.confirmPassword) {
+                setSettingsMessage('settingsPasswordStatus', 'Please fill all password fields.', 'error');
+                return;
+            }
+            if (payload.newPassword !== payload.confirmPassword) {
+                setSettingsMessage('settingsPasswordStatus', 'Passwords do not match.', 'error');
+                return;
+            }
+            if (payload.newPassword.length < 8 || !/[A-Za-z]/.test(payload.newPassword) || !/\d/.test(payload.newPassword)) {
+                setSettingsMessage('settingsPasswordStatus', 'Password does not meet security requirements.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings/password', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payload)
+                });
+                const data = await readApiResponse(res, 'Password change failed.');
+                if (!res.ok) throw new Error(data.message || 'Password change failed.');
+                if (data.token) sessionStorage.setItem('token', data.token);
+                setSettingsMessage('settingsPasswordStatus', data.message || 'Password changed successfully.', 'success');
+                document.getElementById('settingsCurrentPassword').value = '';
+                document.getElementById('settingsNewPassword').value = '';
+                document.getElementById('settingsConfirmPassword').value = '';
+                updateUserSettingsStrength('');
+            } catch (err) {
+                setSettingsMessage('settingsPasswordStatus', err.message || 'Password change failed.', 'error');
+            }
+        }
+
+        async function saveUserNotificationSettings() {
+            const payload = {
+                emailNotifications: document.getElementById('prefEmailNotifications').checked,
+                eventNotifications: document.getElementById('prefEventNotifications').checked,
+                resourceNotifications: document.getElementById('prefResourceNotifications').checked,
+                accountNotifications: document.getElementById('prefAccountNotifications').checked,
+                systemNotifications: document.getElementById('prefSystemNotifications').checked
+            };
+
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings/notifications', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payload)
+                });
+                const data = await readApiResponse(res, 'Notification settings failed.');
+                if (!res.ok) throw new Error(data.message || 'Notification settings failed.');
+                setSettingsMessage('settingsNotificationStatus', data.message || 'Notification settings updated successfully.', 'success');
+            } catch (err) {
+                setSettingsMessage('settingsNotificationStatus', err.message || 'Notification settings failed.', 'error');
+            }
+        }
+
+        async function saveUserAppearanceSettings() {
+            const darkMode = document.getElementById('themeDarkMode').checked;
+            const compactSidebar = document.getElementById('compactSidebarToggle').checked;
+
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings/appearance', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ darkMode, compactSidebar })
+                });
+                const data = await readApiResponse(res, 'Appearance settings failed.');
+                if (!res.ok) throw new Error(data.message || 'Appearance settings failed.');
+                applyThemePreference(darkMode);
+                document.body.classList.toggle('sidebar-compact', compactSidebar);
+                setSettingsMessage('settingsAppearanceStatus', data.message || 'Appearance updated successfully.', 'success');
+            } catch (err) {
+                setSettingsMessage('settingsAppearanceStatus', err.message || 'Appearance settings failed.', 'error');
+            }
+        }
+
+        async function saveUserLanguageSettings() {
+            const language = document.getElementById('settingsLanguage').value;
+            try {
+                const res = await fetchWithApiFallback('/api/user/settings/language', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ language })
+                });
+                const data = await readApiResponse(res, 'Language preference failed.');
+                if (!res.ok) throw new Error(data.message || 'Language preference failed.');
+                localStorage.setItem('preferredLanguage', language);
+                if (language === 'om') {
+                    applyOromoStaticTranslations();
+                    setSettingsMessage('settingsLanguageStatus', 'Language saved. Afaan Oromoo will be shown where supported.', 'success');
+                    return;
+                }
+                setSettingsMessage('settingsLanguageStatus', data.message || 'Language preference updated successfully.', 'success');
+            } catch (err) {
+                setSettingsMessage('settingsLanguageStatus', err.message || 'Language preference failed.', 'error');
+            }
+        }
+
         // ===== 1. PAGE LOAD =====
         async function verifyDashboardAccess() {
             const token = sessionStorage.getItem('token') || '';
@@ -1656,7 +2022,19 @@
             fetchPrayerTimes();
             setupLibraryCards();
             loadMyProfile();
+            loadUserSettings();
             loadMessages();
+
+            const savedUserTheme = localStorage.getItem('userThemePreference') || 'light';
+            applyThemePreference(savedUserTheme === 'dark');
+            const savedUserLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            const languageSelect = document.getElementById('settingsLanguage');
+            if (languageSelect) languageSelect.value = ['en', 'om'].includes(savedUserLanguage) ? savedUserLanguage : 'en';
+
+            const strengthInput = document.getElementById('settingsNewPassword');
+            if (strengthInput) {
+                strengthInput.addEventListener('input', (event) => updateUserSettingsStrength(event.target.value));
+            }
 
             // Sidebar close when click main
             const main = document.querySelector('.main-content');

@@ -111,6 +111,204 @@
             margin-bottom: 25px;
         }
 
+        .settings-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .settings-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        .settings-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+            color: #064e3b;
+        }
+
+        .settings-card .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .settings-card label {
+            display: block;
+            font-size: 0.82rem;
+            color: #475569;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .settings-card input,
+        .settings-card select,
+        .settings-card textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+
+        .settings-card input:focus,
+        .settings-card select:focus,
+        .settings-card textarea:focus {
+            border-color: #059669;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .toggle-row span {
+            font-size: 0.92rem;
+            color: #1e293b;
+        }
+
+        .toggle-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .settings-status {
+            margin-top: 10px;
+            min-height: 20px;
+            font-size: 0.88rem;
+            color: #065f46;
+        }
+
+        .settings-status.error {
+            color: #b91c1c;
+        }
+
+        .settings-status.success {
+            color: #065f46;
+        }
+
+        .system-info {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .system-info li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-pill.danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .password-wrap {
+            position: relative;
+        }
+
+        .password-wrap .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .password-wrap input {
+            padding-right: 42px;
+        }
+
+        .strength-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            background: #ef4444;
+            transition: width 0.2s ease, background 0.2s ease;
+        }
+
+        .dark-theme .settings-card,
+        .dark-theme .toggle-row,
+        .dark-theme .system-info li {
+            background: #2d3748 !important;
+            border-color: #4a5568 !important;
+            color: white !important;
+        }
+
+        .dark-theme .settings-card h3,
+        .dark-theme .toggle-row span,
+        .dark-theme .system-info li,
+        .dark-theme .settings-card label {
+            color: #e2e8f0 !important;
+        }
+
+        .dark-theme .settings-card input,
+        .dark-theme .settings-card select,
+        .dark-theme .settings-card textarea {
+            background: #1a202c !important;
+            color: #f8fafc !important;
+            border-color: #4a5568 !important;
+        }
+
         /* MODERN SEARCH BAR STYLE */
         .search-wrapper {
             position: relative;
@@ -482,11 +680,14 @@
         </div>
         <div class="nav-item" onclick="showUsers(); toggleMenu();"><i class="fa fa-users"></i> Students</div>
         <div class="nav-item" onclick="showAllMembers(); toggleMenu();"><i class="fa fa-list"></i> All Members</div>
+        <div class="nav-item" onclick="showDepartments(); toggleMenu();"><i class="fa fa-building"></i> Departments
+        </div>
         <div class="nav-item" onclick="showComments(); toggleMenu();"><i class="fa fa-comments"></i> Comments</div>
         <div class="nav-item" onclick="showAdminMessages(); toggleMenu();"><i class="fa fa-envelope-open-text"></i>
             Message Center</div>
         <div class="nav-item" onclick="showRoleAccess(); toggleMenu();"><i class="fa fa-user-shield"></i> Role & Access
         </div>
+        <div class="nav-item" onclick="openSettingsSection(); toggleMenu();"><i class="fa fa-gear"></i> Settings</div>
         <div class="nav-item" onclick="switchToUserView(); toggleMenu();"><i class="fa fa-exchange-alt"></i> Switch to
             User View</div>
         <div class="nav-item" onclick="toggleDarkMode()"><i class="fa fa-moon"></i> Dark Mode</div>
@@ -509,6 +710,47 @@
             <div class="stat-card">
                 <h3>Pending Approval</h3>
                 <p id="count-pending" style="color: #d97706;">0</p>
+            </div>
+        </div>
+
+        <div id="departmentsSection" class="card" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:15px; flex-wrap:wrap;">
+                <h3><i class="fa fa-building"></i> Departments</h3>
+                <button class="btn btn-primary" type="button" onclick="loadDepartments()"><i class="fa fa-refresh"></i>
+                    Refresh</button>
+            </div>
+            <p id="departmentsStatus" class="settings-status" role="status" aria-live="polite">Loading departments...
+            </p>
+            <div id="departmentsGrid"
+                style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:15px;"></div>
+            <div id="departmentStudentsView" style="display:none; margin-top:20px;">
+                <button type="button" class="btn btn-primary" onclick="showDepartments()"><i
+                        class="fa fa-arrow-left"></i> Back to Departments</button>
+                <h3 id="departmentStudentsTitle" style="margin:20px 0 12px;"></h3>
+                <div class="controls" style="margin-bottom:15px;">
+                    <div class="search-wrapper" style="flex:1;">
+                        <i class="fa fa-search"></i>
+                        <input id="departmentStudentsSearch" class="search-bar" type="search"
+                            placeholder="Search students in this department..." oninput="loadDepartmentStudents()">
+                    </div>
+                </div>
+                <p id="departmentStudentsSummary" class="settings-status" role="status" aria-live="polite"></p>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Year</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departmentStudentsList"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -604,8 +846,16 @@
                 <div class="search-wrapper" style="flex: 2;">
                     <i class="fa fa-search"></i>
                     <input type="text" id="allMembersSearch" onkeyup="searchAllMembers()" class="search-bar"
-                        placeholder="Search members by name, ID, email...">
+                        placeholder="Search by student ID, name, email, or phone...">
                 </div>
+                <select id="departmentFilter" onchange="loadAllMembers(1)" class="search-bar"
+                    style="width: 190px; padding-left: 10px;">
+                    <option value="">All Departments</option>
+                </select>
+                <select id="yearFilter" onchange="loadAllMembers(1)" class="search-bar"
+                    style="width: 130px; padding-left: 10px;">
+                    <option value="">All Years</option>
+                </select>
                 <select id="statusFilter" onchange="filterAllMembers()" class="search-bar"
                     style="width: 150px; padding-left: 10px;">
                     <option value="">All Status</option>
@@ -618,9 +868,16 @@
                     <option value="">All Roles</option>
                     <option value="student">Student</option>
                     <option value="admin">Admin</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+                <select id="verificationFilter" onchange="loadAllMembers(1)" class="search-bar"
+                    style="width: 170px; padding-left: 10px;">
+                    <option value="">All Verification</option>
+                    <option value="true">Verified</option>
+                    <option value="false">Not verified</option>
                 </select>
                 <button class="btn btn-export" onclick="exportAllMembers()"><i class="fa fa-file-excel"></i> Export
-                    All</button>
+                    Current Results</button>
             </div>
 
             <!-- Members Table -->
@@ -632,6 +889,9 @@
                             <th>Actions</th>
                             <th>Full Name</th>
                             <th>Email</th>
+                            <th>Phone</th>
+                            <th>Department</th>
+                            <th>Year</th>
                             <th>Role</th>
                             <th>Emergency Contact</th>
                             <th>Family Contact</th>
@@ -639,6 +899,7 @@
                             <th>Spiritual Skills</th>
                             <th>Contribution</th>
                             <th>Status</th>
+                            <th>Verification</th>
                             <th>Registration Date</th>
                         </tr>
                     </thead>
@@ -980,6 +1241,160 @@
                 </table>
             </div>
         </div>
+        <div id="settingsSection" class="card" style="display:none;">
+            <h3><i class="fa fa-gear"></i> Settings</h3>
+            <div class="settings-panel">
+                <div class="settings-card">
+                    <h3>Account Settings</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label for="settingsAdminName">Admin Full Name</label>
+                            <input id="settingsAdminName" type="text" placeholder="Admin full name">
+                        </div>
+                        <div>
+                            <label for="settingsAdminEmail">Admin Email</label>
+                            <input id="settingsAdminEmail" type="email" placeholder="Admin email">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="settingsAdminProfileInfo">Profile Information</label>
+                        <textarea id="settingsAdminProfileInfo" rows="3" placeholder="Short profile summary"></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div>
+                            <label for="settingsCurrentPassword">Current Password</label>
+                            <div class="password-wrap">
+                                <input id="settingsCurrentPassword" type="password" placeholder="Current password">
+                                <button class="toggle-password" type="button"
+                                    onclick="togglePasswordVisibility('settingsCurrentPassword')">Show</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="settingsNewPassword">New Password</label>
+                            <div class="password-wrap">
+                                <input id="settingsNewPassword" type="password" placeholder="New password">
+                                <button class="toggle-password" type="button"
+                                    onclick="togglePasswordVisibility('settingsNewPassword')">Show</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="settingsConfirmPassword">Confirm New Password</label>
+                            <div class="password-wrap">
+                                <input id="settingsConfirmPassword" type="password" placeholder="Confirm new password">
+                                <button class="toggle-password" type="button"
+                                    onclick="togglePasswordVisibility('settingsConfirmPassword')">Show</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-status" id="settingsPasswordStatus"></div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveAdminPasswordSettings()">Save Changes</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Profile Settings</h3>
+                    <div>
+                        <label for="settingsProfileImage">Profile Image / Avatar</label>
+                        <input id="settingsProfileImage" type="text" placeholder="Profile image URL or base64 data">
+                    </div>
+                    <div class="form-grid">
+                        <div>
+                            <label for="settingsProfileFullName">Full Name</label>
+                            <input id="settingsProfileFullName" type="text" placeholder="Full name">
+                        </div>
+                        <div>
+                            <label for="settingsProfileEmail">Email</label>
+                            <input id="settingsProfileEmail" type="email" placeholder="Email address">
+                        </div>
+                        <div>
+                            <label for="settingsProfilePhone">Phone Number</label>
+                            <input id="settingsProfilePhone" type="tel" placeholder="Phone number">
+                        </div>
+                    </div>
+                    <div class="settings-status" id="settingsProfileStatus"></div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveAdminProfileSettings()">Update Profile</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Security Settings</h3>
+                    <div class="toggle-row">
+                        <span>Change Password</span>
+                        <input type="checkbox" checked>
+                    </div>
+                    <div>
+                        <label>Password Strength</label>
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="settingsPasswordStrengthBar"></div>
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="logoutAllSessions()">Logout from all sessions</button>
+                    </div>
+                    <div class="settings-status" id="settingsSecurityStatus"></div>
+                    <ul class="system-info" style="margin-top: 16px;">
+                        <li><span>Account status</span><span class="status-pill"
+                                id="settingsAccountStatus">Active</span></li>
+                    </ul>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Notification Settings</h3>
+                    <div class="toggle-row">
+                        <span>Email notifications</span>
+                        <input id="toggleEmailNotifications" type="checkbox">
+                    </div>
+                    <div class="toggle-row">
+                        <span>New student registration notifications</span>
+                        <input id="toggleRegistrationNotifications" type="checkbox">
+                    </div>
+                    <div class="toggle-row">
+                        <span>Student approval notifications</span>
+                        <input id="toggleApprovalNotifications" type="checkbox">
+                    </div>
+                    <div class="toggle-row">
+                        <span>System notifications</span>
+                        <input id="toggleSystemNotifications" type="checkbox">
+                    </div>
+                    <div class="settings-status" id="settingsNotificationStatus"></div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveNotificationSettings()">Save Preferences</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Appearance</h3>
+                    <div class="toggle-row">
+                        <span>Dark Mode</span>
+                        <input id="settingsDarkModeToggle" type="checkbox">
+                    </div>
+                    <div class="toggle-row">
+                        <span>Compact sidebar</span>
+                        <input id="settingsCompactSidebarToggle" type="checkbox">
+                    </div>
+                    <div class="settings-status" id="settingsAppearanceStatus"></div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveAppearanceSettings()">Apply Theme</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>System Information</h3>
+                    <ul class="system-info">
+                        <li><span>Application name</span><strong>AUWCMSJ</strong></li>
+                        <li><span>User role</span><strong>Admin</strong></li>
+                        <li><span>Backend/API status</span><span class="status-pill"
+                                id="settingsApiStatus">Checking...</span></li>
+                        <li><span>Database connection</span><span class="status-pill"
+                                id="settingsDbStatus">Checking...</span></li>
+                        <li><span>Application version</span><strong id="settingsAppVersion">1.0.0</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <h3><i class="fa fa-key"></i> Change Admin Password</h3><br>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -1043,6 +1458,223 @@
             document.body.classList.toggle('dark-theme');
             const isDark = document.body.classList.contains('dark-theme');
             localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
+            return isDark;
+        }
+
+        function openSettingsSection() {
+            const settingsSection = document.getElementById('settingsSection');
+            if (!settingsSection) return;
+            settingsSection.style.display = 'block';
+            settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (typeof loadAdminSettings === 'function') {
+                loadAdminSettings();
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const button = input.parentElement.querySelector('.toggle-password');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            if (button) button.textContent = isPassword ? 'Hide' : 'Show';
+        }
+
+        function updatePasswordStrengthMeter(password) {
+            const strengthFill = document.getElementById('settingsPasswordStrengthBar');
+            if (!strengthFill) return;
+            let score = 0;
+            if (password.length >= 8) score += 35;
+            if (/[A-Za-z]/.test(password)) score += 30;
+            if (/\d/.test(password)) score += 25;
+            if (/[^A-Za-z0-9]/.test(password)) score += 10;
+            const clamped = Math.min(score, 100);
+            strengthFill.style.width = `${clamped}%`;
+            if (clamped < 50) {
+                strengthFill.style.background = '#ef4444';
+            } else if (clamped < 80) {
+                strengthFill.style.background = '#f59e0b';
+            } else {
+                strengthFill.style.background = '#10b981';
+            }
+        }
+
+        function setSettingsStatus(elementId, message, type = 'success') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = message;
+            el.className = 'settings-status';
+            if (type === 'error') el.classList.add('error');
+            if (type === 'success') el.classList.add('success');
+        }
+
+        async function loadAdminSettings() {
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Unable to load settings.');
+
+                const settings = data.settings || {};
+                const prefs = settings.preferences || {};
+                const profile = settings.profile || {};
+                const name = settings.fullName || settings.name || '';
+                document.getElementById('settingsAdminName').value = name;
+                document.getElementById('settingsAdminEmail').value = settings.email || '';
+                document.getElementById('settingsAdminProfileInfo').value = settings.profileInfo || '';
+                document.getElementById('settingsProfileFullName').value = name;
+                document.getElementById('settingsProfileEmail').value = settings.email || '';
+                document.getElementById('settingsProfilePhone').value = settings.phone || '';
+                document.getElementById('settingsProfileImage').value = settings.profileImage || '';
+                document.getElementById('toggleEmailNotifications').checked = Boolean(prefs.emailNotifications ?? true);
+                document.getElementById('toggleRegistrationNotifications').checked = Boolean(prefs.registrationNotifications ?? true);
+                document.getElementById('toggleApprovalNotifications').checked = Boolean(prefs.approvalNotifications ?? true);
+                document.getElementById('toggleSystemNotifications').checked = Boolean(prefs.systemNotifications ?? true);
+                document.getElementById('settingsDarkModeToggle').checked = Boolean(prefs.darkMode ?? false);
+                document.getElementById('settingsCompactSidebarToggle').checked = Boolean(prefs.compactSidebar ?? false);
+                document.getElementById('settingsAccountStatus').textContent = (settings.status || 'active').charAt(0).toUpperCase() + (settings.status || 'active').slice(1);
+                document.getElementById('settingsAccountStatus').className = `status-pill ${settings.status === 'blocked' ? 'danger' : settings.status === 'pending' ? 'warning' : ''}`.trim();
+                document.getElementById('settingsAppVersion').textContent = settings.system?.applicationVersion || '1.0.0';
+                document.getElementById('settingsApiStatus').textContent = settings.system?.backendStatus === 'online' ? 'Online' : 'Offline';
+                document.getElementById('settingsApiStatus').className = `status-pill ${settings.system?.backendStatus === 'online' ? '' : 'warning'}`.trim();
+                document.getElementById('settingsDbStatus').textContent = settings.system?.databaseStatus === 'connected' ? 'Connected' : 'Disconnected';
+                document.getElementById('settingsDbStatus').className = `status-pill ${settings.system?.databaseStatus === 'connected' ? '' : 'danger'}`.trim();
+
+                const savedTheme = localStorage.getItem('adminTheme') === 'dark' || prefs.darkMode;
+                document.body.classList.toggle('dark-theme', savedTheme);
+                if (savedTheme) {
+                    localStorage.setItem('adminTheme', 'dark');
+                }
+            } catch (err) {
+                console.error('Settings load failed:', err);
+                setSettingsStatus('settingsProfileStatus', err.message || 'Could not load settings.', 'error');
+            }
+        }
+
+        async function saveAdminProfileSettings() {
+            const payload = {
+                fullName: document.getElementById('settingsProfileFullName').value.trim(),
+                email: document.getElementById('settingsProfileEmail').value.trim(),
+                phone: document.getElementById('settingsProfilePhone').value.trim(),
+                profileImage: document.getElementById('settingsProfileImage').value.trim(),
+                name: document.getElementById('settingsAdminName').value.trim()
+            };
+
+            if (!payload.fullName) {
+                setSettingsStatus('settingsProfileStatus', 'Full name is required.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Profile update failed.');
+                setSettingsStatus('settingsProfileStatus', data.message || 'Profile updated successfully.', 'success');
+                document.getElementById('settingsAdminName').value = data.settings?.fullName || payload.fullName;
+                document.getElementById('settingsAdminEmail').value = data.settings?.email || payload.email;
+                document.getElementById('settingsProfileFullName').value = data.settings?.fullName || payload.fullName;
+                document.getElementById('settingsProfileEmail').value = data.settings?.email || payload.email;
+            } catch (err) {
+                setSettingsStatus('settingsProfileStatus', err.message || 'Profile update failed.', 'error');
+            }
+        }
+
+        async function saveAdminPasswordSettings() {
+            const payload = {
+                currentPassword: document.getElementById('settingsCurrentPassword').value,
+                newPassword: document.getElementById('settingsNewPassword').value,
+                confirmPassword: document.getElementById('settingsConfirmPassword').value
+            };
+
+            if (!payload.currentPassword || !payload.newPassword || !payload.confirmPassword) {
+                setSettingsStatus('settingsPasswordStatus', 'Please complete all password fields.', 'error');
+                return;
+            }
+
+            if (payload.newPassword !== payload.confirmPassword) {
+                setSettingsStatus('settingsPasswordStatus', 'New password and confirm password do not match.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Password change failed.');
+                if (data.token) sessionStorage.setItem('token', data.token);
+                setSettingsStatus('settingsPasswordStatus', data.message || 'Password updated successfully.', 'success');
+                document.getElementById('settingsCurrentPassword').value = '';
+                document.getElementById('settingsNewPassword').value = '';
+                document.getElementById('settingsConfirmPassword').value = '';
+                updatePasswordStrengthMeter('');
+            } catch (err) {
+                setSettingsStatus('settingsPasswordStatus', err.message || 'Password change failed.', 'error');
+            }
+        }
+
+        async function saveNotificationSettings() {
+            const payload = {
+                emailNotifications: document.getElementById('toggleEmailNotifications').checked,
+                registrationNotifications: document.getElementById('toggleRegistrationNotifications').checked,
+                approvalNotifications: document.getElementById('toggleApprovalNotifications').checked,
+                systemNotifications: document.getElementById('toggleSystemNotifications').checked
+            };
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/notifications', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Notification settings failed.');
+                setSettingsStatus('settingsNotificationStatus', data.message || 'Notification settings saved.', 'success');
+            } catch (err) {
+                setSettingsStatus('settingsNotificationStatus', err.message || 'Notification settings failed.', 'error');
+            }
+        }
+
+        async function saveAppearanceSettings() {
+            const isDark = document.getElementById('settingsDarkModeToggle').checked;
+            const compactSidebar = document.getElementById('settingsCompactSidebarToggle').checked;
+
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/appearance', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ darkMode: isDark, compactSidebar })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Appearance settings failed.');
+                localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
+                document.body.classList.toggle('dark-theme', isDark);
+                setSettingsStatus('settingsAppearanceStatus', data.message || 'Appearance updated.', 'success');
+            } catch (err) {
+                setSettingsStatus('settingsAppearanceStatus', err.message || 'Appearance settings failed.', 'error');
+            }
+        }
+
+        async function logoutAllSessions() {
+            if (!confirm('This will log out all active admin sessions. Continue?')) return;
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/logout-all-sessions', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Could not log out all sessions.');
+                sessionStorage.clear();
+                setSettingsStatus('settingsSecurityStatus', data.message || 'All sessions were logged out successfully.', 'success');
+                setTimeout(() => window.location.href = '../frontend/login.html', 800);
+            } catch (err) {
+                setSettingsStatus('settingsSecurityStatus', err.message || 'Could not log out all sessions.', 'error');
+            }
         }
 
         // --- 2. SIDEBAR TOGGLE ---
@@ -1202,6 +1834,7 @@
 
                     // Ragaa haaraa battalumatti fidi
                     await loadStudents();
+                    await loadDepartments();
                 }
             } catch (err) {
                 alert("Error!");
@@ -1227,6 +1860,7 @@
                 if (res.ok) {
                     alert(data.message);
                     loadStudents(); // Table-icha irra deebii refresh gochuuf
+                    loadDepartments();
                 } else {
                     alert("Balleessuun hin danda'amne: " + data.message);
                 }
@@ -1324,6 +1958,7 @@
                 if (res.ok) {
                     alert(data.message || "Barataa mirkanaa'eera!");
                     loadStudents();
+                    loadDepartments();
                 } else {
                     alert(data.message || "Pending student could not be approved.");
                 }
@@ -1489,11 +2124,18 @@
             }
 
             loadStudents();
+            loadDepartments();
             loadProgressMessages();
+            loadAdminSettings();
 
             // Dark Mode Check
             if (localStorage.getItem('adminTheme') === 'dark') {
                 document.body.classList.add('dark-theme');
+            }
+
+            const strengthInput = document.getElementById('settingsNewPassword');
+            if (strengthInput) {
+                strengthInput.addEventListener('input', (event) => updatePasswordStrengthMeter(event.target.value));
             }
         });
         function exportToCSV() {
@@ -1542,6 +2184,7 @@
         function showAllMembers() {
             // Hide other sections
             document.getElementById('allMembersSection').style.display = 'block';
+            document.getElementById('departmentsSection').style.display = 'none';
             document.getElementById('addUserSection').style.display = 'none';
             document.getElementById('uploadSection').style.display = 'none';
             document.getElementById('manageResourcesCard').style.display = 'none';
@@ -1550,19 +2193,158 @@
             document.getElementById('adminMessagesSection').style.display = 'none';
 
             // Load all members data
-            loadAllMembers();
+            loadAllMembers(1);
 
             // Scroll to the section
             document.getElementById('allMembersSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        async function loadAllMembers() {
+        function showDepartments() {
+            document.getElementById('departmentsSection').style.display = 'block';
+            document.getElementById('allMembersSection').style.display = 'none';
+            document.getElementById('addUserSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('manageResourcesCard').style.display = 'none';
+            document.getElementById('commentsSection').style.display = 'none';
+            document.getElementById('roleAccessSection').style.display = 'none';
+            document.getElementById('adminMessagesSection').style.display = 'none';
+            document.getElementById('departmentsGrid').style.display = 'grid';
+            document.getElementById('departmentStudentsView').style.display = 'none';
+            loadDepartments();
+            document.getElementById('departmentsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function loadDepartments() {
+            const status = document.getElementById('departmentsStatus');
+            const grid = document.getElementById('departmentsGrid');
+            if (!status || !grid) return;
+            status.textContent = 'Loading departments...';
+            grid.innerHTML = '';
+
             try {
-                const res = await fetchWithApiFallback('/api/admin/students');
+                const res = await fetchWithApiFallback('/api/admin/departments');
+                const departments = await res.json();
+                if (!res.ok) throw new Error(departments.message || 'Failed to load departments.');
+
+                const departmentFilter = document.getElementById('departmentFilter');
+                if (departmentFilter) {
+                    departmentFilter.innerHTML = '<option value="">All Departments</option>';
+                    departments.forEach((item) => {
+                        const option = document.createElement('option');
+                        option.value = item.department;
+                        option.textContent = item.department;
+                        departmentFilter.appendChild(option);
+                    });
+                }
+
+                if (!Array.isArray(departments) || departments.length === 0) {
+                    status.textContent = 'No departments found.';
+                    return;
+                }
+
+                status.textContent = '';
+                grid.style.display = 'grid';
+                departments.forEach((item) => {
+                    const encodedDepartment = encodeURIComponent(item.department);
+                    grid.innerHTML += `
+                        <button type="button" class="card" style="text-align:left; cursor:pointer; border:1px solid #d1d5db;"
+                            onclick="showDepartmentStudents(decodeURIComponent('${encodedDepartment}'))">
+                            <strong>${safeTableText(item.department)}</strong>
+                            <span style="float:right; color:#059669; font-weight:700;">${Number(item.count) || 0}</span>
+                        </button>`;
+                });
+            } catch (err) {
+                console.error('Department load error:', err);
+                status.textContent = 'Failed to load departments.';
+            }
+        }
+
+        let selectedDepartment = '';
+
+        async function showDepartmentStudents(department) {
+            selectedDepartment = String(department || '').trim();
+            document.getElementById('departmentsGrid').style.display = 'none';
+            document.getElementById('departmentStudentsView').style.display = 'block';
+            document.getElementById('departmentStudentsSearch').value = '';
+            await loadDepartmentStudents();
+        }
+
+        async function loadDepartmentStudents() {
+            const list = document.getElementById('departmentStudentsList');
+            const title = document.getElementById('departmentStudentsTitle');
+            const summary = document.getElementById('departmentStudentsSummary');
+            if (!list || !title || !summary || !selectedDepartment) return;
+
+            list.innerHTML = '<tr><td colspan="7" style="padding:18px;">Loading students...</td></tr>';
+            summary.textContent = '';
+            const search = document.getElementById('departmentStudentsSearch')?.value.trim() || '';
+            const url = `/api/admin/departments/${encodeURIComponent(selectedDepartment)}/students?${new URLSearchParams({ search }).toString()}`;
+
+            try {
+                const res = await fetchWithApiFallback(url);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to load students.');
+                const students = Array.isArray(data) ? data : (Array.isArray(data.students) ? data.students : []);
+                const active = students.filter((student) => String(student.status || '').toLowerCase() === 'active').length;
+                const pending = students.filter((student) => String(student.status || '').toLowerCase() === 'pending').length;
+                const blocked = students.filter((student) => String(student.status || '').toLowerCase() === 'blocked').length;
+                title.textContent = `${selectedDepartment} Students (${students.length})`;
+                summary.textContent = `Department: ${selectedDepartment} | Total: ${students.length} | Active: ${active} | Pending: ${pending} | Blocked: ${blocked}`;
+
+                if (students.length === 0) {
+                    list.innerHTML = '<tr><td colspan="7" style="padding:18px;">No students found in this department.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = students.map((student) => {
+                    const studentId = String(student.studentId || '');
+                    const encodedId = encodeURIComponent(studentId);
+                    const status = String(student.status || '').toLowerCase();
+                    return `<tr>
+                        <td>${safeTableText(studentId)}</td>
+                        <td>${safeTableText(student.name)}</td>
+                        <td>${safeTableText(student.email)}</td>
+                        <td>${safeTableText(student.phone)}</td>
+                        <td>${safeTableText(student.yearOfEntry)}</td>
+                        <td><span class="badge ${status === 'active' ? 'badge-active' : status === 'blocked' ? 'badge-danger' : 'badge-pending'}">${safeTableText(status)}</span></td>
+                        <td><button type="button" class="btn btn-danger" onclick="deleteStudent(decodeURIComponent('${encodedId}'))"><i class="fa fa-trash"></i></button></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error('Department students load error:', err);
+                title.textContent = `${selectedDepartment} Students`;
+                summary.textContent = 'Failed to load students.';
+                list.innerHTML = `<tr><td colspan="7" style="padding:18px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
+            }
+        }
+
+        async function loadAllMembers() {
+            const search = document.getElementById('allMembersSearch')?.value.trim() || '';
+            const department = document.getElementById('departmentFilter')?.value || '';
+            const statusFilter = document.getElementById('statusFilter')?.value || '';
+            const roleFilter = document.getElementById('roleFilter')?.value || '';
+            const year = document.getElementById('yearFilter')?.value || '';
+            const verified = document.getElementById('verificationFilter')?.value || '';
+            const params = new URLSearchParams({ search, department, status: statusFilter, role: roleFilter, year, verified });
+
+            try {
+                const res = await fetchWithApiFallback(`/api/admin/students?${params.toString()}`);
                 const members = await res.json();
+                if (!res.ok) throw new Error(members.message || 'Failed to load students.');
 
                 const list = document.getElementById('allMembersList');
                 list.innerHTML = "";
+
+                const years = [...new Set(members.map((member) => String(member.yearOfEntry || '').trim()).filter(Boolean))].sort();
+                const yearFilter = document.getElementById('yearFilter');
+                if (yearFilter) {
+                    const selectedYear = yearFilter.value;
+                    yearFilter.innerHTML = '<option value="">All Years</option>';
+                    years.forEach((yearValue) => {
+                        yearFilter.innerHTML += `<option value="${safeTableText(yearValue)}">${safeTableText(yearValue)}</option>`;
+                    });
+                    yearFilter.value = selectedYear;
+                }
 
                 members.forEach(member => {
                     const displayId = member.universityId || member.studentId || "---";
@@ -1571,6 +2353,7 @@
                     const familyContact = `${member.fName || '---'} ${member.fPhone ? `(${member.fPhone})` : ''}`.trim();
                     const status = String(member.status || 'pending').trim().toLowerCase();
                     const role = String(member.role || 'student').trim().toLowerCase();
+                    const verification = member.emailVerified ? 'Verified' : 'Not verified';
                     const registrationDate = member.createdAt ? new Date(member.createdAt).toLocaleDateString() : '---';
                     const actionId = encodeURIComponent(String(displayId));
 
@@ -1599,6 +2382,9 @@
                     </td>
                     <td>${safeTableText(displayName)}</td>
                     <td>${safeTableText(member.email)}</td>
+                    <td>${safeTableText(member.phone)}</td>
+                    <td>${safeTableText(member.department)}</td>
+                    <td>${safeTableText(member.yearOfEntry)}</td>
                     <td><span class="badge ${role === 'admin' ? 'badge-active' : 'badge-pending'}">${safeTableText(role)}</span></td>
                     <td>${safeTableText(emergencyContact)}</td>
                     <td>${safeTableText(familyContact)}</td>
@@ -1606,6 +2392,7 @@
                     <td>${safeTableText(member.spiritualSkill)}</td>
                     <td>${safeTableText(member.contribution)}</td>
                     <td><span class="badge ${status === 'active' ? 'badge-active' : status === 'blocked' ? 'badge-danger' : 'badge-pending'}">${safeTableText(status)}</span></td>
+                    <td>${safeTableText(verification)}</td>
                     <td>${safeTableText(registrationDate)}</td>
                 </tr>`;
                 });
@@ -1618,35 +2405,16 @@
 
             } catch (err) {
                 console.error("All members load error:", err);
-                document.getElementById('allMembersList').innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px;">Error loading members data</td></tr>';
+                document.getElementById('allMembersList').innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 20px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
             }
         }
 
         function searchAllMembers() {
-            const input = document.getElementById('allMembersSearch');
-            const filter = (input?.value || '').toLowerCase();
-            const rows = document.querySelectorAll('#allMembersList tr');
-
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(filter) ? '' : 'none';
-            });
+            loadAllMembers(1);
         }
 
         function filterAllMembers() {
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
-            const rows = document.querySelectorAll('#allMembersList tr');
-
-            rows.forEach(row => {
-                const statusCell = row.cells[10]?.innerText.toLowerCase() || '';
-                const roleCell = row.cells[4]?.innerText.toLowerCase() || '';
-
-                const statusMatch = !statusFilter || statusCell.includes(statusFilter);
-                const roleMatch = !roleFilter || roleCell.includes(roleFilter);
-
-                row.style.display = (statusMatch && roleMatch) ? '' : 'none';
-            });
+            loadAllMembers(1);
         }
 
         async function blockMember(id) {
@@ -1662,6 +2430,7 @@
                 if (res.ok) {
                     alert("Member blocked successfully!");
                     loadAllMembers();
+                    loadDepartments();
                 } else {
                     alert("Failed to block member.");
                 }
@@ -1684,6 +2453,7 @@
                 if (res.ok) {
                     alert("Member unblocked successfully!");
                     loadAllMembers();
+                    loadDepartments();
                 } else {
                     alert("Failed to unblock member.");
                 }
@@ -1693,45 +2463,37 @@
             }
         }
 
-        function exportAllMembers() {
-            const table = document.getElementById("allMembersTable");
-            const rows = Array.from(table.querySelectorAll('#allMembersList tr'))
-                .filter(row => row.style.display !== 'none');
-
-            if (rows.length === 0) {
-                alert("No members to export.");
-                return;
-            }
-
-            const csv = [];
-            const headers = ["Student ID", "Full Name", "Email", "Role", "Emergency Contact", "Family Contact", "Academic Skills", "Spiritual Skills", "Contribution", "Status", "Registration Date"];
-            csv.push(headers.map(h => `"${h}"`).join(","));
-
-            rows.forEach(row => {
-                const cells = Array.from(row.querySelectorAll('td'));
-                const values = [
-                    cells[0]?.innerText.trim() || '',
-                    cells[2]?.innerText.trim() || '',
-                    cells[3]?.innerText.trim() || '',
-                    cells[4]?.innerText.trim() || '',
-                    cells[5]?.innerText.trim() || '',
-                    cells[6]?.innerText.trim() || '',
-                    cells[7]?.innerText.trim() || '',
-                    cells[8]?.innerText.trim() || '',
-                    cells[9]?.innerText.trim() || '',
-                    cells[10]?.innerText.trim() || '',
-                    cells[11]?.innerText.trim() || ''
-                ].map(val => `"${val.replace(/"/g, '""')}"`);
-                csv.push(values.join(","));
+        async function exportAllMembers() {
+            const status = document.getElementById('usersExportStatus');
+            const params = new URLSearchParams({
+                search: document.getElementById('allMembersSearch')?.value.trim() || '',
+                department: document.getElementById('departmentFilter')?.value || '',
+                status: document.getElementById('statusFilter')?.value || '',
+                role: document.getElementById('roleFilter')?.value || '',
+                year: document.getElementById('yearFilter')?.value || '',
+                verified: document.getElementById('verificationFilter')?.value || ''
             });
 
-            let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `All_Members_AUWCMSJ_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
+            if (status) status.textContent = 'Preparing Excel file...';
+            try {
+                const res = await fetchWithApiFallback(`/api/admin/students/export?${params.toString()}`);
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.message || 'Failed to export users.');
+                }
+                const blob = await res.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = res.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] || `AUWCMSJ_Students_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(link.href);
+                if (status) status.textContent = 'Excel file downloaded successfully.';
+            } catch (err) {
+                console.error('Student export error:', err);
+                if (status) status.textContent = 'Failed to export users. Please try again.';
+            }
         }
 
         // --- COMMENTS MANAGEMENT FUNCTIONS ---
