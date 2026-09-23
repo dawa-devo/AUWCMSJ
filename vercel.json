@@ -1,0 +1,20 @@
+{
+    "redirects": [
+        {
+            "source": "/",
+            "destination": "/frontend/login.html",
+            "permanent": false
+        },
+        {
+            "source": "/admin",
+            "destination": "/admin/",
+            "permanent": false
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/admin/",
+            "destination": "/admin/admin.html"
+        }
+    ]
+}
