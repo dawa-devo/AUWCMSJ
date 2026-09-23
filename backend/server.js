@@ -72,9 +72,13 @@ const registerLimiter = rateLimit({
     message: { message: 'Too many registration attempts. Please try again later.' }
 });
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/auwcmsj')
-    .then(() => console.log('MongoDB Connected: auwcmsj'))
-    .catch((err) => console.log('Connection Error:', err));
+mongoose.connect(process.env.MONGO_URI, { dbName: process.env.MONGO_DB_NAME || 'auwcmsj' })
+    .then(() => {
+        console.log("MongoDB Connected");
+    })
+    .catch((err) => {
+        console.error("MongoDB connection error:", err);
+    });
 
 const userSchema = new mongoose.Schema({
     studentId: { type: String, required: true, unique: true, trim: true },
@@ -1749,4 +1753,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Unexpected server error.' });
 });
 
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server on port ${PORT}`));

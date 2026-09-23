@@ -1,55 +1,111 @@
 <!DOCTYPE html>
 <html lang="om">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AUWC - Skills & Contribution</title>
     <style>
-        * { box-sizing: border-box; }
-        html { -webkit-text-size-adjust: 100%; }
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
             background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 20px;
             overflow-x: hidden;
         }
 
         .form-card {
             background: rgba(255, 255, 255, 0.9);
-            width: 100%; max-width: 500px;
-            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             padding: 30px;
         }
 
         .step-tabs {
-            background: #065f46; color: white; text-align: center;
-            padding: 15px; border-radius: 8px; margin-bottom: 25px;
+            background: #065f46;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
         }
 
-        .input-group { margin-bottom: 18px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px; }
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+        }
 
         .text-area {
-            width: 100%; height: 85px; padding: 12px; border: 1.5px solid #cbd5e1;
-            border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; transition: 0.3s;
+            width: 100%;
+            height: 85px;
+            padding: 12px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
         }
 
-        .text-area:focus { border-color: #065f46; background: #f0fdf4; }
+        .text-area:focus {
+            border-color: #065f46;
+            background: #f0fdf4;
+        }
 
         /* --- BUTTON GROUP --- */
         .button-group {
-            display: flex; gap: 15px; justify-content: space-between; margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            margin-top: 25px;
         }
 
         .btn {
-            padding: 12px 20px; border-radius: 8px; font-weight: 700;
-            font-size: 15px; cursor: pointer; border: none; transition: 0.3s; flex: 1;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+            flex: 1;
         }
 
-        .btn-back { background: #64748b; color: white; }
-        .btn-next { background: #065f46; color: white; }
+        .btn-back {
+            background: #64748b;
+            color: white;
+        }
 
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-next {
+            background: #065f46;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
 
         @media (max-width: 768px) {
             .form-card {
@@ -62,25 +118,31 @@
                 align-items: flex-start;
                 padding: 14px;
             }
+
             .form-card {
                 padding: 24px 16px;
                 margin-top: 18px;
             }
+
             .step-tabs h2 {
                 font-size: 20px;
             }
+
             .text-area {
                 font-size: 16px;
             }
+
             .button-group {
                 flex-direction: column-reverse;
             }
+
             .btn {
                 width: 100%;
             }
         }
     </style>
 </head>
+
 <body>
 
     <div class="form-card">
@@ -91,17 +153,20 @@
         <form id="skillsForm">
             <div class="input-group">
                 <label>Academic Skills</label>
-                <textarea id="academicSkill" class="text-area" placeholder="e.g., 'I am good at Python programming...'"></textarea>
+                <textarea id="academicSkill" class="text-area"
+                    placeholder="e.g., 'I am good at Python programming...'"></textarea>
             </div>
 
             <div class="input-group">
                 <label>Spiritual Skills</label>
-                <textarea id="spiritualSkill" class="text-area" placeholder="e.g., 'I can lead prayers or teach Quran.'"></textarea>
+                <textarea id="spiritualSkill" class="text-area"
+                    placeholder="e.g., 'I can lead prayers or teach Quran.'"></textarea>
             </div>
 
             <div class="input-group">
                 <label>Contribution</label>
-                <textarea id="contribution" class="text-area" placeholder="How do you want to help the community?"></textarea>
+                <textarea id="contribution" class="text-area"
+                    placeholder="How do you want to help the community?"></textarea>
             </div>
 
             <div class="button-group">
@@ -114,11 +179,7 @@
     <script>
         async function fetchWithApiFallback(path, options) {
             const host = window.location.hostname;
-            const candidates = [
-                'http://127.0.0.1:5000',
-                'http://localhost:5000',
-                host && host !== 'localhost' && host !== '127.0.0.1' ? `http://${host}:5000` : null
-            ].filter(Boolean);
+            const candidates = ['https://auwcmsj-backend.onrender.com'];
 
             let lastError = null;
             for (const base of candidates) {
@@ -172,4 +233,5 @@
         }
     </script>
 </body>
+
 </html>
