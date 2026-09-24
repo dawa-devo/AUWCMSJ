@@ -27,7 +27,9 @@ const User = mongoose.model("User", userSchema);
 
 async function createAdmin() {
     try {
-        await mongoose.connect(MONGO_URI);
+        await mongoose.connect(MONGO_URI, {
+            dbName: process.env.MONGO_DB_NAME || 'auwcmsj'
+        });
         console.log("MongoDB connected");
 
         const adminId = "admin001";
@@ -61,7 +63,6 @@ async function createAdmin() {
         }
 
         console.log("Admin ID:", adminId);
-        console.log("Admin Password:", adminPassword);
 
         await mongoose.disconnect();
     } catch (error) {

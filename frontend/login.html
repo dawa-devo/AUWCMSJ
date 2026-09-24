@@ -223,6 +223,13 @@
             }
         }
 
+        const loginReason = new URLSearchParams(window.location.search).get('reason');
+        if (loginReason) {
+            const noticeBox = document.getElementById('notice-box');
+            noticeBox.style.display = "block";
+            noticeBox.innerText = loginReason;
+        }
+
         // Hojii Login raawwachuuf
         async function handleLogin(event) {
             event.preventDefault(); // Fuulli akka hin 'refresh' goone
@@ -231,7 +238,7 @@
             const loginBtn = document.getElementById('loginBtn');
 
             // Ragaalee input irraa fuuchuu (IDs sirreeffamaniiru)
-            const studentId = document.getElementById('userId').value.trim();
+            const identifier = document.getElementById('userId').value.trim();
             const password = document.getElementById('passwordField').value.trim();
 
             loginBtn.innerText = "Checking...";
@@ -246,7 +253,7 @@
                         res = await fetch(`${base}/api/login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ studentId, password })
+                            body: JSON.stringify({ identifier, studentId: identifier, password })
                         });
                         break;
                     } catch (e) {
@@ -255,14 +262,15 @@
                 }
                 if (!res) throw lastFetchErr || new Error('Cannot reach API');
 
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
+                    const role = String(data?.role || '').toLowerCase();
                     // Success response irrattis data barbaachisaa jiraachuu mirkaneessi
                     const hasRequiredSessionData =
                         typeof data?.name === 'string' &&
                         data.name.trim() !== '' &&
-                        (data?.role === 'admin' || data?.role === 'student' || data?.role === 'teacher') &&
+                        (role === 'admin' || role === 'student' || role === 'teacher') &&
                         typeof data?.token === 'string' &&
                         data.token.trim() !== '';
 
@@ -277,14 +285,14 @@
                     // Ragaalee kuusuu
                     sessionStorage.setItem('isLoggedIn', 'true');
                     sessionStorage.setItem('userName', data.name);
-                    sessionStorage.setItem('role', data.role);
+                    sessionStorage.setItem('role', role);
                     sessionStorage.setItem('token', data.token);
                     sessionStorage.setItem('studentId', data.studentId || '');
                     localStorage.setItem('currentUser', data.name);
                     localStorage.setItem('currentProfilePic', data.profilePic || '');
 
                     // Gara Dashboard-itti dabarsuu
-                    if (data.role === 'admin') {
+                    if (role === 'admin') {
                         window.location.href = '../admin/admin.html';
                     } else {
                         window.location.href = 'userdashboard.html';
@@ -298,7 +306,8 @@
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Server waliin wal quunnamuun hin danda'amne!");
+                noticeBox.style.display = "block";
+                noticeBox.innerText = error.message || "Server waliin wal quunnamuun hin danda'amne!";
                 loginBtn.innerText = "Login";
                 loginBtn.disabled = false;
             }

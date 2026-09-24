@@ -1431,7 +1431,7 @@
                     const res = await fetch(`${base}${path}`, { ...options, headers });
                     if (res.status === 401) {
                         sessionStorage.clear();
-                        window.location.href = '../frontend/login.html';
+                        window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
                     }
                     return res;
                 } catch (err) {
@@ -2099,10 +2099,19 @@
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const user = await response.json().catch(() => ({}));
-                return response.ok && user.role === 'admin' && user.status !== 'blocked';
+                if (!response.ok) {
+                    return { ok: false, message: user.message || 'Admin authentication failed.' };
+                }
+                if (String(user.role || '').toLowerCase() !== 'admin') {
+                    return { ok: false, message: 'This account does not have the admin role.' };
+                }
+                if (user.status === 'blocked') {
+                    return { ok: false, message: 'This admin account is blocked.' };
+                }
+                return { ok: true };
             } catch (err) {
                 console.error('Admin access verification failed:', err);
-                return false;
+                return { ok: false, message: err.message || 'Admin authentication could not be verified.' };
             }
         }
 
@@ -2113,9 +2122,10 @@
                 return;
             }
 
-            if (!await verifyAdminPageAccess()) {
+            const adminAccess = await verifyAdminPageAccess();
+            if (!adminAccess.ok) {
                 sessionStorage.clear();
-                window.location.href = '../frontend/userdashboard.html';
+                window.location.href = '../frontend/login.html?reason=' + encodeURIComponent(adminAccess.message);
                 return;
             }
 

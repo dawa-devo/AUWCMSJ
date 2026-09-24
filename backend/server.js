@@ -42,16 +42,20 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeRequest);
 
-const allowedOrigins = String(process.env.CORS_ORIGINS || '')
+const configuredOrigins = String(process.env.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+const allowedOrigins = new Set([
+    ...configuredOrigins,
+    'https://auwcmsj-flax.vercel.app'
+]);
 
 app.use(cors({
     origin(origin, callback) {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.length === 0) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
+        if (configuredOrigins.length === 0) return callback(null, true);
+        if (allowedOrigins.has(origin)) return callback(null, true);
         return callback(new Error('Not allowed by CORS'));
     }
 }));
@@ -273,8 +277,9 @@ async function sendApprovalEmail(userEmail) {
 function signUserToken(user) {
     return jwt.sign(
         {
-            userId: user._id,
+            userId: String(user._id),
             studentId: user.studentId,
+            role: String(user.role || '').toLowerCase(),
             tokenVersion: Number(user.tokenVersion || 0)
         },
         getJwtSecret(),
@@ -551,15 +556,20 @@ app.get('/api/verify-email', verifyEmailHandler);
 
 app.post('/api/login', loginLimiter, async (req, res) => {
     try {
-        const studentId = String(req.body.studentId || '').trim();
+        const identifier = String(req.body.identifier || req.body.studentId || req.body.email || '').trim();
         const password = String(req.body.password || '');
 
-        if (!studentId || !password) {
-            return res.status(400).json({ message: 'Student ID and password are required.' });
+        if (!identifier || !password) {
+            return res.status(400).json({ message: 'Student ID or email and password are required.' });
         }
 
-        const user = await User.findOne({ studentId });
-        if (!user) return res.status(400).json({ message: 'ID hin argamne!' });
+        const user = await User.findOne({
+            $or: [
+                { studentId: identifier },
+                { email: identifier.toLowerCase() }
+            ]
+        });
+        if (!user) return res.status(400).json({ message: 'Student ID or email was not found.' });
         if (user.status === 'blocked') return res.status(403).json({ message: 'This account is blocked.' });
         if (user.status !== 'active') return res.status(403).json({ message: 'Admin mirkaneessuu eagi!' });
 
@@ -575,7 +585,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
         res.json({
             message: 'Success',
             name: user.name,
-            role: user.role,
+            role: String(user.role || '').toLowerCase(),
             studentId: user.studentId,
             profilePic: user.profilePic || '',
             emailVerified: Boolean(user.emailVerified),
