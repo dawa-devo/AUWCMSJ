@@ -235,8 +235,25 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+function emailRecipientLabel(email) {
+    const value = String(email || '').trim().toLowerCase();
+    const atIndex = value.lastIndexOf('@');
+    return atIndex > 0 ? `***@${value.slice(atIndex + 1)}` : 'invalid-recipient';
+}
+
+function emailConfigurationStatus() {
+    return {
+        hasUser: Boolean(String(process.env.EMAIL_USER || '').trim()),
+        hasPassword: Boolean(String(process.env.EMAIL_PASS || '').trim())
+    };
+}
+
 function appBaseUrl() {
-    return String(process.env.PUBLIC_APP_URL || 'http://127.0.0.1:5500').replace(/\/$/, '');
+    const configuredUrl = String(process.env.PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
+    if (!configuredUrl && String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+        throw new Error('PUBLIC_APP_URL is not configured for production email verification links.');
+    }
+    return configuredUrl || 'http://127.0.0.1:5500';
 }
 
 function verificationLink(token) {
@@ -244,15 +261,51 @@ function verificationLink(token) {
 }
 
 async function sendMail({ to, subject, text }) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        throw new Error('Email credentials are missing in .env');
+    const recipient = emailRecipientLabel(to);
+    console.info(`[EMAIL] send started recipient=${recipient}`);
+
+    const config = emailConfigurationStatus();
+    if (!config.hasUser || !config.hasPassword) {
+        const missing = [
+            !config.hasUser ? 'EMAIL_USER' : '',
+            !config.hasPassword ? 'EMAIL_PASS' : ''
+        ].filter(Boolean).join(', ');
+        const error = new Error(`Email configuration is missing: ${missing}.`);
+        console.error(`[EMAIL] send failed recipient=${recipient} reason=${error.message}`);
+        throw error;
     }
-    return transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text
-    });
+
+    try {
+        const result = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to,
+            subject,
+            text
+        });
+        console.info(`[EMAIL] send succeeded recipient=${recipient} messageId=${String(result.messageId || ' unavailable').trim()}`);
+        return result;
+    } catch (err) {
+        const details = [
+            err.code ? `code=${String(err.code)}` : '',
+            err.responseCode ? `responseCode=${String(err.responseCode)}` : '',
+            err.command ? `command=${String(err.command)}` : '',
+            `message=${String(err.message || 'SMTP request failed')}`
+        ].filter(Boolean).join(' ');
+        console.error(`[EMAIL] send failed recipient=${recipient} ${details}`);
+        throw err;
+    }
+}
+
+const emailConfig = emailConfigurationStatus();
+if (!emailConfig.hasUser || !emailConfig.hasPassword) {
+    const missing = [
+        !emailConfig.hasUser ? 'EMAIL_USER' : '',
+        !emailConfig.hasPassword ? 'EMAIL_PASS' : ''
+    ].filter(Boolean).join(', ');
+    console.error(`[EMAIL CONFIG] Missing required environment variable(s): ${missing}.`);
+}
+if (String(process.env.NODE_ENV || '').toLowerCase() === 'production' && !String(process.env.PUBLIC_APP_URL || '').trim()) {
+    console.error('[EMAIL CONFIG] PUBLIC_APP_URL is required in production for verification links.');
 }
 
 const sendPasswordEmail = async (userEmail, generatedPassword, verifyToken) => {
@@ -472,7 +525,6 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
                 await sendPasswordEmail(updatedUser.email, generatedPassword, verifyToken);
                 emailSent = true;
             } catch (emailErr) {
-                console.error('EMAIL ERROR:', emailErr);
                 emailError = emailErr.message || 'Password email could not be sent.';
             }
         } else {
@@ -482,12 +534,13 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
         const allowFallback = String(process.env.ALLOW_PASSWORD_FALLBACK || 'true').toLowerCase() !== 'false'
             && process.env.NODE_ENV !== 'production';
 
-        res.status(200).json({
-            message: 'Step 2 Milkaa\'eera!',
+        const response = {
+            message: emailSent ? 'Step 2 Milkaa\'eera!' : 'Registration saved, but the password email could not be sent.',
             emailSent,
             emailError,
             generatedPassword: (!emailSent && allowFallback) ? generatedPassword : undefined
-        });
+        };
+        res.status(emailSent ? 200 : 502).json(response);
     } catch (err) {
         console.error('DATABASE ERROR:', err);
         res.status(err.status || 500).json({ error: err.message });

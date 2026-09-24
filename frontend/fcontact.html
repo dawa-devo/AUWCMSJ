@@ -279,20 +279,14 @@
                     body: JSON.stringify(data)
                 });
 
-                const result = await response.json();
+                const result = await response.json().catch(() => ({}));
 
-                if (response.ok) {
-                    if (result.emailSent) {
-                        alert("Step 2 milkaa'eera! Password kee email keerratti siif ergameera.");
-                    } else {
-                        const fallbackPassword = result.generatedPassword ? `\nTemporary password: ${result.generatedPassword}` : "";
-                        const fallbackReason = result.emailError ? `\nReason: ${result.emailError}` : "";
-                        alert(`Step 2 milkaa'eera, garuu email hin ergamne.${fallbackReason}${fallbackPassword}`);
-                    }
+                if (response.ok && result.emailSent) {
+                    alert("Step 2 milkaa'eera! Password kee email keerratti siif ergameera.");
                     window.location.href = 'skill.html';
                 } else {
-                    // Database error yoo ta'e asitti sitti hima
-                    alert("Rakkon uumame: " + (result.error || "Ragaan hin fudhatamne"));
+                    const reason = result.error || result.emailError || result.message || "Password email could not be sent.";
+                    alert("Registration hin xumuramne: " + reason);
                     nextBtn.disabled = false;
                     nextBtn.innerText = "Next Step";
                 }
