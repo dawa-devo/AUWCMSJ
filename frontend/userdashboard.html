@@ -969,11 +969,11 @@
             .top-nav {
                 position: relative;
                 display: grid;
-                grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+                grid-template-columns: minmax(0, 1fr) minmax(100px, 132px);
                 grid-template-areas:
-                    "top top"
-                    "profile ayah";
-                align-items: center;
+                    "top profile"
+                    "ayah ayah";
+                align-items: start;
                 justify-content: stretch;
                 gap: 8px;
                 width: 100%;
@@ -997,7 +997,7 @@
             .logo-menu-container {
                 flex-direction: row;
                 align-items: center;
-                gap: 12px;
+                gap: 6px;
                 flex: initial;
             }
 
@@ -1065,7 +1065,7 @@
             .user-profile-wrapper {
                 grid-area: profile;
                 position: static;
-                align-items: flex-start;
+                align-items: flex-end;
                 width: 100%;
                 max-width: none;
                 min-width: 0;
@@ -1074,9 +1074,16 @@
             }
 
             .profile-main {
+                justify-content: flex-end;
                 max-width: 100%;
                 gap: 6px;
                 padding: 3px 7px;
+            }
+
+            .profile-upload-status {
+                max-width: 100%;
+                overflow-wrap: anywhere;
+                text-align: right;
             }
 
             .profile-name {
@@ -1089,7 +1096,12 @@
 
             .translator-widget {
                 width: 100%;
-                max-width: 170px;
+                max-width: none;
+            }
+
+            .logout-small-btn {
+                max-width: 100%;
+                white-space: nowrap;
             }
 
             .main-content {
@@ -1171,6 +1183,7 @@
             .top-nav {
                 gap: 6px;
                 padding: 10px;
+                grid-template-columns: minmax(0, 1fr) minmax(100px, 112px);
             }
 
             .sidebar {
@@ -1184,9 +1197,13 @@
             }
 
             .header-logo h3 {
-                font-size: 0.95rem;
+                font-size: 0.82rem;
                 line-height: 1.25;
                 max-width: none;
+            }
+
+            .logo-menu-container {
+                gap: 4px;
             }
 
             .translator-widget {
@@ -1194,7 +1211,7 @@
             }
 
             .user-profile-wrapper {
-                align-items: flex-start;
+                align-items: flex-end;
                 max-width: none;
             }
 
@@ -1209,7 +1226,7 @@
             }
 
             .profile-name {
-                max-width: 72px;
+                max-width: 48px;
             }
 
             .profile-upload-status {
