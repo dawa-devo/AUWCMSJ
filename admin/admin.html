@@ -769,8 +769,8 @@
             <div class="controls">
                 <div class="search-wrapper">
                     <i class="fa fa-search"></i>
-                    <input type="text" id="searchInput" onkeyup="searchTable()" class="search-bar"
-                        placeholder="Search student...">
+                    <input type="search" id="searchInput" oninput="searchTable()" class="search-bar"
+                        placeholder="Search by full name or University ID...">
                 </div>
                 <button class="btn btn-export" onclick="toggleExportColumns()"><i class="fa fa-file-excel"></i> Export
                     Excel</button>
@@ -1057,11 +1057,9 @@
 
                     <div class="quick-admin-card">
                         <h5><i class="fa fa-key"></i> Reset User Password</h5>
-                        <p>Set a new password for a user account.</p>
+                        <p>Generate a new 5-digit password for a user account.</p>
                         <input type="text" id="quickResetStudentId" class="search-bar" placeholder="Student ID">
-                        <input type="password" id="quickResetPassword" class="search-bar"
-                            placeholder="New Password (min 6 chars)">
-                        <button class="btn btn-primary" onclick="resetUserPasswordByAdmin()"><i
+                        <button class="btn btn-primary" onclick="resetUserPasswordByAdmin(this)"><i
                                 class="fa fa-rotate"></i> Reset Password</button>
                         <p id="quickResetMsg" class="quick-admin-status"></p>
                     </div>
@@ -1859,6 +1857,9 @@
                             <i class="fa fa-check"></i>
                         </button>
                         ` : ''}
+                        <button type="button" class="btn btn-primary" title="Generate a new 5-digit password" aria-label="Reset password for ${safeTableText(displayName)}" onclick="resetStudentPasswordByAdmin(decodeURIComponent('${actionId}'), this)">
+                            <i class="fa fa-key"></i> Reset Password
+                        </button>
                         <button type="button" class="btn btn-danger" title="Delete student" onclick="deleteStudent(decodeURIComponent('${actionId}'))">
                             <i class="fa fa-trash"></i> Delete
                         </button>
@@ -2983,40 +2984,67 @@
             }
         }
 
-        async function resetUserPasswordByAdmin() {
+        async function resetUserPasswordByAdmin(buttonEl) {
             const studentId = document.getElementById('quickResetStudentId').value.trim();
-            const newPassword = document.getElementById('quickResetPassword').value.trim();
             const msgEl = document.getElementById('quickResetMsg');
 
-            if (!studentId || !newPassword) {
+            if (!studentId) {
                 msgEl.style.color = '#dc2626';
-                msgEl.innerText = 'Student ID and new password are required.';
+                msgEl.innerText = 'Student ID is required.';
                 return;
             }
 
-            if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
-                msgEl.style.color = '#dc2626';
-                msgEl.innerText = 'Password must be at least 8 characters and include a letter and a number.';
+            await resetStudentPasswordByAdmin(studentId, buttonEl, msgEl);
+        }
+
+        async function resetStudentPasswordByAdmin(studentId, buttonEl, msgEl = null) {
+            const cleanId = String(studentId || '').trim();
+            if (!cleanId) {
+                alert('Student ID is required.');
                 return;
+            }
+            if (!confirm(`Generate a new 5-digit password for ${cleanId}?`)) return;
+
+            const originalButtonHtml = buttonEl?.innerHTML;
+            if (buttonEl) {
+                buttonEl.disabled = true;
+                buttonEl.setAttribute('aria-busy', 'true');
+                buttonEl.innerHTML = '<i class="fa fa-spinner fa-spin" aria-hidden="true"></i> Resetting...';
             }
 
             try {
                 const res = await fetchWithApiFallback('/api/admin/reset-password', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ studentId, newPassword })
+                    body: JSON.stringify({ studentId: cleanId })
                 });
 
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || 'Password reset failed.');
+                if (!/^\d{5}$/.test(String(data.generatedPassword || ''))) {
+                    throw new Error('The server returned an invalid temporary password.');
+                }
 
-                document.getElementById('quickResetPassword').value = '';
-                msgEl.style.color = '#059669';
-                msgEl.innerText = 'Password reset successfully.';
+                const message = `Password reset for ${cleanId}.\nNew 5-digit password: ${data.generatedPassword}\nShare it securely with the student.`;
+                alert(message);
+                if (msgEl) {
+                    msgEl.style.color = '#059669';
+                    msgEl.innerText = `Password reset for ${cleanId}.`;
+                }
             } catch (err) {
                 console.error(err);
-                msgEl.style.color = '#dc2626';
-                msgEl.innerText = err.message || 'Password reset failed.';
+                if (msgEl) {
+                    msgEl.style.color = '#dc2626';
+                    msgEl.innerText = err.message || 'Password reset failed.';
+                } else {
+                    alert(err.message || 'Password reset failed.');
+                }
+            } finally {
+                if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.removeAttribute('aria-busy');
+                    buttonEl.innerHTML = originalButtonHtml;
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -402,7 +403,7 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
 });
 
 function cryptoRandomPassword() {
-    return createRawToken(6);
+    return String(crypto.randomInt(10000, 100000));
 }
 
 app.post('/api/skills', async (req, res) => {
@@ -1533,25 +1534,25 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
 app.put('/api/admin/reset-password', authenticate, requireAdmin, async (req, res) => {
     try {
         const studentId = String(req.body.studentId || '').trim();
-        const newPassword = String(req.body.newPassword || '');
-
-        if (!studentId || !newPassword) {
-            return res.status(400).json({ message: 'Student ID and new password are required.' });
-        }
-        if (!isStrongPassword(newPassword)) {
-            return res.status(400).json({ message: 'New password must be at least 8 characters and include a letter and a number.' });
+        if (!studentId) {
+            return res.status(400).json({ message: 'Student ID is required.' });
         }
 
-        const user = await User.findOne({ studentId });
+        const generatedPassword = cryptoRandomPassword();
+        const hashedPassword = await bcrypt.hash(generatedPassword, 12);
+        const user = await User.findOneAndUpdate(
+            { studentId },
+            { $set: { password: hashedPassword }, $inc: { tokenVersion: 1 } },
+            { new: true }
+        ).select('studentId').lean();
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
-        user.password = hashedPassword;
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
-        res.json({ message: 'Password reset successfully.' });
+        res.json({
+            message: 'Password reset successfully.',
+            generatedPassword
+        });
     } catch (err) {
         console.error('Admin reset password error:', err);
         res.status(500).json({ message: 'Error resetting password: ' + err.message });
