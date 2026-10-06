@@ -741,7 +741,6 @@
                             <tr>
                                 <th>Student ID</th>
                                 <th>Full Name</th>
-                                <th>Email</th>
                                 <th>Phone</th>
                                 <th>Year</th>
                                 <th>Status</th>
@@ -784,13 +783,12 @@
                     style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px;">
                     <label><input type="checkbox" class="export-col" value="1" checked> Student ID</label>
                     <label><input type="checkbox" class="export-col" value="3" checked> Full Name</label>
-                    <label><input type="checkbox" class="export-col" value="4" checked> Email</label>
-                    <label><input type="checkbox" class="export-col" value="5" checked> Emergency Contact</label>
-                    <label><input type="checkbox" class="export-col" value="6" checked> Family Contact</label>
-                    <label><input type="checkbox" class="export-col" value="7" checked> Academic Skills</label>
-                    <label><input type="checkbox" class="export-col" value="8" checked> Spiritual Skills</label>
-                    <label><input type="checkbox" class="export-col" value="9" checked> Contribution</label>
-                    <label><input type="checkbox" class="export-col" value="10" checked> Status</label>
+                    <label><input type="checkbox" class="export-col" value="4" checked> Emergency Contact</label>
+                    <label><input type="checkbox" class="export-col" value="5" checked> Family Contact</label>
+                    <label><input type="checkbox" class="export-col" value="6" checked> Academic Skills</label>
+                    <label><input type="checkbox" class="export-col" value="7" checked> Spiritual Skills</label>
+                    <label><input type="checkbox" class="export-col" value="8" checked> Contribution</label>
+                    <label><input type="checkbox" class="export-col" value="9" checked> Status</label>
                 </div>
                 <button class="btn btn-export" onclick="exportToCSV()">Download Selected Columns</button>
             </div>
@@ -802,7 +800,6 @@
                             <th>Student ID</th>
                             <th>Actions</th>
                             <th>Full Name</th>
-                            <th>Email</th>
                             <th>Emergency Contact</th>
                             <th>Family Contact</th>
                             <th>Academic Skills</th>
@@ -846,7 +843,7 @@
                 <div class="search-wrapper" style="flex: 2;">
                     <i class="fa fa-search"></i>
                     <input type="text" id="allMembersSearch" onkeyup="searchAllMembers()" class="search-bar"
-                        placeholder="Search by student ID, name, email, or phone...">
+                        placeholder="Search by student ID, name, or phone...">
                 </div>
                 <select id="departmentFilter" onchange="loadAllMembers(1)" class="search-bar"
                     style="width: 190px; padding-left: 10px;">
@@ -870,12 +867,6 @@
                     <option value="admin">Admin</option>
                     <option value="teacher">Teacher</option>
                 </select>
-                <select id="verificationFilter" onchange="loadAllMembers(1)" class="search-bar"
-                    style="width: 170px; padding-left: 10px;">
-                    <option value="">All Verification</option>
-                    <option value="true">Verified</option>
-                    <option value="false">Not verified</option>
-                </select>
                 <button class="btn btn-export" onclick="exportAllMembers()"><i class="fa fa-file-excel"></i> Export
                     Current Results</button>
             </div>
@@ -888,7 +879,6 @@
                             <th>Student ID</th>
                             <th>Actions</th>
                             <th>Full Name</th>
-                            <th>Email</th>
                             <th>Phone</th>
                             <th>Department</th>
                             <th>Year</th>
@@ -899,7 +889,6 @@
                             <th>Spiritual Skills</th>
                             <th>Contribution</th>
                             <th>Status</th>
-                            <th>Verification</th>
                             <th>Registration Date</th>
                         </tr>
                     </thead>
@@ -1029,7 +1018,6 @@
                             <tr>
                                 <th>Student ID</th>
                                 <th>Name</th>
-                                <th>Email</th>
                                 <th>Current Role</th>
                                 <th>Status</th>
                                 <th>Change Role</th>
@@ -1050,7 +1038,6 @@
                         <input type="text" id="quickUpdateStudentId" class="search-bar" placeholder="Student ID">
                         <input type="text" id="quickUpdateFullName" class="search-bar"
                             placeholder="Full Name (optional)">
-                        <input type="email" id="quickUpdateEmail" class="search-bar" placeholder="Email (optional)">
                         <select id="quickUpdateStatus" class="search-bar">
                             <option value="">Keep current status</option>
                             <option value="active">Set Active</option>
@@ -1251,10 +1238,6 @@
                             <label for="settingsAdminName">Admin Full Name</label>
                             <input id="settingsAdminName" type="text" placeholder="Admin full name">
                         </div>
-                        <div>
-                            <label for="settingsAdminEmail">Admin Email</label>
-                            <input id="settingsAdminEmail" type="email" placeholder="Admin email">
-                        </div>
                     </div>
                     <div>
                         <label for="settingsAdminProfileInfo">Profile Information</label>
@@ -1304,10 +1287,6 @@
                             <input id="settingsProfileFullName" type="text" placeholder="Full name">
                         </div>
                         <div>
-                            <label for="settingsProfileEmail">Email</label>
-                            <input id="settingsProfileEmail" type="email" placeholder="Email address">
-                        </div>
-                        <div>
                             <label for="settingsProfilePhone">Phone Number</label>
                             <input id="settingsProfilePhone" type="tel" placeholder="Phone number">
                         </div>
@@ -1342,10 +1321,6 @@
 
                 <div class="settings-card">
                     <h3>Notification Settings</h3>
-                    <div class="toggle-row">
-                        <span>Email notifications</span>
-                        <input id="toggleEmailNotifications" type="checkbox">
-                    </div>
                     <div class="toggle-row">
                         <span>New student registration notifications</span>
                         <input id="toggleRegistrationNotifications" type="checkbox">
@@ -1512,16 +1487,12 @@
 
                 const settings = data.settings || {};
                 const prefs = settings.preferences || {};
-                const profile = settings.profile || {};
                 const name = settings.fullName || settings.name || '';
                 document.getElementById('settingsAdminName').value = name;
-                document.getElementById('settingsAdminEmail').value = settings.email || '';
                 document.getElementById('settingsAdminProfileInfo').value = settings.profileInfo || '';
                 document.getElementById('settingsProfileFullName').value = name;
-                document.getElementById('settingsProfileEmail').value = settings.email || '';
                 document.getElementById('settingsProfilePhone').value = settings.phone || '';
                 document.getElementById('settingsProfileImage').value = settings.profileImage || '';
-                document.getElementById('toggleEmailNotifications').checked = Boolean(prefs.emailNotifications ?? true);
                 document.getElementById('toggleRegistrationNotifications').checked = Boolean(prefs.registrationNotifications ?? true);
                 document.getElementById('toggleApprovalNotifications').checked = Boolean(prefs.approvalNotifications ?? true);
                 document.getElementById('toggleSystemNotifications').checked = Boolean(prefs.systemNotifications ?? true);
@@ -1549,7 +1520,6 @@
         async function saveAdminProfileSettings() {
             const payload = {
                 fullName: document.getElementById('settingsProfileFullName').value.trim(),
-                email: document.getElementById('settingsProfileEmail').value.trim(),
                 phone: document.getElementById('settingsProfilePhone').value.trim(),
                 profileImage: document.getElementById('settingsProfileImage').value.trim(),
                 name: document.getElementById('settingsAdminName').value.trim()
@@ -1570,9 +1540,7 @@
                 if (!res.ok) throw new Error(data.message || 'Profile update failed.');
                 setSettingsStatus('settingsProfileStatus', data.message || 'Profile updated successfully.', 'success');
                 document.getElementById('settingsAdminName').value = data.settings?.fullName || payload.fullName;
-                document.getElementById('settingsAdminEmail').value = data.settings?.email || payload.email;
                 document.getElementById('settingsProfileFullName').value = data.settings?.fullName || payload.fullName;
-                document.getElementById('settingsProfileEmail').value = data.settings?.email || payload.email;
             } catch (err) {
                 setSettingsStatus('settingsProfileStatus', err.message || 'Profile update failed.', 'error');
             }
@@ -1616,7 +1584,6 @@
 
         async function saveNotificationSettings() {
             const payload = {
-                emailNotifications: document.getElementById('toggleEmailNotifications').checked,
                 registrationNotifications: document.getElementById('toggleRegistrationNotifications').checked,
                 approvalNotifications: document.getElementById('toggleApprovalNotifications').checked,
                 systemNotifications: document.getElementById('toggleSystemNotifications').checked
@@ -1897,7 +1864,6 @@
                         </button>
                     </td>
                     <td>${safeTableText(displayName)}</td>
-                    <td>${safeTableText(user.email)}</td>
                     <td>${safeTableText(emergencyContact)}</td>
                     <td>${safeTableText(familyContact)}</td>
                     <td>${safeTableText(user.academicSkill)}</td>
@@ -2281,7 +2247,7 @@
             const summary = document.getElementById('departmentStudentsSummary');
             if (!list || !title || !summary || !selectedDepartment) return;
 
-            list.innerHTML = '<tr><td colspan="7" style="padding:18px;">Loading students...</td></tr>';
+            list.innerHTML = '<tr><td colspan="6" style="padding:18px;">Loading students...</td></tr>';
             summary.textContent = '';
             const search = document.getElementById('departmentStudentsSearch')?.value.trim() || '';
             const url = `/api/admin/departments/${encodeURIComponent(selectedDepartment)}/students?${new URLSearchParams({ search }).toString()}`;
@@ -2298,7 +2264,7 @@
                 summary.textContent = `Department: ${selectedDepartment} | Total: ${students.length} | Active: ${active} | Pending: ${pending} | Blocked: ${blocked}`;
 
                 if (students.length === 0) {
-                    list.innerHTML = '<tr><td colspan="7" style="padding:18px;">No students found in this department.</td></tr>';
+                    list.innerHTML = '<tr><td colspan="6" style="padding:18px;">No students found in this department.</td></tr>';
                     return;
                 }
 
@@ -2309,7 +2275,6 @@
                     return `<tr>
                         <td>${safeTableText(studentId)}</td>
                         <td>${safeTableText(student.name)}</td>
-                        <td>${safeTableText(student.email)}</td>
                         <td>${safeTableText(student.phone)}</td>
                         <td>${safeTableText(student.yearOfEntry)}</td>
                         <td><span class="badge ${status === 'active' ? 'badge-active' : status === 'blocked' ? 'badge-danger' : 'badge-pending'}">${safeTableText(status)}</span></td>
@@ -2320,7 +2285,7 @@
                 console.error('Department students load error:', err);
                 title.textContent = `${selectedDepartment} Students`;
                 summary.textContent = 'Failed to load students.';
-                list.innerHTML = `<tr><td colspan="7" style="padding:18px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
+                list.innerHTML = `<tr><td colspan="6" style="padding:18px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
             }
         }
 
@@ -2330,8 +2295,7 @@
             const statusFilter = document.getElementById('statusFilter')?.value || '';
             const roleFilter = document.getElementById('roleFilter')?.value || '';
             const year = document.getElementById('yearFilter')?.value || '';
-            const verified = document.getElementById('verificationFilter')?.value || '';
-            const params = new URLSearchParams({ search, department, status: statusFilter, role: roleFilter, year, verified });
+            const params = new URLSearchParams({ search, department, status: statusFilter, role: roleFilter, year });
 
             try {
                 const res = await fetchWithApiFallback(`/api/admin/students?${params.toString()}`);
@@ -2359,7 +2323,6 @@
                     const familyContact = `${member.fName || '---'} ${member.fPhone ? `(${member.fPhone})` : ''}`.trim();
                     const status = String(member.status || 'pending').trim().toLowerCase();
                     const role = String(member.role || 'student').trim().toLowerCase();
-                    const verification = member.emailVerified ? 'Verified' : 'Not verified';
                     const registrationDate = member.createdAt ? new Date(member.createdAt).toLocaleDateString() : '---';
                     const actionId = encodeURIComponent(String(displayId));
 
@@ -2387,7 +2350,6 @@
                         </button>
                     </td>
                     <td>${safeTableText(displayName)}</td>
-                    <td>${safeTableText(member.email)}</td>
                     <td>${safeTableText(member.phone)}</td>
                     <td>${safeTableText(member.department)}</td>
                     <td>${safeTableText(member.yearOfEntry)}</td>
@@ -2398,7 +2360,6 @@
                     <td>${safeTableText(member.spiritualSkill)}</td>
                     <td>${safeTableText(member.contribution)}</td>
                     <td><span class="badge ${status === 'active' ? 'badge-active' : status === 'blocked' ? 'badge-danger' : 'badge-pending'}">${safeTableText(status)}</span></td>
-                    <td>${safeTableText(verification)}</td>
                     <td>${safeTableText(registrationDate)}</td>
                 </tr>`;
                 });
@@ -2411,7 +2372,7 @@
 
             } catch (err) {
                 console.error("All members load error:", err);
-                document.getElementById('allMembersList').innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 20px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
+                document.getElementById('allMembersList').innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 20px;">${safeTableText(err.message || 'Failed to load students.')}</td></tr>`;
             }
         }
 
@@ -2476,8 +2437,7 @@
                 department: document.getElementById('departmentFilter')?.value || '',
                 status: document.getElementById('statusFilter')?.value || '',
                 role: document.getElementById('roleFilter')?.value || '',
-                year: document.getElementById('yearFilter')?.value || '',
-                verified: document.getElementById('verificationFilter')?.value || ''
+                year: document.getElementById('yearFilter')?.value || ''
             });
 
             if (status) status.textContent = 'Preparing Excel file...';
@@ -2821,7 +2781,7 @@
                 list.innerHTML = "";
 
                 if (!Array.isArray(users) || users.length === 0) {
-                    list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No users found</td></tr>';
+                    list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No users found</td></tr>';
                     return;
                 }
 
@@ -2836,7 +2796,6 @@
                 <tr>
                     <td><b>${safeTableText(studentId)}</b></td>
                     <td>${safeTableText(user.name)}</td>
-                    <td>${safeTableText(user.email)}</td>
                     <td>${roleBadge}</td>
                     <td>${statusBadge}</td>
                     <td>
@@ -2856,7 +2815,7 @@
 
             } catch (err) {
                 console.error("Role users load error:", err);
-                document.getElementById('roleUsersList').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Error loading users</td></tr>';
+                document.getElementById('roleUsersList').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Error loading users</td></tr>';
             }
         }
 
@@ -2982,7 +2941,6 @@
         async function saveQuickUserInfo() {
             const studentId = document.getElementById('quickUpdateStudentId').value.trim();
             const fullName = document.getElementById('quickUpdateFullName').value.trim();
-            const email = document.getElementById('quickUpdateEmail').value.trim();
             const status = document.getElementById('quickUpdateStatus').value;
             const role = document.getElementById('quickUpdateRole').value;
             const msgEl = document.getElementById('quickUpdateMsg');
@@ -2995,7 +2953,6 @@
 
             const payload = { studentId };
             if (fullName) payload.name = fullName;
-            if (email) payload.email = email;
             if (status) payload.status = status;
             if (role) payload.role = role;
 

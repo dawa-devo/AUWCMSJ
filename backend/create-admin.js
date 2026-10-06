@@ -8,7 +8,6 @@ const MONGO_URI =
 const userSchema = new mongoose.Schema({
     studentId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    email: String,
     password: { type: String, required: true },
     role: {
         type: String,
@@ -19,8 +18,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["pending", "active", "blocked"],
         default: "pending"
-    },
-    emailVerified: { type: Boolean, default: true }
+    }
 });
 
 const User = mongoose.model("User", userSchema);
@@ -44,7 +42,6 @@ async function createAdmin() {
             existingAdmin.password = hashedPassword;
             existingAdmin.role = "admin";
             existingAdmin.status = "active";
-            existingAdmin.emailVerified = true;
 
             await existingAdmin.save();
             console.log("Existing account updated to ADMIN");
@@ -52,11 +49,9 @@ async function createAdmin() {
             await User.create({
                 studentId: adminId,
                 name: "System Administrator",
-                email: "admin@auwcmsj.com",
                 password: hashedPassword,
                 role: "admin",
-                status: "active",
-                emailVerified: true
+                status: "active"
             });
 
             console.log("New ADMIN account created");

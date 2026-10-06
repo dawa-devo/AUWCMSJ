@@ -38,8 +38,7 @@ function createAuth(User) {
                 userId: String(user._id),
                 studentId: user.studentId,
                 role: user.role,
-                status: user.status,
-                emailVerified: Boolean(user.emailVerified)
+                status: user.status
             };
             next();
         } catch (err) {
@@ -72,10 +71,6 @@ function createAuth(User) {
             return res.status(403).json({ message: 'Account is not activated yet. Wait for admin verification.' });
         }
 
-        const requireEmail = String(process.env.REQUIRE_EMAIL_VERIFICATION || '').toLowerCase() === 'true';
-        if (requireEmail && req.user.role !== 'admin' && !req.user.emailVerified) {
-            return res.status(403).json({ message: 'Please verify your email before using this feature.' });
-        }
         next();
     }
 

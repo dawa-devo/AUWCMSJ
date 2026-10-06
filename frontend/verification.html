@@ -202,13 +202,11 @@
 
         <div class="success-icon animate-spin-slow">🕒</div>
 
-        <div id="verify-status" class="info-text" style="display:none; margin-bottom: 12px;"></div>
         <div class="info-text">
             Your Jema'a application has been submitted successfully and is currently under review by our Admin team.
             This process typically takes up to <b>24 hours</b>.
             <br><br>
-            Please note: Full access to the student dashboard and features will be unlocked after admin activation.
-            If you received a verification email, open that link to confirm your email address.
+            Full access to the student dashboard and features will be unlocked after admin approval.
         </div>
 
         <div class="footer-links">
@@ -219,22 +217,7 @@
     </div>
 
     <script>
-        async function fetchWithApiFallback(path, options) {
-            const host = window.location.hostname;
-            const candidates = ['https://auwcmsj-backend.onrender.com'];
-
-            let lastError = null;
-            for (const base of candidates) {
-                try {
-                    return await fetch(`${base}${path}`, options);
-                } catch (err) {
-                    lastError = err;
-                }
-            }
-            throw lastError || new Error('Server connection failed.');
-        }
-
-        document.addEventListener("DOMContentLoaded", async function () {
+        document.addEventListener("DOMContentLoaded", function () {
             const savedName = localStorage.getItem("fullName") || localStorage.getItem("tempFullName");
 
             if (savedName && savedName.trim() !== "") {
@@ -243,35 +226,6 @@
                 document.getElementById("student-name").textContent = "User";
             }
 
-            const params = new URLSearchParams(window.location.search);
-            const token = (params.get('token') || '').trim();
-            if (!token) return;
-
-            const statusEl = document.getElementById('verify-status');
-            statusEl.style.display = 'block';
-            statusEl.textContent = 'Checking verification token...';
-
-            try {
-                const res = await fetchWithApiFallback('/api/verify-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (res.ok) {
-                    statusEl.style.background = '#ecfdf5';
-                    statusEl.style.color = '#065f46';
-                    statusEl.textContent = data.message || 'Email verified successfully.';
-                } else {
-                    statusEl.style.background = '#fef2f2';
-                    statusEl.style.color = '#991b1b';
-                    statusEl.textContent = data.message || 'Verification failed.';
-                }
-            } catch (err) {
-                statusEl.style.background = '#fef2f2';
-                statusEl.style.color = '#991b1b';
-                statusEl.textContent = 'Could not reach the server to verify this token.';
-            }
         });
 
         // Logout function

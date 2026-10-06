@@ -205,11 +205,6 @@
                 </div>
 
                 <div class="form-row">
-                    <label>Email Address</label>
-                    <input id="email" type="email" class="input-field" placeholder="example@gmail.com" required>
-                </div>
-
-                <div class="form-row">
                     <label>University ID</label>
                     <input id="universityId" type="text" class="input-field" placeholder="AU/123/15" required>
                 </div>
@@ -269,7 +264,6 @@
 
             const data = {
                 fullName: document.getElementById('fullName').value.trim(),
-                email: document.getElementById('email').value.trim(),
                 universityId: document.getElementById('universityId').value.trim(),
                 department: document.getElementById('department').value.trim(),
                 year: document.getElementById('yearOfEntry').value.trim(),
@@ -279,8 +273,8 @@
             };
 
             // --- VALIDATION: Bakka duwwaa to'achuu ---
-            if (!data.fullName || !data.email || !data.universityId || !data.phone) {
-                alert("Maaloo, ragaalee barbaachisoo (Maqaa, Email, ID fi Bilbila) guuti!");
+            if (!data.fullName || !data.universityId || !data.department || !data.year || !data.gender || !data.phone) {
+                alert("Error: Full name, university ID, department, year of entry, gender, and phone are required.");
                 return;
             }
 
@@ -304,7 +298,8 @@
                     window.location.href = 'fcontact.html';
                 } else {
                     const errorData = await response.json();
-                    alert("Error: " + (errorData.message || "Ragaan hin kuusamne"));
+                    const errorMessage = errorData.message || "Ragaan hin kuusamne";
+                    alert(errorMessage.startsWith('Error:') ? errorMessage : `Error: ${errorMessage}`);
                     nextBtn.disabled = false;
                     nextBtn.innerText = "Next";
                 }

@@ -618,10 +618,71 @@
         }
 
         .profile-circle {
-            width: 30px;
-            height: 30px;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
+            object-fit: cover;
+            z-index: 2;
+        }
+
+        .profile-avatar-button {
+            position: relative;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            overflow: hidden;
             border: 1px solid white;
+            border-radius: 50%;
+            background: #e8f5e9;
+            cursor: pointer;
+        }
+
+        .profile-avatar-button:focus-visible {
+            outline: 3px solid #facc15;
+            outline-offset: 2px;
+        }
+
+        .profile-avatar-fallback {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .profile-avatar-edit {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            z-index: 3;
+            display: grid;
+            width: 15px;
+            height: 15px;
+            place-items: center;
+            border-radius: 50%;
+            background: #1b5e20;
+            color: white;
+            font-size: 8px;
+        }
+
+        .profile-image-input {
+            display: none;
+        }
+
+        .profile-upload-status {
+            min-height: 0;
+            color: white;
+            font-size: 11px;
+        }
+
+        .profile-upload-status:empty {
+            display: none;
+        }
+
+        .profile-upload-status[data-state="error"] {
+            color: #fecaca;
         }
 
         .profile-name {
@@ -718,70 +779,6 @@
         /* Gaafa 'active' ta'u akka banamu */
         .file-list-container.show {
             display: block;
-        }
-
-        .account-panel {
-            background: hsl(207, 15%, 88%);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .account-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
-        .account-card {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 14px;
-            padding: 18px;
-        }
-
-        .account-card h3 {
-            color: #1b5e20;
-            margin-bottom: 12px;
-        }
-
-        .account-input {
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
-        }
-
-        .account-input:focus {
-            border-color: #1b5e20;
-        }
-
-        .profile-preview {
-            width: 88px;
-            height: 88px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #1b5e20;
-            display: block;
-            margin-bottom: 12px;
-        }
-
-        .account-btn {
-            width: 100%;
-            padding: 11px 12px;
-            border: none;
-            border-radius: 8px;
-            background: #1b5e20;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .account-msg {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #475569;
         }
 
         .library-header {
@@ -966,29 +963,59 @@
 
         @media (max-width: 768px) {
             html {
-                scroll-padding-top: 110px;
+                scroll-padding-top: 24px;
             }
 
             .top-nav {
+                position: relative;
+                display: grid;
+                grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+                grid-template-areas:
+                    "top top"
+                    "profile ayah";
+                align-items: center;
+                justify-content: stretch;
+                gap: 8px;
+                width: 100%;
                 height: auto;
-                min-height: 220px;
-                padding-bottom: 16px;
+                min-height: 0;
+                padding: 12px;
+                text-align: left;
             }
 
             .header-top-row {
+                grid-area: top;
                 position: relative;
                 top: auto;
-                padding: 12px 12px 0;
-                justify-content: flex-start;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: center;
+                width: 100%;
+                padding: 0;
+            }
+
+            .logo-menu-container {
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
+                flex: initial;
+            }
+
+            .header-logo {
+                min-width: 0;
+                gap: 7px;
             }
 
             .header-logo h3 {
                 font-size: 1rem;
+                line-height: 1.2;
+                white-space: nowrap;
             }
 
             #adminReturnBtn {
+                grid-column: 1 / -1;
                 width: 100%;
-                flex-basis: 100%;
+                min-width: 0;
             }
 
             #adminReturnBtn button {
@@ -999,44 +1026,79 @@
             .logopic {
                 width: 42px;
                 height: 42px;
+                flex: 0 0 42px;
             }
 
             .menu-icon {
                 font-size: 20px;
+                padding: 6px;
             }
 
             .ayah-content {
-                margin-top: 8px;
-                padding: 14px 12px;
-                border-radius: 12px;
+                grid-area: ayah;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                margin: 0;
+                padding: 4px;
+                border-radius: 0;
+                box-shadow: none;
+                animation: none;
             }
 
             .ayah-content h2 {
-                font-size: 1.25rem;
-                line-height: 1.4;
+                font-size: 1rem;
+                line-height: 1.3;
+            }
+
+            .ayah-content h2,
+            .ayah-content p {
+                opacity: 1;
+                animation: none;
             }
 
             .logo-ayah {
-                font-size: 0.82rem;
-                line-height: 1.5;
+                font-size: 0.68rem;
+                line-height: 1.3;
             }
 
             .user-profile-wrapper {
+                grid-area: profile;
                 position: static;
-                margin-top: 12px;
+                align-items: flex-start;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                margin: 0;
+                gap: 6px;
             }
 
             .profile-main {
-                padding: 5px 10px;
+                max-width: 100%;
+                gap: 6px;
+                padding: 3px 7px;
+            }
+
+            .profile-name {
+                max-width: 88px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 0.78rem;
+            }
+
+            .translator-widget {
+                width: 100%;
+                max-width: 170px;
             }
 
             .main-content {
-                padding: 248px 14px 24px;
+                padding: 24px 14px;
             }
 
             .section {
                 margin-bottom: 40px;
-                scroll-margin-top: 100px;
+                scroll-margin-top: 24px;
             }
 
             .section-header {
@@ -1048,7 +1110,6 @@
             }
 
             .grid-cards,
-            .account-grid,
             .footer-grid {
                 grid-template-columns: 1fr;
                 gap: 16px;
@@ -1056,8 +1117,7 @@
 
             .card,
             .prayer-container,
-            .stats-container,
-            .account-panel {
+            .stats-container {
                 padding: 18px 14px;
                 border-radius: 16px;
             }
@@ -1105,28 +1165,28 @@
 
         @media (max-width: 480px) {
             html {
-                scroll-padding-top: 96px;
+                scroll-padding-top: 16px;
             }
 
             .top-nav {
-                min-height: 240px;
+                gap: 6px;
+                padding: 10px;
             }
 
             .sidebar {
                 width: 82vw;
                 left: -82vw;
-                padding: 170px 16px 20px;
+                padding: 24px 16px 20px;
             }
 
             .main-content {
-                padding: 268px 10px 18px;
+                padding: 20px 10px 18px;
             }
 
             .header-logo h3 {
                 font-size: 0.95rem;
                 line-height: 1.25;
-                max-width: 52vw;
-                word-break: break-word;
+                max-width: none;
             }
 
             .translator-widget {
@@ -1134,11 +1194,38 @@
             }
 
             .user-profile-wrapper {
-                align-items: stretch;
-                width: 100%;
-                max-width: 280px;
-                margin-left: auto;
-                margin-right: auto;
+                align-items: flex-start;
+                max-width: none;
+            }
+
+            .profile-avatar-button {
+                flex-basis: 32px;
+                width: 32px;
+                height: 32px;
+            }
+
+            .profile-main {
+                padding: 3px 5px;
+            }
+
+            .profile-name {
+                max-width: 72px;
+            }
+
+            .profile-upload-status {
+                font-size: 10px;
+            }
+
+            .translator-widget {
+                padding: 4px 6px;
+            }
+
+            .translator-widget .translator-label {
+                margin-bottom: 2px;
+            }
+
+            .translator-widget .translator-select {
+                padding: 4px;
             }
 
             .section-header {
@@ -1175,11 +1262,9 @@
             }
 
             .logout-small-btn,
-            .account-btn,
             #submitBtn,
             #levelSelect,
-            #progressDetail,
-            .account-input {
+            #progressDetail {
                 font-size: 16px;
             }
 
@@ -1227,9 +1312,21 @@
         </div>
         <div class="user-profile-wrapper">
             <div class="profile-main">
-                <img src="profile.png" alt="Profile" class="profile-circle" id="headerProfilePic">
+                <button type="button" class="profile-avatar-button" id="profileAvatarButton"
+                    aria-label="Change profile picture" title="Change profile picture">
+                    <svg class="profile-avatar-fallback" viewBox="0 0 64 64" aria-hidden="true">
+                        <rect width="64" height="64" rx="32" fill="#e8f5e9"></rect>
+                        <circle cx="32" cy="23" r="12" fill="#1b5e20"></circle>
+                        <path d="M9 59c2-13 10-20 23-20s21 7 23 20" fill="#1b5e20"></path>
+                    </svg>
+                    <img alt="" class="profile-circle" id="headerProfilePic" hidden>
+                    <span class="profile-avatar-edit" aria-hidden="true"><i class="fas fa-camera"></i></span>
+                </button>
+                <input type="file" id="profileImageInput" class="profile-image-input"
+                    accept="image/png,image/jpeg,image/webp" aria-label="Choose profile picture">
                 <span class="profile-name">dawe</span>
             </div>
+            <p id="profileUploadStatus" class="profile-upload-status" role="status" aria-live="polite"></p>
 
             <button id="logoutBtn" class="logout-small-btn">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -1261,10 +1358,6 @@
                         Roadmap</span></a></li>
             <li><a href="#messages" onclick="toggleSidebar()"><i class="fas fa-envelope"></i> <span>Messages</span></a>
             </li>
-            <li><a href="#account" onclick="toggleSidebar()"><i class="fas fa-user-cog"></i> <span>My Account</span></a>
-            </li>
-            <li><a href="#settings" onclick="openUserSettingsSection(); toggleSidebar();"><i class="fas fa-gear"></i>
-                    <span>Settings</span></a></li>
             <li><a href="#contact" onclick="toggleSidebar()"><i class="fas fa-envelope"></i> <span>Contact</span></a>
             </li>
         </ul>
@@ -1457,179 +1550,14 @@
             </div>
         </section>
 
-        <section id="settings" class="section">
-            <div class="section-header">
-                <h1>Settings</h1>
-            </div>
-            <div class="settings-panel">
-                <div class="settings-card">
-                    <h3>My Profile</h3>
-                    <div class="settings-row">
-                        <div>
-                            <label for="settingsFullName">Full Name</label>
-                            <input id="settingsFullName" type="text" placeholder="Full name">
-                        </div>
-                        <div>
-                            <label for="settingsEmail">Email</label>
-                            <input id="settingsEmail" type="email" placeholder="Email address">
-                        </div>
-                        <div>
-                            <label for="settingsPhone">Phone Number</label>
-                            <input id="settingsPhone" type="tel" placeholder="Phone number">
-                        </div>
-                        <div>
-                            <label for="settingsStudentId">Student ID</label>
-                            <input id="settingsStudentId" type="text" readonly>
-                        </div>
-                        <div>
-                            <label for="settingsDepartment">Department</label>
-                            <input id="settingsDepartment" type="text" placeholder="Department">
-                        </div>
-                        <div>
-                            <label for="settingsYearOfEntry">Year of Entry</label>
-                            <input id="settingsYearOfEntry" type="text" placeholder="Year of entry">
-                        </div>
-                    </div>
-                    <div>
-                        <label for="settingsProfileImage">Profile Image URL</label>
-                        <input id="settingsProfileImage" type="text" placeholder="Profile image URL or data URL">
-                    </div>
-                    <div class="settings-actions">
-                        <button class="account-btn" onclick="saveUserProfileSettings()">Save Profile Changes</button>
-                    </div>
-                    <div id="settingsProfileStatus" class="settings-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Change Password</h3>
-                    <div class="password-wrap">
-                        <label for="settingsCurrentPassword">Current Password</label>
-                        <input id="settingsCurrentPassword" type="password" placeholder="Current password">
-                        <button class="toggle-password" type="button"
-                            onclick="toggleUserPasswordVisibility('settingsCurrentPassword')">Show</button>
-                    </div>
-                    <div class="password-wrap">
-                        <label for="settingsNewPassword">New Password</label>
-                        <input id="settingsNewPassword" type="password" placeholder="New password">
-                        <button class="toggle-password" type="button"
-                            onclick="toggleUserPasswordVisibility('settingsNewPassword')">Show</button>
-                    </div>
-                    <div class="password-wrap">
-                        <label for="settingsConfirmPassword">Confirm New Password</label>
-                        <input id="settingsConfirmPassword" type="password" placeholder="Confirm new password">
-                        <button class="toggle-password" type="button"
-                            onclick="toggleUserPasswordVisibility('settingsConfirmPassword')">Show</button>
-                    </div>
-                    <div class="strength-bar">
-                        <div class="strength-fill" id="userSettingsStrengthBar"></div>
-                    </div>
-                    <div class="settings-actions">
-                        <button class="account-btn" onclick="saveUserPasswordSettings()">Change Password</button>
-                    </div>
-                    <div id="settingsPasswordStatus" class="settings-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Notification Settings</h3>
-                    <div class="toggle-row"><span>Email Notifications</span><input id="prefEmailNotifications"
-                            type="checkbox"></div>
-                    <div class="toggle-row"><span>New Event Notifications</span><input id="prefEventNotifications"
-                            type="checkbox"></div>
-                    <div class="toggle-row"><span>New Resource Notifications</span><input id="prefResourceNotifications"
-                            type="checkbox"></div>
-                    <div class="toggle-row"><span>Account Notifications</span><input id="prefAccountNotifications"
-                            type="checkbox"></div>
-                    <div class="toggle-row"><span>Important System Notifications</span><input
-                            id="prefSystemNotifications" type="checkbox"></div>
-                    <div class="settings-actions">
-                        <button class="account-btn" onclick="saveUserNotificationSettings()">Save Notifications</button>
-                    </div>
-                    <div id="settingsNotificationStatus" class="settings-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Appearance</h3>
-                    <div class="toggle-row"><span>Light Mode</span><input id="themeLightMode" type="radio"
-                            name="themeChoice" value="light"></div>
-                    <div class="toggle-row"><span>Dark Mode</span><input id="themeDarkMode" type="radio"
-                            name="themeChoice" value="dark"></div>
-                    <div class="toggle-row"><span>Compact Sidebar</span><input id="compactSidebarToggle"
-                            type="checkbox"></div>
-                    <div class="settings-actions">
-                        <button class="account-btn" onclick="saveUserAppearanceSettings()">Apply Appearance</button>
-                    </div>
-                    <div id="settingsAppearanceStatus" class="settings-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Language</h3>
-                    <label for="settingsLanguage">Preferred Language</label>
-                    <select id="settingsLanguage">
-                        <option value="en">English</option>
-                        <option value="om">Afaan Oromoo</option>
-                    </select>
-                    <div class="settings-actions">
-                        <button class="account-btn" onclick="saveUserLanguageSettings()">Save Language</button>
-                    </div>
-                    <div id="settingsLanguageStatus" class="settings-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Account Information</h3>
-                    <ul class="system-info-list">
-                        <li><span>Account status</span><strong id="settingsAccountStatus">Active</strong></li>
-                        <li><span>Student ID</span><strong id="settingsInfoStudentId">-</strong></li>
-                        <li><span>Role</span><strong id="settingsInfoRole">Student</strong></li>
-                        <li><span>Registration date</span><strong id="settingsInfoDate">-</strong></li>
-                        <li><span>Email verification</span><strong id="settingsInfoEmailVerified">No</strong></li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section id="account" class="section">
-            <div class="section-header">
-                <h1>My Account</h1>
-            </div>
-            <div class="account-panel">
-                <div class="account-grid">
-                    <div class="account-card">
-                        <h3>Upload Profile Photo</h3>
-                        <img src="profile.png" alt="Profile Preview" class="profile-preview" id="profilePreview">
-                        <input type="file" id="profileUploadInput" accept="image/*" class="account-input">
-                        <button class="account-btn" onclick="uploadProfilePhoto()" id="profileUploadBtn">Upload
-                            Photo</button>
-                        <p id="profileMsg" class="account-msg"></p>
-                    </div>
-                    <div class="account-card">
-                        <h3>Change Password</h3>
-                        <input type="password" id="currentPassword" class="account-input"
-                            placeholder="Current password">
-                        <input type="password" id="newPassword" class="account-input" placeholder="New password">
-                        <input type="password" id="confirmPassword" class="account-input"
-                            placeholder="Confirm new password">
-                        <button class="account-btn" onclick="changeMyPassword()" id="changePasswordBtn">Change
-                            Password</button>
-                        <p id="passwordMsg" class="account-msg"></p>
-                    </div>
-                    <div class="account-card" style="border: 2px solid #f59e0b; background: #fef3c7;">
-                        <h3 style="color: #d97706;">Delete Profile Photo</h3>
-                        <p style="color: #92400e; margin-bottom: 15px; font-size: 0.9rem;">Remove your current profile
-                            photo and revert to default.</p>
-                        <button class="account-btn" onclick="deleteProfilePhoto()" id="deletePhotoBtn"
-                            style="background: #f59e0b; color: white;">Delete Profile Photo</button>
-                        <p id="deletePhotoMsg" class="account-msg"></p>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <footer class="main-footer" id="contact">
         <div class="footer-grid">
             <div class="footer-col">
                 <h4>AUWCMSJ</h4>
-                <p>Ambo University Woliso Campus Muslim Students Jema'aa. Building a strong community through faith and
+                <p>Ambo University Woliso Campus Muslim Students Jema'aa. Building a strong community through faith
+                    and
                     knowledge.</p>
                 <div class="social-links">
                     <a href="https://t.me/waliso235" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
@@ -1726,240 +1654,6 @@
             }
         }
 
-        function setSettingsMessage(elementId, message, type = 'success') {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-            el.textContent = message || '';
-            el.className = 'settings-status';
-            if (type === 'error') el.classList.add('error');
-            if (type === 'success') el.classList.add('success');
-        }
-
-        function updateUserSettingsStrength(password) {
-            const bar = document.getElementById('userSettingsStrengthBar');
-            if (!bar) return;
-            let score = 0;
-            if (password.length >= 8) score += 35;
-            if (/[A-Za-z]/.test(password)) score += 30;
-            if (/\d/.test(password)) score += 25;
-            if (/[^A-Za-z0-9]/.test(password)) score += 10;
-            const width = Math.min(score, 100);
-            bar.style.width = `${width}%`;
-            bar.style.background = width < 50 ? '#ef4444' : width < 80 ? '#f59e0b' : '#10b981';
-        }
-
-        function toggleUserPasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-            const button = input.parentElement.querySelector('.toggle-password');
-            const nextType = input.type === 'password' ? 'text' : 'password';
-            input.type = nextType;
-            if (button) button.textContent = nextType === 'password' ? 'Show' : 'Hide';
-        }
-
-        function applyThemePreference(isDark) {
-            document.body.classList.toggle('dark-mode', isDark);
-            localStorage.setItem('userThemePreference', isDark ? 'dark' : 'light');
-            const lightRadio = document.getElementById('themeLightMode');
-            const darkRadio = document.getElementById('themeDarkMode');
-            if (lightRadio) lightRadio.checked = !isDark;
-            if (darkRadio) darkRadio.checked = isDark;
-        }
-
-        function openUserSettingsSection() {
-            const settingsSection = document.getElementById('settings');
-            if (settingsSection) {
-                settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            loadUserSettings();
-        }
-
-        async function loadUserSettings() {
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings', {
-                    headers: getAuthHeaders()
-                });
-                const data = await readApiResponse(res, 'Settings load failed.');
-                if (!res.ok) throw new Error(data.message || 'Settings load failed.');
-
-                const settings = data.settings || {};
-                const preferences = settings.preferences || {};
-                document.getElementById('settingsFullName').value = settings.fullName || '';
-                document.getElementById('settingsEmail').value = settings.email || '';
-                document.getElementById('settingsPhone').value = settings.phone || '';
-                document.getElementById('settingsStudentId').value = settings.studentId || '';
-                document.getElementById('settingsDepartment').value = settings.department || '';
-                document.getElementById('settingsYearOfEntry').value = settings.yearOfEntry || '';
-                document.getElementById('settingsProfileImage').value = settings.profileImage || '';
-
-                document.getElementById('prefEmailNotifications').checked = Boolean(preferences.emailNotifications ?? true);
-                document.getElementById('prefEventNotifications').checked = Boolean(preferences.eventNotifications ?? true);
-                document.getElementById('prefResourceNotifications').checked = Boolean(preferences.resourceNotifications ?? true);
-                document.getElementById('prefAccountNotifications').checked = Boolean(preferences.accountNotifications ?? true);
-                document.getElementById('prefSystemNotifications').checked = Boolean(preferences.systemNotifications ?? true);
-                document.getElementById('settingsLanguage').value = ['en', 'om'].includes(String(preferences.language || 'en')) ? String(preferences.language || 'en') : 'en';
-                document.getElementById('compactSidebarToggle').checked = Boolean(preferences.compactSidebar ?? false);
-
-                const darkMode = Boolean(preferences.darkMode ?? false);
-                applyThemePreference(darkMode);
-                document.body.classList.toggle('sidebar-compact', Boolean(preferences.compactSidebar ?? false));
-
-                const statusText = settings.status || 'active';
-                const statusLabel = statusText.charAt(0).toUpperCase() + statusText.slice(1);
-                document.getElementById('settingsAccountStatus').textContent = statusLabel;
-                document.getElementById('settingsInfoStudentId').textContent = settings.studentId || '-';
-                document.getElementById('settingsInfoRole').textContent = settings.role || 'Student';
-                document.getElementById('settingsInfoDate').textContent = settings.registrationDate ? new Date(settings.registrationDate).toLocaleDateString() : '-';
-                document.getElementById('settingsInfoEmailVerified').textContent = settings.emailVerified ? 'Verified' : 'Not verified';
-
-                const currentUserName = settings.fullName || settings.name || 'User';
-                sessionStorage.setItem('userName', currentUserName);
-                localStorage.setItem('currentUser', currentUserName);
-                setUser();
-            } catch (err) {
-                console.error('loadUserSettings failed:', err);
-                setSettingsMessage('settingsProfileStatus', err.message || 'Could not load settings.', 'error');
-            }
-        }
-
-        async function saveUserProfileSettings() {
-            const payload = {
-                fullName: document.getElementById('settingsFullName').value.trim(),
-                email: document.getElementById('settingsEmail').value.trim(),
-                phone: document.getElementById('settingsPhone').value.trim(),
-                department: document.getElementById('settingsDepartment').value.trim(),
-                yearOfEntry: document.getElementById('settingsYearOfEntry').value.trim(),
-                profileImage: document.getElementById('settingsProfileImage').value.trim()
-            };
-
-            if (!payload.fullName) {
-                setSettingsMessage('settingsProfileStatus', 'Full name is required.', 'error');
-                return;
-            }
-
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings/profile', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify(payload)
-                });
-                const data = await readApiResponse(res, 'Profile update failed.');
-                if (!res.ok) throw new Error(data.message || 'Profile update failed.');
-                setSettingsMessage('settingsProfileStatus', data.message || 'Profile updated successfully.', 'success');
-                if (data.settings?.fullName) {
-                    sessionStorage.setItem('userName', data.settings.fullName);
-                    localStorage.setItem('currentUser', data.settings.fullName);
-                    setUser();
-                }
-            } catch (err) {
-                setSettingsMessage('settingsProfileStatus', err.message || 'Profile update failed.', 'error');
-            }
-        }
-
-        async function saveUserPasswordSettings() {
-            const payload = {
-                currentPassword: document.getElementById('settingsCurrentPassword').value,
-                newPassword: document.getElementById('settingsNewPassword').value,
-                confirmPassword: document.getElementById('settingsConfirmPassword').value
-            };
-
-            if (!payload.currentPassword || !payload.newPassword || !payload.confirmPassword) {
-                setSettingsMessage('settingsPasswordStatus', 'Please fill all password fields.', 'error');
-                return;
-            }
-            if (payload.newPassword !== payload.confirmPassword) {
-                setSettingsMessage('settingsPasswordStatus', 'Passwords do not match.', 'error');
-                return;
-            }
-            if (payload.newPassword.length < 8 || !/[A-Za-z]/.test(payload.newPassword) || !/\d/.test(payload.newPassword)) {
-                setSettingsMessage('settingsPasswordStatus', 'Password does not meet security requirements.', 'error');
-                return;
-            }
-
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings/password', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify(payload)
-                });
-                const data = await readApiResponse(res, 'Password change failed.');
-                if (!res.ok) throw new Error(data.message || 'Password change failed.');
-                if (data.token) sessionStorage.setItem('token', data.token);
-                setSettingsMessage('settingsPasswordStatus', data.message || 'Password changed successfully.', 'success');
-                document.getElementById('settingsCurrentPassword').value = '';
-                document.getElementById('settingsNewPassword').value = '';
-                document.getElementById('settingsConfirmPassword').value = '';
-                updateUserSettingsStrength('');
-            } catch (err) {
-                setSettingsMessage('settingsPasswordStatus', err.message || 'Password change failed.', 'error');
-            }
-        }
-
-        async function saveUserNotificationSettings() {
-            const payload = {
-                emailNotifications: document.getElementById('prefEmailNotifications').checked,
-                eventNotifications: document.getElementById('prefEventNotifications').checked,
-                resourceNotifications: document.getElementById('prefResourceNotifications').checked,
-                accountNotifications: document.getElementById('prefAccountNotifications').checked,
-                systemNotifications: document.getElementById('prefSystemNotifications').checked
-            };
-
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings/notifications', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify(payload)
-                });
-                const data = await readApiResponse(res, 'Notification settings failed.');
-                if (!res.ok) throw new Error(data.message || 'Notification settings failed.');
-                setSettingsMessage('settingsNotificationStatus', data.message || 'Notification settings updated successfully.', 'success');
-            } catch (err) {
-                setSettingsMessage('settingsNotificationStatus', err.message || 'Notification settings failed.', 'error');
-            }
-        }
-
-        async function saveUserAppearanceSettings() {
-            const darkMode = document.getElementById('themeDarkMode').checked;
-            const compactSidebar = document.getElementById('compactSidebarToggle').checked;
-
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings/appearance', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ darkMode, compactSidebar })
-                });
-                const data = await readApiResponse(res, 'Appearance settings failed.');
-                if (!res.ok) throw new Error(data.message || 'Appearance settings failed.');
-                applyThemePreference(darkMode);
-                document.body.classList.toggle('sidebar-compact', compactSidebar);
-                setSettingsMessage('settingsAppearanceStatus', data.message || 'Appearance updated successfully.', 'success');
-            } catch (err) {
-                setSettingsMessage('settingsAppearanceStatus', err.message || 'Appearance settings failed.', 'error');
-            }
-        }
-
-        async function saveUserLanguageSettings() {
-            const language = document.getElementById('settingsLanguage').value;
-            try {
-                const res = await fetchWithApiFallback('/api/user/settings/language', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ language })
-                });
-                const data = await readApiResponse(res, 'Language preference failed.');
-                if (!res.ok) throw new Error(data.message || 'Language preference failed.');
-                localStorage.setItem('preferredLanguage', language);
-                if (language === 'om') {
-                    applyOromoStaticTranslations();
-                    setSettingsMessage('settingsLanguageStatus', 'Language saved. Afaan Oromoo will be shown where supported.', 'success');
-                    return;
-                }
-                setSettingsMessage('settingsLanguageStatus', data.message || 'Language preference updated successfully.', 'success');
-            } catch (err) {
-                setSettingsMessage('settingsLanguageStatus', err.message || 'Language preference failed.', 'error');
-            }
-        }
-
         // ===== 1. PAGE LOAD =====
         async function verifyDashboardAccess() {
             const token = sessionStorage.getItem('token') || '';
@@ -2018,19 +1712,7 @@
             fetchPrayerTimes();
             setupLibraryCards();
             loadMyProfile();
-            loadUserSettings();
             loadMessages();
-
-            const savedUserTheme = localStorage.getItem('userThemePreference') || 'light';
-            applyThemePreference(savedUserTheme === 'dark');
-            const savedUserLanguage = localStorage.getItem('preferredLanguage') || 'en';
-            const languageSelect = document.getElementById('settingsLanguage');
-            if (languageSelect) languageSelect.value = ['en', 'om'].includes(savedUserLanguage) ? savedUserLanguage : 'en';
-
-            const strengthInput = document.getElementById('settingsNewPassword');
-            if (strengthInput) {
-                strengthInput.addEventListener('input', (event) => updateUserSettingsStrength(event.target.value));
-            }
 
             // Sidebar close when click main
             const main = document.querySelector('.main-content');
@@ -2044,6 +1726,16 @@
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', logout);
+            }
+
+            const profileAvatarButton = document.getElementById('profileAvatarButton');
+            const profileImageInput = document.getElementById('profileImageInput');
+            if (profileAvatarButton && profileImageInput) {
+                profileAvatarButton.addEventListener('click', () => profileImageInput.click());
+                profileImageInput.addEventListener('change', (event) => {
+                    const file = event.target.files?.[0];
+                    if (file) uploadProfilePhoto(file);
+                });
             }
         });
 
@@ -2059,12 +1751,74 @@
             const el = document.querySelector('.profile-name');
             if (el) el.innerText = currentUser;
 
-            const savedProfilePic = localStorage.getItem('currentProfilePic') || 'profile.png';
+            const savedProfilePic = localStorage.getItem('currentProfilePic') || '';
             const headerProfilePic = document.getElementById('headerProfilePic');
-            const profilePreview = document.getElementById('profilePreview');
 
-            if (headerProfilePic) headerProfilePic.src = savedProfilePic;
-            if (profilePreview) profilePreview.src = savedProfilePic;
+            if (headerProfilePic) {
+                if (!savedProfilePic) {
+                    headerProfilePic.hidden = true;
+                    return;
+                }
+                headerProfilePic.hidden = false;
+                headerProfilePic.onerror = () => {
+                    headerProfilePic.hidden = true;
+                };
+                headerProfilePic.src = savedProfilePic;
+            }
+        }
+
+        function readImageFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('The selected image could not be read.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function uploadProfilePhoto(file) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            const maxFileSize = 550 * 1024;
+            const fileInput = document.getElementById('profileImageInput');
+            const uploadButton = document.getElementById('profileAvatarButton');
+            const status = document.getElementById('profileUploadStatus');
+
+            if (!allowedTypes.includes(file.type)) {
+                status.dataset.state = 'error';
+                status.textContent = 'Choose a PNG, JPEG, or WebP image.';
+                fileInput.value = '';
+                return;
+            }
+            if (file.size > maxFileSize) {
+                status.dataset.state = 'error';
+                status.textContent = 'Image must be 550 KB or smaller.';
+                fileInput.value = '';
+                return;
+            }
+
+            uploadButton.disabled = true;
+            status.dataset.state = '';
+            status.textContent = 'Uploading photo...';
+            try {
+                const profilePic = await readImageFile(file);
+                const response = await fetchWithApiFallback('/api/user/profile-photo', {
+                    method: 'PUT',
+                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ profilePic })
+                });
+                const result = await readApiResponse(response, 'Profile photo upload failed.');
+                if (!response.ok) throw new Error(result.message || 'Profile photo upload failed.');
+
+                localStorage.setItem('currentProfilePic', result.profilePic || profilePic);
+                setUser();
+                status.textContent = result.message || 'Profile photo updated.';
+            } catch (error) {
+                status.dataset.state = 'error';
+                status.textContent = error.message || 'Profile photo upload failed.';
+            } finally {
+                uploadButton.disabled = false;
+                fileInput.value = '';
+            }
         }
 
 
@@ -2193,115 +1947,21 @@
                 });
                 const user = await readApiResponse(res, 'Profile load failed.');
                 if (!res.ok) throw new Error(user.message || 'Profile load failed.');
-                const profilePic = user.profilePic || localStorage.getItem('currentProfilePic') || 'profile.png';
+                const profilePic = user.profilePic || localStorage.getItem('currentProfilePic') || '';
 
                 sessionStorage.setItem('userName', user.name || sessionStorage.getItem('userName') || 'User');
                 sessionStorage.setItem('studentId', user.studentId || sessionStorage.getItem('studentId') || '');
                 localStorage.setItem('currentUser', user.name || 'User');
-                localStorage.setItem('currentProfilePic', profilePic);
+                if (profilePic) {
+                    localStorage.setItem('currentProfilePic', profilePic);
+                } else {
+                    localStorage.removeItem('currentProfilePic');
+                }
                 setUser();
             } catch (err) {
                 console.log(err);
             }
         }
-
-        async function uploadProfilePhoto() {
-            const input = document.getElementById('profileUploadInput');
-            const msg = document.getElementById('profileMsg');
-            const button = document.getElementById('profileUploadBtn');
-            const file = input?.files?.[0];
-
-            if (!file) {
-                msg.style.color = 'red';
-                msg.innerText = 'Please choose an image first.';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    button.disabled = true;
-                    button.innerText = 'Uploading...';
-
-                    const profilePic = String(reader.result || '');
-                    const res = await fetchWithApiFallback('/api/user/profile-photo', {
-                        method: 'PUT',
-                        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                        body: JSON.stringify({ profilePic })
-                    });
-                    const data = await readApiResponse(res, 'Profile upload failed.');
-
-                    if (!res.ok) throw new Error(data.message || 'Profile upload failed.');
-
-                    localStorage.setItem('currentProfilePic', data.profilePic || profilePic);
-                    setUser();
-                    msg.style.color = 'green';
-                    msg.innerText = data.message || 'Profile photo updated.';
-                    input.value = '';
-                } catch (err) {
-                    msg.style.color = 'red';
-                    msg.innerText = err.message || 'Profile upload failed.';
-                } finally {
-                    button.disabled = false;
-                    button.innerText = 'Upload Photo';
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function changeMyPassword() {
-            const currentPassword = document.getElementById('currentPassword').value.trim();
-            const newPassword = document.getElementById('newPassword').value.trim();
-            const confirmPassword = document.getElementById('confirmPassword').value.trim();
-            const msg = document.getElementById('passwordMsg');
-            const button = document.getElementById('changePasswordBtn');
-
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                msg.style.color = 'red';
-                msg.innerText = 'Please fill all password fields.';
-                return;
-            }
-
-            if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
-                msg.style.color = 'red';
-                msg.innerText = 'New password must be at least 8 characters and include a letter and a number.';
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                msg.style.color = 'red';
-                msg.innerText = 'New password and confirm password do not match.';
-                return;
-            }
-
-            try {
-                button.disabled = true;
-                button.innerText = 'Saving...';
-
-                const res = await fetchWithApiFallback('/api/user/change-password', {
-                    method: 'PUT',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ currentPassword, newPassword })
-                });
-                const data = await readApiResponse(res, 'Password change failed.');
-
-                if (!res.ok) throw new Error(data.message || 'Password change failed.');
-                if (data.token) sessionStorage.setItem('token', data.token);
-
-                msg.style.color = 'green';
-                msg.innerText = data.message || 'Password changed successfully.';
-                document.getElementById('currentPassword').value = '';
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-            } catch (err) {
-                msg.style.color = 'red';
-                msg.innerText = err.message || 'Password change failed.';
-            } finally {
-                button.disabled = false;
-                button.innerText = 'Change Password';
-            }
-        }
-
 
         // ===== 5. PROGRESS =====
         async function submitToAdmin() {
@@ -2584,7 +2244,6 @@
                 ['.sidebar a[href="#stats"] span', 'Statistics', 'Istaatistiksii'],
                 ['.sidebar a[href="#roadmap"] span', 'Qirath Roadmap', 'Karoora Qiraa\'aa'],
                 ['.sidebar a[href="#messages"] span', 'Messages', 'Ergaa'],
-                ['.sidebar a[href="#account"] span', 'My Account', 'Akkaawuntii Koo'],
                 ['.sidebar a[href="#contact"] span', 'Contact', 'Nu Quunnamaa'],
                 ['#about .section-header h1', 'About AUWCMSJ', 'Waa\'ee AUWCMSJ'],
                 ['#prayer .section-header h1', 'Prayer Times', 'Yeroo Salaata'],
@@ -2592,17 +2251,10 @@
                 ['#stats .section-header h1', "Jema'aa Statistics", "Istaatistiksii Jema'aa"],
                 ['#roadmap .section-header h1', 'Qirath Progress Update', 'Fooyya\'insa Qiraa\'aa'],
                 ['#messages .section-header h1', 'Messages', 'Ergaa'],
-                ['#account .section-header h1', 'My Account', 'Akkaawuntii Koo'],
                 ['#roadmap h3', 'Submit Your Progress', 'Fooyya\'insa Kee Ergi'],
                 ['#roadmap label', 'Select Level:', 'Sadarkaa Filadhu:'],
                 ['#submitBtn', 'Send to Admin', 'Geggeessaa Ergi'],
                 ['#messages #messageList p', 'Loading messages...', 'Ergaan fe\'amaa jira...'],
-                ['#account h3', 'Upload Profile Photo', 'Suuraa Piroofaayilii Olkaa\'i'],
-                ['#profileUploadBtn', 'Upload Photo', 'Suuraa Olkaa\'i'],
-                ['#account h3', 'Change Password', 'Jecha Iccitii Jijjiiri'],
-                ['#changePasswordBtn', 'Change Password', 'Jecha Iccitii Jijjiiri'],
-                ['#account h3', 'Delete Profile Photo', 'Suuraa Piroofaayilii Haqi'],
-                ['#deletePhotoBtn', 'Delete Profile Photo', 'Suuraa Piroofaayilii Haqi'],
                 ['.footer-col a[href="#prayer"]', 'Prayer Times', 'Yeroo Salaata'],
                 ['.footer-col a[href="#library"]', 'Digital Library', 'Mana Kitaabaa Dijitaalaa'],
                 ['.footer-col a[href="#stats"]', 'Statistics', 'Istaatistiksii'],
@@ -2679,54 +2331,6 @@
             script.async = true;
             document.head.appendChild(script);
         })();
-
-        // ===== 11. DELETE PROFILE PHOTO =====
-        async function deleteProfilePhoto() {
-            const msg = document.getElementById('deletePhotoMsg');
-            const button = document.getElementById('deletePhotoBtn');
-
-            if (!confirm("Are you sure you want to delete your profile photo? This will revert to the default photo.")) {
-                return;
-            }
-
-            try {
-                button.disabled = true;
-                button.innerText = 'Deleting...';
-                msg.style.color = '#92400e';
-                msg.innerText = 'Deleting profile photo...';
-
-                const res = await fetchWithApiFallback('/api/user/delete-profile-photo', {
-                    method: 'POST',
-                    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({})
-                });
-
-                const data = await readApiResponse(res, 'Failed to delete profile photo.');
-                if (!res.ok) {
-                    throw new Error(data.message || 'Failed to delete profile photo');
-                }
-
-                // Update local storage and UI
-                localStorage.removeItem('currentProfilePic');
-
-                // Update profile preview to default
-                document.getElementById('profilePreview').src = 'profile.png';
-
-                msg.style.color = 'green';
-                msg.innerText = 'Profile photo deleted successfully!';
-
-                // Update user display
-                setUser();
-
-            } catch (err) {
-                console.error('Profile photo deletion error:', err);
-                msg.style.color = 'red';
-                msg.innerText = err.message || 'Failed to delete profile photo. Please try again.';
-            } finally {
-                button.disabled = false;
-                button.innerText = 'Delete Profile Photo';
-            }
-        }
 
         // ===== 10. LOGOUT =====
         function logout(e) {

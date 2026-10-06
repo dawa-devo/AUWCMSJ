@@ -1,17 +1,11 @@
 const crypto = require('crypto');
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 function createRawToken(bytes = 32) {
     return crypto.randomBytes(bytes).toString('hex');
 }
 
 function hashToken(token) {
     return crypto.createHash('sha256').update(String(token)).digest('hex');
-}
-
-function isValidEmail(email) {
-    return EMAIL_REGEX.test(String(email || '').trim());
 }
 
 function isStrongPassword(password) {
@@ -24,7 +18,6 @@ function sanitizeUser(user) {
     if (!user) return null;
     const plain = typeof user.toObject === 'function' ? user.toObject() : { ...user };
     delete plain.password;
-    delete plain.emailVerifyTokenHash;
     delete plain.registrationTokenHash;
     delete plain.tokenVersion;
     delete plain.__v;
@@ -60,7 +53,6 @@ function sanitizeRequest(req, _res, next) {
 module.exports = {
     createRawToken,
     hashToken,
-    isValidEmail,
     isStrongPassword,
     sanitizeUser,
     escapeRegex,

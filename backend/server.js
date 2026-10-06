@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -14,7 +13,6 @@ const { createAuth } = require('./middleware/auth');
 const {
     createRawToken,
     hashToken,
-    isValidEmail,
     isStrongPassword,
     sanitizeUser,
     escapeRegex,
@@ -32,7 +30,6 @@ try {
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
-const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
 const ALLOWED_ROLES = ['student', 'admin', 'teacher'];
 const ALLOWED_STATUS = ['pending', 'active', 'blocked'];
@@ -76,7 +73,11 @@ const registerLimiter = rateLimit({
     message: { message: 'Too many registration attempts. Please try again later.' }
 });
 
-mongoose.connect(process.env.MONGO_URI, { dbName: process.env.MONGO_DB_NAME || 'auwcmsj' })
+mongoose.connect(process.env.MONGO_URI, {
+    dbName: process.env.MONGO_DB_NAME || 'auwcmsj',
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 15000
+})
     .then(() => {
         console.log("MongoDB Connected");
     })
@@ -87,7 +88,6 @@ mongoose.connect(process.env.MONGO_URI, { dbName: process.env.MONGO_DB_NAME || '
 const userSchema = new mongoose.Schema({
     studentId: { type: String, required: true, unique: true, trim: true },
     name: { type: String, required: true, trim: true },
-    email: { type: String, trim: true, lowercase: true },
     gender: { type: String, enum: ['Male', 'Female', ''], default: '' },
     department: { type: String, default: '' },
     yearOfEntry: { type: String, default: '' },
@@ -95,12 +95,10 @@ const userSchema = new mongoose.Schema({
     profilePic: { type: String, default: '' },
     profile: {
         fullName: { type: String, default: '' },
-        email: { type: String, default: '' },
         phone: { type: String, default: '' },
         profileImage: { type: String, default: '' }
     },
     preferences: {
-        emailNotifications: { type: Boolean, default: true },
         registrationNotifications: { type: Boolean, default: true },
         approvalNotifications: { type: Boolean, default: true },
         systemNotifications: { type: Boolean, default: true },
@@ -110,10 +108,6 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ALLOWED_ROLES, default: 'student' },
     status: { type: String, enum: ALLOWED_STATUS, default: 'pending' },
-    emailVerified: { type: Boolean, default: false },
-    emailVerifyTokenHash: { type: String, default: '' },
-    emailVerifyExpires: { type: Date },
-    emailVerifyUsedAt: { type: Date },
     registrationTokenHash: { type: String, default: '' },
     registrationTokenExpires: { type: Date },
     tokenVersion: { type: Number, default: 0 },
@@ -141,13 +135,11 @@ function buildAdminSettingsPayload(user) {
         userId: String(plain._id || ''),
         name: String(plain.name || profile.fullName || '').trim(),
         fullName: String(profile.fullName || plain.name || '').trim(),
-        email: String(plain.email || profile.email || '').trim(),
         phone: String(profile.phone || plain.phone || '').trim(),
         profileImage: String(profile.profileImage || plain.profilePic || '').trim(),
         role: plain.role || 'admin',
         status: plain.status || 'active',
         preferences: {
-            emailNotifications: Boolean(preferences.emailNotifications ?? true),
             registrationNotifications: Boolean(preferences.registrationNotifications ?? true),
             approvalNotifications: Boolean(preferences.approvalNotifications ?? true),
             systemNotifications: Boolean(preferences.systemNotifications ?? true),
@@ -173,7 +165,6 @@ function buildUserSettingsPayload(user) {
         userId: String(plain._id || ''),
         fullName: String(profile.fullName || plain.name || '').trim(),
         name: String(plain.name || profile.fullName || '').trim(),
-        email: String(profile.email || plain.email || '').trim(),
         phone: String(profile.phone || plain.phone || '').trim(),
         studentId: String(plain.studentId || '').trim(),
         department: String(plain.department || '').trim(),
@@ -181,10 +172,8 @@ function buildUserSettingsPayload(user) {
         profileImage: String(profile.profileImage || plain.profilePic || '').trim(),
         role: plain.role || 'student',
         status: plain.status || 'active',
-        emailVerified: Boolean(plain.emailVerified),
         registrationDate: plain.createdAt ? new Date(plain.createdAt).toISOString() : null,
         preferences: {
-            emailNotifications: Boolean(preferences.emailNotifications ?? true),
             eventNotifications: Boolean(preferences.eventNotifications ?? true),
             resourceNotifications: Boolean(preferences.resourceNotifications ?? true),
             accountNotifications: Boolean(preferences.accountNotifications ?? true),
@@ -227,106 +216,6 @@ const resourceSchema = new mongoose.Schema({
 });
 const Resource = mongoose.model('Resource', resourceSchema);
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
-function emailRecipientLabel(email) {
-    const value = String(email || '').trim().toLowerCase();
-    const atIndex = value.lastIndexOf('@');
-    return atIndex > 0 ? `***@${value.slice(atIndex + 1)}` : 'invalid-recipient';
-}
-
-function emailConfigurationStatus() {
-    return {
-        hasUser: Boolean(String(process.env.EMAIL_USER || '').trim()),
-        hasPassword: Boolean(String(process.env.EMAIL_PASS || '').trim())
-    };
-}
-
-function appBaseUrl() {
-    const configuredUrl = String(process.env.PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-    if (!configuredUrl && String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
-        throw new Error('PUBLIC_APP_URL is not configured for production email verification links.');
-    }
-    return configuredUrl || 'http://127.0.0.1:5500';
-}
-
-function verificationLink(token) {
-    return `${appBaseUrl()}/frontend/verification.html?token=${encodeURIComponent(token)}`;
-}
-
-async function sendMail({ to, subject, text }) {
-    const recipient = emailRecipientLabel(to);
-    console.info(`[EMAIL] send started recipient=${recipient}`);
-
-    const config = emailConfigurationStatus();
-    if (!config.hasUser || !config.hasPassword) {
-        const missing = [
-            !config.hasUser ? 'EMAIL_USER' : '',
-            !config.hasPassword ? 'EMAIL_PASS' : ''
-        ].filter(Boolean).join(', ');
-        const error = new Error(`Email configuration is missing: ${missing}.`);
-        console.error(`[EMAIL] send failed recipient=${recipient} reason=${error.message}`);
-        throw error;
-    }
-
-    try {
-        const result = await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to,
-            subject,
-            text
-        });
-        console.info(`[EMAIL] send succeeded recipient=${recipient} messageId=${String(result.messageId || ' unavailable').trim()}`);
-        return result;
-    } catch (err) {
-        const details = [
-            err.code ? `code=${String(err.code)}` : '',
-            err.responseCode ? `responseCode=${String(err.responseCode)}` : '',
-            err.command ? `command=${String(err.command)}` : '',
-            `message=${String(err.message || 'SMTP request failed')}`
-        ].filter(Boolean).join(' ');
-        console.error(`[EMAIL] send failed recipient=${recipient} ${details}`);
-        throw err;
-    }
-}
-
-const emailConfig = emailConfigurationStatus();
-if (!emailConfig.hasUser || !emailConfig.hasPassword) {
-    const missing = [
-        !emailConfig.hasUser ? 'EMAIL_USER' : '',
-        !emailConfig.hasPassword ? 'EMAIL_PASS' : ''
-    ].filter(Boolean).join(', ');
-    console.error(`[EMAIL CONFIG] Missing required environment variable(s): ${missing}.`);
-}
-if (String(process.env.NODE_ENV || '').toLowerCase() === 'production' && !String(process.env.PUBLIC_APP_URL || '').trim()) {
-    console.error('[EMAIL CONFIG] PUBLIC_APP_URL is required in production for verification links.');
-}
-
-const sendPasswordEmail = async (userEmail, generatedPassword, verifyToken) => {
-    const verifyLine = verifyToken
-        ? `\n\nVerify your email (link expires in 24 hours):\n${verificationLink(verifyToken)}`
-        : '';
-    return sendMail({
-        to: userEmail,
-        subject: 'AUWCMSJ Password',
-        text: `Baga nagaan dhufte! Password kee: ${generatedPassword}${verifyLine}`
-    });
-};
-
-async function sendApprovalEmail(userEmail) {
-    return sendMail({
-        to: userEmail,
-        subject: 'AUWCMSJ Account Activated',
-        text: 'Your AUWCMSJ account has been approved by an administrator. You can now log in with your student ID and password.'
-    });
-}
-
 function signUserToken(user) {
     return jwt.sign(
         {
@@ -338,15 +227,6 @@ function signUserToken(user) {
         getJwtSecret(),
         { expiresIn: JWT_EXPIRES_IN }
     );
-}
-
-async function issueEmailVerification(user) {
-    const rawToken = createRawToken(32);
-    user.emailVerifyTokenHash = hashToken(rawToken);
-    user.emailVerifyExpires = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
-    user.emailVerifyUsedAt = undefined;
-    await user.save();
-    return rawToken;
 }
 
 async function assertRegistrationToken(universityId, registrationToken) {
@@ -422,28 +302,21 @@ app.get('/api/resources', authenticate, requireActive, async (req, res) => {
 app.post('/api/register-step1', registerLimiter, async (req, res) => {
     try {
         const universityId = String(req.body.universityId || '').trim();
-        const email = String(req.body.email || '').trim().toLowerCase();
         const fullName = String(req.body.fullName || '').trim();
         const gender = String(req.body.gender || '').trim();
         const department = String(req.body.department || '').trim();
         const yearOfEntry = String(req.body.year || req.body.yearOfEntry || '').trim();
         const phone = String(req.body.phone || '').trim();
 
-        if (!universityId || !fullName || !email || !phone) {
-            return res.status(400).json({ message: 'Full name, email, university ID, and phone are required.' });
+        if (!universityId || !fullName || !phone) {
+            return res.status(400).json({ message: 'Error: Full name, university ID, and phone are required.' });
         }
-        if (universityId.length > 80 || fullName.length > 160 || email.length > 254 || phone.length > 40) {
+        if (universityId.length > 80 || fullName.length > 160 || phone.length > 40) {
             return res.status(400).json({ message: 'One or more registration fields are too long.' });
-        }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ message: 'Please enter a valid email address.' });
         }
 
         const existing = await User.findOne({ studentId: universityId });
         if (existing) return res.status(400).json({ message: 'ID is already registered!' });
-
-        const emailTaken = await User.findOne({ email });
-        if (emailTaken) return res.status(400).json({ message: 'Email is already registered.' });
 
         const registrationToken = createRawToken(24);
         const placeholderPassword = await bcrypt.hash(createRawToken(16), 10);
@@ -451,7 +324,6 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
         const newUser = new User({
             studentId: universityId,
             name: fullName,
-            email,
             gender: gender === 'Male' || gender === 'Female' ? gender : '',
             department,
             yearOfEntry,
@@ -459,7 +331,6 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
             password: placeholderPassword,
             status: 'pending',
             role: 'student',
-            emailVerified: false,
             registrationTokenHash: hashToken(registrationToken),
             registrationTokenExpires: new Date(Date.now() + REGISTRATION_TTL_MS)
         });
@@ -467,25 +338,41 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
         res.status(200).json({ message: 'Step 1 saved!', registrationToken });
     } catch (err) {
         if (err.code === 11000) {
-            return res.status(400).json({ message: 'ID or email is already registered.' });
+            return res.status(400).json({ message: 'ID is already registered.' });
         }
         res.status(500).json({ message: 'Registration could not be saved.' });
     }
 });
 
 app.post('/api/register-step2', registerLimiter, async (req, res) => {
+    console.info('[REGISTER STEP2] Request received');
     try {
         const data = req.body || {};
         if (!data.universityId) {
             return res.status(400).json({ error: 'ID barataa hin argamne. Step 1 irraa deebi\'ii yaali.' });
         }
 
-        const updatedUser = await assertRegistrationToken(data.universityId, data.registrationToken);
-
         const registrationFields = ['eName', 'ePhone', 'eRel', 'fName', 'fPhone', 'fRel'];
         if (registrationFields.some((field) => String(data[field] || '').length > 160)) {
             return res.status(400).json({ error: 'Emergency contact fields are too long.' });
         }
+        if (!data.eName || !data.ePhone || !data.fName || !data.fPhone) {
+            return res.status(400).json({ error: 'Emergency and family contact names and phone numbers are required.' });
+        }
+
+        console.info('[REGISTER STEP2] Registration data validated');
+        const updatedUser = await assertRegistrationToken(data.universityId, data.registrationToken);
+
+        const generatedPassword = cryptoRandomPassword();
+        const hashedPw = await bcrypt.hash(generatedPassword, 12);
+        updatedUser.password = hashedPw;
+        updatedUser.eName = data.eName || '';
+        updatedUser.ePhone = data.ePhone || '';
+        updatedUser.eRel = data.eRel || '';
+        updatedUser.fName = data.fName || '';
+        updatedUser.fPhone = data.fPhone || '';
+        updatedUser.fRel = data.fRel || '';
+        await updatedUser.save();
 
         await ContactEmergency.findOneAndUpdate(
             { universityId: String(data.universityId).trim() },
@@ -501,49 +388,16 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const generatedPassword = cryptoRandomPassword();
-        const hashedPw = await bcrypt.hash(generatedPassword, 12);
-        const verifyToken = createRawToken(32);
-
-        updatedUser.password = hashedPw;
-        updatedUser.eName = data.eName || '';
-        updatedUser.ePhone = data.ePhone || '';
-        updatedUser.eRel = data.eRel || '';
-        updatedUser.fName = data.fName || '';
-        updatedUser.fPhone = data.fPhone || '';
-        updatedUser.fRel = data.fRel || '';
-        updatedUser.emailVerifyTokenHash = hashToken(verifyToken);
-        updatedUser.emailVerifyExpires = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
-        updatedUser.emailVerifyUsedAt = undefined;
-        updatedUser.emailVerified = false;
-        await updatedUser.save();
-
-        let emailSent = false;
-        let emailError = '';
-        if (updatedUser.email) {
-            try {
-                await sendPasswordEmail(updatedUser.email, generatedPassword, verifyToken);
-                emailSent = true;
-            } catch (emailErr) {
-                emailError = emailErr.message || 'Password email could not be sent.';
-            }
-        } else {
-            emailError = 'No email address was saved for this user.';
-        }
-
-        const allowFallback = String(process.env.ALLOW_PASSWORD_FALLBACK || 'true').toLowerCase() !== 'false'
-            && process.env.NODE_ENV !== 'production';
-
-        const response = {
-            message: emailSent ? 'Step 2 Milkaa\'eera!' : 'Registration saved, but the password email could not be sent.',
-            emailSent,
-            emailError,
-            generatedPassword: (!emailSent && allowFallback) ? generatedPassword : undefined
-        };
-        res.status(emailSent ? 200 : 502).json(response);
+        console.info('[REGISTER STEP2] User data saved');
+        return res.status(200).json({
+            message: 'Registration completed. Save your generated password to log in after admin approval.',
+            registrationComplete: true,
+            generatedPassword
+        });
     } catch (err) {
-        console.error('DATABASE ERROR:', err);
-        res.status(err.status || 500).json({ error: err.message });
+        const status = Number(err.status) >= 400 && Number(err.status) < 600 ? Number(err.status) : 500;
+        console.error(`[REGISTER STEP2] Failed status=${status}`);
+        return res.status(status).json({ error: status === 500 ? 'Registration could not be completed because of a server error.' : err.message });
     }
 });
 
@@ -573,63 +427,19 @@ app.post('/api/skills', async (req, res) => {
     }
 });
 
-async function verifyEmailHandler(req, res) {
-    try {
-        const token = String(req.body?.token || req.query.token || '').trim();
-        if (!token) {
-            return res.status(400).json({ message: 'Verification token is required.' });
-        }
-
-        const tokenHash = hashToken(token);
-        const user = await User.findOne({ emailVerifyTokenHash: tokenHash });
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid verification token.' });
-        }
-        if (user.emailVerifyUsedAt) {
-            return res.status(400).json({ message: 'This verification token has already been used.' });
-        }
-        if (!user.emailVerifyExpires || user.emailVerifyExpires.getTime() < Date.now()) {
-            return res.status(400).json({ message: 'This verification token has expired.' });
-        }
-
-        user.emailVerified = true;
-        user.emailVerifyUsedAt = new Date();
-        user.emailVerifyTokenHash = '';
-        user.emailVerifyExpires = undefined;
-        await user.save();
-
-        res.json({ message: 'Email verified successfully.', emailVerified: true });
-    } catch (err) {
-        res.status(500).json({ message: 'Verification failed.' });
-    }
-}
-
-app.post('/api/verify-email', verifyEmailHandler);
-app.get('/api/verify-email', verifyEmailHandler);
-
 app.post('/api/login', loginLimiter, async (req, res) => {
     try {
-        const identifier = String(req.body.identifier || req.body.studentId || req.body.email || '').trim();
+        const studentId = String(req.body.studentId || req.body.identifier || '').trim();
         const password = String(req.body.password || '');
 
-        if (!identifier || !password) {
-            return res.status(400).json({ message: 'Student ID or email and password are required.' });
+        if (!studentId || !password) {
+            return res.status(400).json({ message: 'Student ID and password are required.' });
         }
 
-        const user = await User.findOne({
-            $or: [
-                { studentId: identifier },
-                { email: identifier.toLowerCase() }
-            ]
-        });
-        if (!user) return res.status(400).json({ message: 'Student ID or email was not found.' });
+        const user = await User.findOne({ studentId });
+        if (!user) return res.status(400).json({ message: 'Student ID was not found.' });
         if (user.status === 'blocked') return res.status(403).json({ message: 'This account is blocked.' });
         if (user.status !== 'active') return res.status(403).json({ message: 'Admin mirkaneessuu eagi!' });
-
-        const requireEmail = String(process.env.REQUIRE_EMAIL_VERIFICATION || '').toLowerCase() === 'true';
-        if (requireEmail && user.role !== 'admin' && !user.emailVerified) {
-            return res.status(403).json({ message: 'Please verify your email before logging in.' });
-        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Password dogoggora!' });
@@ -641,7 +451,6 @@ app.post('/api/login', loginLimiter, async (req, res) => {
             role: String(user.role || '').toLowerCase(),
             studentId: user.studentId,
             profilePic: user.profilePic || '',
-            emailVerified: Boolean(user.emailVerified),
             token
         });
     } catch (err) {
@@ -663,7 +472,7 @@ app.post('/api/logout', authenticate, async (req, res) => {
 
 app.get('/api/user/me', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('name studentId email profilePic role status emailVerified profile preferences department yearOfEntry phone createdAt');
+        const user = await User.findById(req.user._id).select('name studentId profilePic role status profile preferences department yearOfEntry phone createdAt');
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -697,7 +506,6 @@ app.put('/api/user/settings/profile', authenticate, async (req, res) => {
         }
 
         const fullName = String(req.body.fullName || user.profile?.fullName || user.name || '').trim();
-        const email = String(req.body.email || user.profile?.email || user.email || '').trim().toLowerCase();
         const phone = String(req.body.phone || user.profile?.phone || user.phone || '').trim();
         const department = String(req.body.department || user.department || '').trim();
         const yearOfEntry = String(req.body.yearOfEntry || user.yearOfEntry || '').trim();
@@ -706,23 +514,12 @@ app.put('/api/user/settings/profile', authenticate, async (req, res) => {
         if (!fullName) {
             return res.status(400).json({ message: 'Full name is required.' });
         }
-        if (email && !isValidEmail(email)) {
-            return res.status(400).json({ message: 'Please enter a valid email address.' });
-        }
         if (profileImage && !profileImage.startsWith('data:image/') && !/^https?:\/\//i.test(profileImage)) {
             return res.status(400).json({ message: 'Profile image must be a valid image URL or base64 image.' });
         }
 
-        if (email) {
-            const duplicateEmailUser = await User.findOne({ email, _id: { $ne: user._id } });
-            if (duplicateEmailUser) {
-                return res.status(409).json({ message: 'This email is already assigned to another user.' });
-            }
-        }
-
         if (user.role !== 'admin') {
             user.name = fullName;
-            user.email = email || user.email || '';
             user.phone = phone;
             user.department = department;
             user.yearOfEntry = yearOfEntry;
@@ -730,7 +527,6 @@ app.put('/api/user/settings/profile', authenticate, async (req, res) => {
             user.profile = {
                 ...(user.profile || {}),
                 fullName,
-                email: email || user.profile?.email || user.email || '',
                 phone,
                 profileImage: profileImage || user.profile?.profileImage || user.profilePic || ''
             };
@@ -794,7 +590,6 @@ app.put('/api/user/settings/notifications', authenticate, async (req, res) => {
         const previous = user.preferences || {};
         user.preferences = {
             ...previous,
-            emailNotifications: Boolean(req.body.emailNotifications ?? previous.emailNotifications ?? true),
             eventNotifications: Boolean(req.body.eventNotifications ?? previous.eventNotifications ?? true),
             resourceNotifications: Boolean(req.body.resourceNotifications ?? previous.resourceNotifications ?? true),
             accountNotifications: Boolean(req.body.accountNotifications ?? previous.accountNotifications ?? true),
@@ -887,45 +682,30 @@ app.put('/api/admin/settings/profile', authenticate, requireAdmin, async (req, r
         }
 
         const fullName = String(req.body.fullName || req.body.name || user.profile?.fullName || user.name || '').trim();
-        const email = String(req.body.email || user.email || '').trim().toLowerCase();
         const phone = String(req.body.phone || user.profile?.phone || user.phone || '').trim();
         const profileImage = String(req.body.profileImage || req.body.profilePic || user.profile?.profileImage || user.profilePic || '').trim();
 
         if (!fullName) {
             return res.status(400).json({ message: 'Admin full name is required.' });
         }
-        if (email && !isValidEmail(email)) {
-            return res.status(400).json({ message: 'Please enter a valid email address.' });
-        }
         if (profileImage && !profileImage.startsWith('data:image/') && !/^https?:\/\//i.test(profileImage)) {
             return res.status(400).json({ message: 'Profile image must be a valid image URL or base64 image.' });
-        }
-
-        const duplicateEmailUser = email ? await User.findOne({ email, _id: { $ne: user._id } }) : null;
-        if (duplicateEmailUser) {
-            return res.status(409).json({ message: 'This email is already assigned to another user.' });
         }
 
         const nextProfile = {
             ...(user.profile || {}),
             fullName,
-            email,
             phone,
             profileImage
         };
 
         const updateData = {
             name: fullName,
-            email: email || user.email || '',
             phone,
             profilePic: profileImage,
             profile: nextProfile,
             ...(phone || !user.phone ? {} : {})
         };
-
-        if (email) {
-            updateData.email = email;
-        }
 
         const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
         res.json({
@@ -983,7 +763,6 @@ app.put('/api/admin/settings/notifications', authenticate, requireAdmin, async (
 
         const preferences = user.preferences || {};
         const updates = {
-            emailNotifications: Boolean(req.body.emailNotifications ?? preferences.emailNotifications ?? true),
             registrationNotifications: Boolean(req.body.registrationNotifications ?? preferences.registrationNotifications ?? true),
             approvalNotifications: Boolean(req.body.approvalNotifications ?? preferences.approvalNotifications ?? true),
             systemNotifications: Boolean(req.body.systemNotifications ?? preferences.systemNotifications ?? true)
@@ -1048,15 +827,20 @@ app.put('/api/admin/settings/logout-all-sessions', authenticate, requireAdmin, a
 
 app.put('/api/user/profile-photo', authenticate, requireActive, async (req, res) => {
     try {
-        const profilePic = String(req.body.profilePic || '').trim();
+        const profilePic = String(req.body?.profilePic || '').trim();
         if (!profilePic) {
             return res.status(400).json({ message: 'Profile image is required.' });
         }
         if (profilePic.length > 800000) {
             return res.status(400).json({ message: 'Profile image is too large.' });
         }
-        if (!profilePic.startsWith('data:image/')) {
-            return res.status(400).json({ message: 'Profile image must be a valid image.' });
+        const imageMatch = profilePic.match(/^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/]+={0,2})$/i);
+        if (!imageMatch) {
+            return res.status(400).json({ message: 'Profile image must be a PNG, JPEG, or WebP image.' });
+        }
+        const imageBuffer = Buffer.from(imageMatch[2], 'base64');
+        if (!imageBuffer.length || imageBuffer.length > 550 * 1024 || imageBuffer.toString('base64') !== imageMatch[2]) {
+            return res.status(400).json({ message: 'Profile image must be 550 KB or smaller and contain valid image data.' });
         }
 
         const updatedUser = await User.findByIdAndUpdate(
@@ -1243,19 +1027,16 @@ function buildAdminStudentFilters(query = {}) {
     const status = String(query.status || '').trim().toLowerCase();
     const role = String(query.role || '').trim().toLowerCase();
     const year = String(query.year || '').trim();
-    const verified = String(query.verified || '').trim().toLowerCase();
 
     if (department) filters.department = new RegExp(`^\\s*${escapeRegex(department)}\\s*$`, 'i');
     if (status && ALLOWED_STATUS.includes(status)) filters.status = status;
     if (role && ALLOWED_ROLES.includes(role)) filters.role = role;
     if (year) filters.yearOfEntry = new RegExp(`^${escapeRegex(year)}$`, 'i');
-    if (verified === 'true' || verified === 'false') filters.emailVerified = verified === 'true';
     if (search) {
         const searchRegex = new RegExp(escapeRegex(search), 'i');
         filters.$or = [
             { studentId: searchRegex },
             { name: searchRegex },
-            { email: searchRegex },
             { phone: searchRegex }
         ];
     }
@@ -1296,7 +1077,7 @@ app.get('/api/admin/departments/:department/students', authenticate, requireAdmi
         const filters = buildAdminStudentFilters({ ...req.query, department });
         const students = await User.find(filters)
             .sort({ createdAt: -1 })
-            .select('-password -emailVerifyTokenHash -registrationTokenHash -tokenVersion')
+            .select('-password -registrationTokenHash -tokenVersion')
             .lean();
         const contactIds = students
             .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
@@ -1333,7 +1114,7 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
         }
         const students = await User.find(buildAdminStudentFilters(req.query))
             .sort({ createdAt: -1 })
-            .select('studentId name email phone department yearOfEntry eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution role status emailVerified createdAt')
+            .select('studentId name phone department yearOfEntry eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution role status createdAt')
             .lean();
         const contactIds = students
             .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
@@ -1348,7 +1129,6 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
         worksheet.columns = [
             { header: 'Student ID', key: 'studentId' },
             { header: 'Full Name', key: 'fullName' },
-            { header: 'Email', key: 'email' },
             { header: 'Phone', key: 'phone' },
             { header: 'Department', key: 'department' },
             { header: 'Year of Entry', key: 'year' },
@@ -1359,7 +1139,6 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
             { header: 'Contribution', key: 'contribution' },
             { header: 'Role', key: 'role' },
             { header: 'Status', key: 'status' },
-            { header: 'Verification Status', key: 'verification' },
             { header: 'Registration Date', key: 'registrationDate' }
         ];
         students.forEach((student) => {
@@ -1367,7 +1146,6 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
             worksheet.addRow({
                 studentId: student.studentId || '',
                 fullName: student.name || '',
-                email: student.email || '',
                 phone: student.phone || '',
                 department: String(student.department || '').trim(),
                 year: student.yearOfEntry || '',
@@ -1378,11 +1156,10 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
                 contribution: student.contribution || '',
                 role: student.role || '',
                 status: student.status || '',
-                verification: student.emailVerified ? 'Verified' : 'Not verified',
                 registrationDate: student.createdAt || null
             });
         });
-        worksheet.autoFilter = { from: 'A1', to: `O${Math.max(students.length + 1, 1)}` };
+        worksheet.autoFilter = { from: 'A1', to: `M${Math.max(students.length + 1, 1)}` };
         worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
         worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B5E20' } };
         worksheet.getColumn('registrationDate').numFmt = 'yyyy-mm-dd hh:mm';
@@ -1410,7 +1187,7 @@ app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
     try {
         const students = await User.find(buildAdminStudentFilters(req.query))
             .sort({ createdAt: -1 })
-            .select('-password -emailVerifyTokenHash -registrationTokenHash -tokenVersion');
+            .select('-password -registrationTokenHash -tokenVersion');
 
         const merged = await Promise.all(
             students.map(async (student) => {
@@ -1494,14 +1271,6 @@ async function approveStudentHandler(req, res) {
             return res.status(404).json({ message: 'Barataan hin argamne' });
         }
 
-        if (updatedUser.email) {
-            try {
-                await sendApprovalEmail(updatedUser.email);
-            } catch (err) {
-                console.error('EMAIL ERROR:', err);
-            }
-        }
-
         res.json({ message: "Barataan mirkanaa'eera!", user: sanitizeUser(updatedUser) });
     } catch (err) {
         res.status(500).json({ message: 'Error: ' + err.message });
@@ -1563,8 +1332,7 @@ app.post('/api/admin/add-student', authenticate, requireAdmin, async (req, res) 
             name,
             password: hashedPassword,
             status,
-            role,
-            emailVerified: true
+            role
         });
 
         await newUser.save();
@@ -1717,7 +1485,6 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
     try {
         const studentId = String(req.body.studentId || '').trim();
         const name = req.body.name;
-        const email = req.body.email;
         const status = req.body.status;
         const role = req.body.role;
 
@@ -1732,13 +1499,6 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
 
         const updateData = {};
         if (name) updateData.name = String(name).trim();
-        if (email) {
-            const nextEmail = String(email).trim().toLowerCase();
-            if (!isValidEmail(nextEmail)) {
-                return res.status(400).json({ message: 'Please enter a valid email address.' });
-            }
-            updateData.email = nextEmail;
-        }
         if (status) {
             if (!ALLOWED_STATUS.includes(status)) {
                 return res.status(400).json({ message: 'Invalid status.' });
@@ -1813,7 +1573,7 @@ app.put('/api/admin/spam-protection', authenticate, requireAdmin, (req, res) => 
 app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     console.error(err);
-    res.status(500).json({ message: 'Unexpected server error.' });
+    res.status(500).json({ message: 'Unexpected server error.' })
 });
 
 app.listen(PORT, '0.0.0.0', () => console.log(`Server on port ${PORT}`));

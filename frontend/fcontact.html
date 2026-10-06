@@ -127,6 +127,20 @@
             background: #047857;
         }
 
+        .form-message {
+            margin-top: 14px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form-message.error {
+            color: #991b1b;
+        }
+
+        .form-message.success {
+            color: #065f46;
+        }
+
         @media (max-width: 768px) {
             .form-card {
                 max-width: 100%;
@@ -215,6 +229,7 @@
                 <button type="button" class="btn btn-back" onclick="goBack()">Back</button>
                 <button type="button" class="btn btn-next" onclick="checkAndGo()">Next Step</button>
             </div>
+            <p id="step2Message" class="form-message" role="status" aria-live="polite"></p>
         </form>
     </div>
 
@@ -223,25 +238,15 @@
             window.location.href = 'register.html';
         }
 
-        async function fetchWithApiFallback(path, options) {
-            const host = window.location.hostname;
-            const candidates = ['https://auwcmsj-backend.onrender.com'];
+        const API_BASE_URL = 'https://auwcmsj-backend.onrender.com';
+        const REQUEST_TIMEOUT_MS = 90000;
 
-            let lastError = null;
-            for (const base of candidates) {
-                try {
-                    return await fetch(`${base}${path}`, options);
-                } catch (err) {
-                    lastError = err;
-                }
-            }
-            throw lastError || new Error('Server connection failed.');
+        function responseMessage(result, fallback) {
+            const message = result.error || result.message;
+            return typeof message === 'string' && message.trim() ? message.trim() : fallback;
         }
 
         async function checkAndGo() {
-            const nameRegex = /^[A-Za-z\s]+$/;
-            const phoneRegex = /^[0-9]{10,13}$/;
-
             // 1. ID barataa localStorage irraa fiduu
             const studentId = localStorage.getItem('tempStudentId');
 
@@ -268,34 +273,51 @@
                 return;
             }
 
-            try {
-                const nextBtn = document.querySelector(".btn-next");
-                nextBtn.disabled = true;
-                nextBtn.innerText = "Ergamaa jira...";
+            const nextBtn = document.querySelector('.btn-next');
+            const messageEl = document.getElementById('step2Message');
+            const originalLabel = nextBtn.innerText;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+            nextBtn.disabled = true;
+            nextBtn.innerText = 'Ergamaa jira...';
+            messageEl.textContent = '';
+            messageEl.className = 'form-message';
 
-                const response = await fetchWithApiFallback('/api/register-step2', {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/register-step2`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
 
-                const result = await response.json().catch(() => ({}));
+                const result = await response.json().catch(() => ({})) || {};
 
-                if (response.ok && result.emailSent) {
-                    alert("Step 2 milkaa'eera! Password kee email keerratti siif ergameera.");
-                    window.location.href = 'skill.html';
-                } else {
-                    const reason = result.error || result.emailError || result.message || "Password email could not be sent.";
-                    alert("Registration hin xumuramne: " + reason);
-                    nextBtn.disabled = false;
-                    nextBtn.innerText = "Next Step";
+                if (!response.ok) {
+                    throw new Error(responseMessage(result, `Registration failed (HTTP ${response.status}). Please try again.`));
                 }
+
+                if (!result.registrationComplete || !result.generatedPassword) {
+                    throw new Error(responseMessage(result, 'Registration was not completed. Please try again.'));
+                }
+
+                messageEl.className = 'form-message success';
+                messageEl.textContent = `Registration complete. Your generated password is ${result.generatedPassword}. Save it to log in after admin approval.`;
+                alert(messageEl.textContent);
+                window.location.href = 'verification.html';
             } catch (error) {
-                alert("Error: Server waliin wal quunnamuun hin danda'amne!");
-                console.error(error);
-                const nextBtn = document.querySelector(".btn-next");
+                messageEl.className = 'form-message error';
+                if (error.name === 'AbortError') {
+                    messageEl.textContent = 'Tajaajilli yeroo isaa darbe. The server did not respond in time. Please try again.';
+                } else if (error instanceof TypeError) {
+                    messageEl.textContent = 'Server waliin wal quunnamuun hin danda’amne. Could not connect to the registration server. Please try again.';
+                } else {
+                    messageEl.textContent = `Registration hin xumuramne. ${error.message}`;
+                }
+            } finally {
+                clearTimeout(timeoutId);
                 nextBtn.disabled = false;
-                nextBtn.innerText = "Next Step";
+                nextBtn.innerText = originalLabel;
             }
         }
     </script>
