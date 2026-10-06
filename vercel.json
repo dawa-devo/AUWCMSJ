@@ -1,17 +1,16 @@
 {
     "redirects": [
         {
-            "source": "/",
-            "destination": "/frontend/login.html",
-            "permanent": false
-        },
-        {
             "source": "/admin",
             "destination": "/admin/",
             "permanent": false
         }
     ],
     "rewrites": [
+        {
+            "source": "/register.html",
+            "destination": "/frontend/register.html"
+        },
         {
             "source": "/admin/",
             "destination": "/admin/admin.html"

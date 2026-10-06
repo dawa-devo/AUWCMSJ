@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://auwcmsj-flax.vercel.app/sitemap.xml
