@@ -436,23 +436,59 @@
 
         /* Stats & Roadmap */
         .stats-container {
-            background: hsl(207, 15%, 88%);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 330px;
+            padding: 36px 24px;
+            border: 1px solid rgba(16, 185, 129, 0.16);
+            border-radius: 20px;
+            background: linear-gradient(145deg, #f8fffb, #e8f5ee);
+            box-shadow: 0 12px 30px rgba(16, 80, 52, 0.1);
         }
 
-        .bar-wrapper {
-            background: #eee;
-            height: 20px;
-            border-radius: 10px;
-            margin: 10px 0 20px;
-            overflow: hidden;
+        .student-total-badge {
+            display: grid;
+            place-items: center;
+            width: clamp(190px, 32vw, 240px);
+            aspect-ratio: 1;
+            padding: 9px;
+            border-radius: 50%;
+            background: conic-gradient(from 220deg, #34d399, #059669, #047857, #6ee7b7, #34d399);
+            box-shadow: 0 12px 28px rgba(5, 150, 105, 0.24), 0 0 0 8px rgba(16, 185, 129, 0.08);
         }
 
-        .bar {
+        .student-total-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
             height: 100%;
-            background: #1b5e20;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            background: linear-gradient(150deg, #064e3b, #047857);
+            color: #fff;
+            text-align: center;
+            box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.18);
+        }
+
+        .student-total-count {
+            color: #fff;
+            font-size: clamp(2.75rem, 8vw, 4.25rem);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .student-total-label {
+            margin-top: 8px;
+            color: #d1fae5;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
         }
 
         .roadmap-track {
@@ -1364,7 +1400,7 @@
     <nav class="sidebar" id="sidebar">
         <ul class="nav-links">
             <li><a href="#about" onclick="toggleSidebar()"><i class="fas fa-info-circle"></i> <span>About
-                        Jema'aa</span></a></li>
+                        Jemae</span></a></li>
             <li><a href="#prayer" onclick="toggleSidebar()"><i class="fas fa-clock"></i> <span>Prayer Times</span></a>
             </li>
             <li><a href="#library" onclick="toggleSidebar()"><i class="fas fa-book"></i> <span>Digital
@@ -1383,7 +1419,7 @@
     <main class="main-content">
         <div id="newsDisplay"
             style="background: #fff9c4; padding: 15px; border-left: 5px solid #fbc02d; margin-bottom: 20px; border-radius: 8px; font-weight: bold; color: #333; line-height: 1.5;">
-            Beeksisni ammaan tana hin jiru.
+            No announcements available at this time.
         </div>
         <section id="about" class="section">
             <div class="section-header">
@@ -1404,7 +1440,7 @@
                 </div>
                 <div class="card"><i class="fas fa-gavel"></i>
                     <h3>Rules</h3>
-                    <p>Jema'aa Ethics</p>
+                    <p>Jemae Ethics</p>
                 </div>
             </div>
         </section>
@@ -1488,16 +1524,12 @@
                 <h1>Jema'aa Statistics</h1>
             </div>
             <div class="stats-container">
-                <p id="maleStatsLabel">Male Students (0)</p>
-                <div class="bar-wrapper">
-                    <div id="maleStatsBar" class="bar" style="width: 0%;"></div>
+                <div class="student-total-badge">
+                    <div class="student-total-content">
+                        <span id="totalStatsCount" class="student-total-count" aria-live="polite">0</span>
+                        <span id="totalStatsLabel" class="student-total-label">Total Students</span>
+                    </div>
                 </div>
-                <p id="femaleStatsLabel">Female Students (0)</p>
-                <div class="bar-wrapper">
-                    <div id="femaleStatsBar" class="bar" style="width: 0%; background: #66bb6a;"></div>
-                </div>
-                <p id="totalStatsLabel" style="margin-top: 10px; font-weight: 700; color: #1b5e20;">Total Registered
-                    Students: 0</p>
             </div>
         </section>
 
@@ -1573,7 +1605,7 @@
         <div class="footer-grid">
             <div class="footer-col">
                 <h4>AUWCMSJ</h4>
-                <p>Ambo University Woliso Campus Muslim Students Jema'aa. Building a strong community through faith
+                <p>Ambo University Woliso Campus Muslim Students Jemae. Building a strong community through faith
                     and
                     knowledge.</p>
                 <div class="social-links">
@@ -1847,11 +1879,11 @@
 
                 const data = await res.json();
                 document.getElementById('newsDisplay').innerText =
-                    data.news || "Beeksisni hin jiru.";
+                    data.news || "No announcements available at this time.";
 
             } catch (err) {
                 console.log(err);
-                document.getElementById('newsDisplay').innerText = "News hin fe'amne!";
+                document.getElementById('newsDisplay').innerText = "Announcements could not be loaded.";
             }
         }
 
@@ -2031,23 +2063,11 @@
                 if (!res.ok) throw new Error("Stats error");
 
                 const data = await res.json();
-                const total = Number(data.total || 0);
-                const male = Number(data.male || 0);
-                const female = Number(data.female || 0);
-                const malePercent = total > 0 ? (male / total) * 100 : 0;
-                const femalePercent = total > 0 ? (female / total) * 100 : 0;
+                const totalValue = Number(data.total);
+                const total = Number.isFinite(totalValue) && totalValue >= 0 ? totalValue : 0;
+                const totalCount = document.getElementById('totalStatsCount');
 
-                const maleLabel = document.getElementById('maleStatsLabel');
-                const femaleLabel = document.getElementById('femaleStatsLabel');
-                const totalLabel = document.getElementById('totalStatsLabel');
-                const maleBar = document.getElementById('maleStatsBar');
-                const femaleBar = document.getElementById('femaleStatsBar');
-
-                if (maleLabel) maleLabel.innerText = `Male Students (${male})`;
-                if (femaleLabel) femaleLabel.innerText = `Female Students (${female})`;
-                if (totalLabel) totalLabel.innerText = `Total Registered Students: ${total}`;
-                if (maleBar) maleBar.style.width = `${malePercent}%`;
-                if (femaleBar) femaleBar.style.width = `${femalePercent}%`;
+                if (totalCount) totalCount.innerText = new Intl.NumberFormat().format(total);
 
             } catch (err) {
                 console.log("Stats hin fe'amne");

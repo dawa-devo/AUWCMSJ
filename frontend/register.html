@@ -233,7 +233,7 @@
                     <input id="phoneNumber" type="tel" class="input-field" placeholder="09xxxxxxxx" required>
                 </div>
 
-                <p class="footer-note">Hubachiisa: Bakka duwwaa hunda guutuun dirqama.</p>
+                <p class="footer-note">Note: All required fields must be completed.</p>
 
                 <div class="button-group">
                     <button type="button" class="btn btn-back" onclick="window.history.back()">Back</button>
@@ -272,7 +272,7 @@
                 status: 'pending'
             };
 
-            // --- VALIDATION: Bakka duwwaa to'achuu ---
+            // --- VALIDATION: Check required fields ---
             if (!data.fullName || !data.universityId || !data.department || !data.year || !data.gender || !data.phone) {
                 alert("Error: Full name, university ID, department, year of entry, gender, and phone are required.");
                 return;
