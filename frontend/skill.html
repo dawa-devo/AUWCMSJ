@@ -177,6 +177,8 @@
     </div>
 
     <script>
+        sessionStorage.setItem('currentStep', 'skills');
+
         async function fetchWithApiFallback(path, options) {
             const host = window.location.hostname;
             const candidates = ['https://auwcmsj-backend.onrender.com'];
@@ -227,6 +229,12 @@
                     }
                     return;
                 }
+                const generatedPassword = sessionStorage.getItem('pendingRegistrationPassword');
+                if (generatedPassword) {
+                    alert(`Registration complete. Your generated password is ${generatedPassword}. Save it to log in after admin approval.`);
+                    sessionStorage.removeItem('pendingRegistrationPassword');
+                }
+                sessionStorage.setItem('currentStep', 'complete');
                 window.location.href = 'verification.html';
             } catch (err) {
                 console.error('Server error:', err);

@@ -304,10 +304,9 @@
                     throw new Error(responseMessage(result, 'Registration was not completed. Please try again.'));
                 }
 
-                messageEl.className = 'form-message success';
-                messageEl.textContent = `Registration complete. Your generated password is ${result.generatedPassword}. Save it to log in after admin approval.`;
-                alert(messageEl.textContent);
-                window.location.href = 'verification.html';
+                sessionStorage.setItem('pendingRegistrationPassword', result.generatedPassword);
+                sessionStorage.setItem('currentStep', 'skills');
+                window.location.href = 'skill.html';
             } catch (error) {
                 messageEl.className = 'form-message error';
                 if (error.name === 'AbortError' || error instanceof TypeError) {
