@@ -107,13 +107,27 @@
 
         .menu-icon {
             font-size: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 44px;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            color: inherit;
             cursor: pointer;
-            padding-left: 5px;
-            transition: 0.3s;
+            transition: color 0.3s, background-color 0.3s;
         }
 
-        .menu-icon:hover {
+        .menu-icon:hover,
+        .menu-icon:focus-visible {
             color: #4caf50;
+            background: rgba(255, 255, 255, 0.2);
+            outline: 2px solid rgba(255, 255, 255, 0.75);
+            outline-offset: 2px;
         }
 
         .right-side {
@@ -1024,7 +1038,7 @@
                 position: relative;
                 top: auto;
                 display: grid;
-                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-columns: minmax(0, 1fr);
                 align-items: center;
                 width: 100%;
                 padding: 0;
@@ -1033,11 +1047,14 @@
             .logo-menu-container {
                 flex-direction: row;
                 align-items: center;
-                gap: 6px;
+                justify-content: flex-start;
+                gap: 8px;
                 flex: initial;
+                min-width: 0;
             }
 
             .header-logo {
+                flex: 0 1 auto;
                 min-width: 0;
                 gap: 7px;
             }
@@ -1067,7 +1084,12 @@
 
             .menu-icon {
                 font-size: 20px;
-                padding: 6px;
+                flex: 0 0 44px;
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                position: relative;
+                z-index: 1250;
             }
 
             .ayah-content {
@@ -1235,7 +1257,9 @@
             .header-logo h3 {
                 font-size: 0.82rem;
                 line-height: 1.25;
-                max-width: none;
+                max-width: 92px;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .logo-menu-container {
@@ -1347,7 +1371,10 @@
                     <img src="logo.jpg" alt="Logo" class="logopic">
                     <h3>AUWCMSJ</h3>
                 </div>
-                <div class="menu-icon" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+                <button type="button" class="menu-icon" id="sidebarToggle" aria-label="Open navigation menu"
+                    aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
             </div>
             <div id="adminReturnBtn" style="display: none;">
                 <button onclick="returnToAdminView()"
@@ -2113,7 +2140,11 @@
 
         // ===== 8. SIDEBAR =====
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.getElementById('sidebarToggle');
+            const isOpen = sidebar.classList.toggle('active');
+            menuButton.setAttribute('aria-expanded', String(isOpen));
+            menuButton.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
         }
 
 

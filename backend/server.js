@@ -114,6 +114,11 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ role: 1, status: 1, createdAt: -1 });
+userSchema.index({ role: 1, gender: 1 });
+userSchema.index({ createdAt: -1 });
+
 const User = mongoose.model('User', userSchema);
 const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(User);
 
@@ -190,7 +195,7 @@ const messageSchema = new mongoose.Schema({
 const Message = mongoose.model('Message', messageSchema);
 
 const ContactEmergency = mongoose.model('ContactEmergency', new mongoose.Schema({
-    universityId: { type: String, required: true },
+    universityId: { type: String, required: true, index: true },
     eName: String,
     ePhone: String,
     eRel: String,
@@ -1068,30 +1073,9 @@ app.get('/api/admin/departments/:department/students', authenticate, requireAdmi
         const filters = buildAdminStudentFilters({ ...req.query, department });
         const students = await User.find(filters)
             .sort({ createdAt: -1 })
-            .select('-password -registrationTokenHash -tokenVersion')
+            .select('studentId name phone yearOfEntry status')
             .lean();
-        const contactIds = students
-            .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
-            .map((student) => student.studentId)
-            .filter(Boolean);
-        const contacts = contactIds.length
-            ? await ContactEmergency.find({ universityId: { $in: contactIds } }).lean()
-            : [];
-        const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
-        const merged = students.map((student) => {
-            const contact = contactsById.get(String(student.studentId)) || {};
-            return {
-                ...student,
-                eName: student.eName || contact.eName || '',
-                ePhone: student.ePhone || contact.ePhone || '',
-                eRel: student.eRel || contact.eRel || '',
-                fName: student.fName || contact.fName || '',
-                fPhone: student.fPhone || contact.fPhone || '',
-                fRel: student.fRel || contact.fRel || ''
-            };
-        });
-
-        res.json(merged);
+        res.json(students);
     } catch (err) {
         console.error('Department students load error:', err);
         res.status(500).json({ message: 'Department students could not be loaded.' });
@@ -1178,28 +1162,31 @@ app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
     try {
         const students = await User.find(buildAdminStudentFilters(req.query))
             .sort({ createdAt: -1 })
-            .select('-password -registrationTokenHash -tokenVersion');
+            .select('studentId name gender department yearOfEntry phone role status eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution createdAt')
+            .lean();
 
-        const merged = await Promise.all(
-            students.map(async (student) => {
-                const plain = student.toObject();
-                const hasEmergencyData = plain.eName || plain.ePhone || plain.fName || plain.fPhone;
-                if (hasEmergencyData) return plain;
-
-                const contact = await ContactEmergency.findOne({ universityId: plain.studentId }).lean();
-                if (!contact) return plain;
-
-                return {
-                    ...plain,
-                    eName: contact.eName || plain.eName,
-                    ePhone: contact.ePhone || plain.ePhone,
-                    eRel: contact.eRel || plain.eRel,
-                    fName: contact.fName || plain.fName,
-                    fPhone: contact.fPhone || plain.fPhone,
-                    fRel: contact.fRel || plain.fRel
-                };
-            })
-        );
+        const contactIds = students
+            .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
+            .map((student) => student.studentId)
+            .filter(Boolean);
+        const contacts = contactIds.length
+            ? await ContactEmergency.find({ universityId: { $in: contactIds } })
+                .select('universityId eName ePhone eRel fName fPhone fRel')
+                .lean()
+            : [];
+        const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
+        const merged = students.map((student) => {
+            const contact = contactsById.get(String(student.studentId)) || {};
+            return {
+                ...student,
+                eName: student.eName || contact.eName || '',
+                ePhone: student.ePhone || contact.ePhone || '',
+                eRel: student.eRel || contact.eRel || '',
+                fName: student.fName || contact.fName || '',
+                fPhone: student.fPhone || contact.fPhone || '',
+                fRel: student.fRel || contact.fRel || ''
+            };
+        });
 
         res.json(merged);
     } catch (err) {
