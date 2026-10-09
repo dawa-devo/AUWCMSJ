@@ -1344,15 +1344,47 @@ app.get('/api/news', authenticate, requireActive, (req, res) => {
     res.json({ news: latestNews });
 });
 
+app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const [stats] = await User.aggregate([
+            { $match: { role: 'student' } },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+                    pending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
+                    male: { $sum: { $cond: [{ $eq: ['$gender', 'Male'] }, 1, 0] } },
+                    female: { $sum: { $cond: [{ $eq: ['$gender', 'Female'] }, 1, 0] } }
+                }
+            },
+            { $project: { _id: 0, total: 1, active: 1, pending: 1, male: 1, female: 1 } }
+        ]);
+
+        res.json(stats || { total: 0, active: 0, pending: 0, male: 0, female: 0 });
+    } catch (err) {
+        console.error('Admin statistics error:', err);
+        res.status(500).json({ message: 'Statistics could not be loaded.' });
+    }
+});
+
 app.get('/api/statistics', authenticate, requireActive, async (req, res) => {
     try {
-        const students = await User.find({ role: 'student' }).select('gender status').lean();
-        const total = students.length;
-        const active = students.filter((student) => student.status === 'active').length;
-        const male = students.filter((student) => student.gender === 'Male').length;
-        const female = students.filter((student) => student.gender === 'Female').length;
+        const [stats] = await User.aggregate([
+            { $match: { role: 'student' } },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+                    male: { $sum: { $cond: [{ $eq: ['$gender', 'Male'] }, 1, 0] } },
+                    female: { $sum: { $cond: [{ $eq: ['$gender', 'Female'] }, 1, 0] } }
+                }
+            },
+            { $project: { _id: 0, total: 1, active: 1, male: 1, female: 1 } }
+        ]);
 
-        res.json({ total, active, male, female });
+        res.json(stats || { total: 0, active: 0, male: 0, female: 0 });
     } catch (err) {
         res.status(500).json({ message: "Statistics hin fe'amne" });
     }

@@ -89,6 +89,19 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             text-align: center;
+            border-top: 4px solid #059669;
+        }
+
+        .stat-card.metric-male {
+            border-top-color: #2563eb;
+        }
+
+        .stat-card.metric-female {
+            border-top-color: #db2777;
+        }
+
+        .stat-card.metric-total {
+            border-top-color: #064e3b;
         }
 
         .stat-card h3 {
@@ -100,6 +113,19 @@
             font-size: 24px;
             font-weight: bold;
             color: #064e3b;
+        }
+
+        .stat-card.metric-male p {
+            color: #2563eb;
+        }
+
+        .stat-card.metric-female p {
+            color: #db2777;
+        }
+
+        .dashboard-stats .stat-card {
+            min-width: 0;
+            padding: 20px 14px;
         }
 
         /* Controls & Search Bar */
@@ -616,6 +642,15 @@
                 grid-template-columns: minmax(0, 1fr) !important;
             }
 
+            .dashboard-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 12px;
+            }
+
+            .dashboard-stats .metric-total {
+                grid-column: 1 / -1;
+            }
+
             .controls {
                 flex-direction: column;
                 align-items: stretch;
@@ -790,8 +825,8 @@
     </div>
 
     <div class="main">
-        <div class="stats-grid">
-            <div class="stat-card">
+        <div class="stats-grid dashboard-stats">
+            <div class="stat-card metric-total">
                 <h3>Total Students</h3>
                 <p id="count-total">0</p>
             </div>
@@ -802,6 +837,14 @@
             <div class="stat-card">
                 <h3>Pending Approval</h3>
                 <p id="count-pending" style="color: #d97706;">0</p>
+            </div>
+            <div class="stat-card metric-male">
+                <h3>Male Students</h3>
+                <p id="count-male">0</p>
+            </div>
+            <div class="stat-card metric-female">
+                <h3>Female Students</h3>
+                <p id="count-female">0</p>
             </div>
         </div>
 
@@ -1988,10 +2031,17 @@
                 </tr>`;
                 });
 
-                // Lakkoofsa gubbaa update gochuuf
-                document.getElementById('count-total').innerText = students.length;
-                document.getElementById('count-active').innerText = students.filter(s => String(s.status || '').trim().toLowerCase() === 'active').length;
-                document.getElementById('count-pending').innerText = students.filter(s => String(s.status || '').trim().toLowerCase() === 'pending').length;
+                const statsResponse = await fetchWithApiFallback('/api/admin/stats');
+                const stats = await statsResponse.json();
+                if (!statsResponse.ok) {
+                    throw new Error(stats.message || 'Statistics could not be loaded.');
+                }
+
+                document.getElementById('count-total').innerText = stats.total;
+                document.getElementById('count-active').innerText = stats.active;
+                document.getElementById('count-pending').innerText = stats.pending;
+                document.getElementById('count-male').innerText = stats.male;
+                document.getElementById('count-female').innerText = stats.female;
 
             } catch (err) {
                 console.error("Dashboard ragaa fiduu dadhabe:", err);
