@@ -239,7 +239,7 @@
         }
 
         const API_BASE_URL = 'https://auwcmsj-backend.onrender.com';
-        const REQUEST_TIMEOUT_MS = 90000;
+        const REQUEST_TIMEOUT_MS = 10000;
 
         function responseMessage(result, fallback) {
             const message = result.error || result.message;
@@ -279,7 +279,7 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
             nextBtn.disabled = true;
-            nextBtn.innerText = 'Ergamaa jira...';
+            nextBtn.innerText = 'Sending...';
             messageEl.textContent = '';
             messageEl.className = 'form-message';
 
@@ -291,7 +291,10 @@
                     signal: controller.signal
                 });
 
-                const result = await response.json().catch(() => ({})) || {};
+                const result = await response.json().catch((err) => {
+                    if (err.name === 'AbortError') throw err;
+                    return {};
+                }) || {};
 
                 if (!response.ok) {
                     throw new Error(responseMessage(result, `Registration failed (HTTP ${response.status}). Please try again.`));
@@ -307,12 +310,10 @@
                 window.location.href = 'verification.html';
             } catch (error) {
                 messageEl.className = 'form-message error';
-                if (error.name === 'AbortError') {
-                    messageEl.textContent = 'Tajaajilli yeroo isaa darbe. The server did not respond in time. Please try again.';
-                } else if (error instanceof TypeError) {
-                    messageEl.textContent = 'Server waliin wal quunnamuun hin danda’amne. Could not connect to the registration server. Please try again.';
+                if (error.name === 'AbortError' || error instanceof TypeError) {
+                    messageEl.textContent = 'Network error, please try again.';
                 } else {
-                    messageEl.textContent = `Registration hin xumuramne. ${error.message}`;
+                    messageEl.textContent = error.message || 'Network error, please try again.';
                 }
             } finally {
                 clearTimeout(timeoutId);

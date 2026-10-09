@@ -11,6 +11,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { createAuth } = require('./middleware/auth');
+const connectDatabase = require('./middleware/database');
 const {
     createRawToken,
     hashToken,
@@ -57,6 +58,7 @@ app.use(cors({
         return callback(new Error('Not allowed by CORS'));
     }
 }));
+app.use('/api', connectDatabase);
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -73,18 +75,6 @@ const registerLimiter = rateLimit({
     legacyHeaders: false,
     message: { message: 'Too many registration attempts. Please try again later.' }
 });
-
-mongoose.connect(process.env.MONGO_URI, {
-    dbName: process.env.MONGO_DB_NAME || 'auwcmsj',
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 15000
-})
-    .then(() => {
-        console.log("MongoDB Connected");
-    })
-    .catch((err) => {
-        console.error("MongoDB connection error:", err);
-    });
 
 const userSchema = new mongoose.Schema({
     studentId: { type: String, required: true, unique: true, trim: true },
@@ -1577,4 +1567,8 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Unexpected server error.' })
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server on port ${PORT}`));
+if (require.main === module) {
+    app.listen(PORT, '0.0.0.0', () => console.log(`Server on port ${PORT}`));
+}
+
+module.exports = app;

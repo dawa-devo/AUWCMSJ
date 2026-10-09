@@ -248,21 +248,30 @@
                 const apiBases = ['https://auwcmsj-backend.onrender.com'];
                 let res = null;
                 let lastFetchErr = null;
+                let requestTimeoutId = null;
                 for (const base of apiBases) {
+                    const controller = new AbortController();
+                    requestTimeoutId = setTimeout(() => controller.abort(), 10000);
                     try {
                         res = await fetch(`${base}/api/login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ identifier, studentId: identifier, password })
+                            body: JSON.stringify({ identifier, studentId: identifier, password }),
+                            signal: controller.signal
                         });
                         break;
                     } catch (e) {
                         lastFetchErr = e;
+                        clearTimeout(requestTimeoutId);
                     }
                 }
                 if (!res) throw lastFetchErr || new Error('Cannot reach API');
 
-                const data = await res.json().catch(() => ({}));
+                const data = await res.json().catch((error) => {
+                    if (error.name === 'AbortError') throw error;
+                    return {};
+                });
+                clearTimeout(requestTimeoutId);
 
                 if (res.ok) {
                     const role = String(data?.role || '').toLowerCase();
@@ -307,7 +316,9 @@
             } catch (error) {
                 console.error("Error:", error);
                 noticeBox.style.display = "block";
-                noticeBox.innerText = error.message || "Server waliin wal quunnamuun hin danda'amne!";
+                noticeBox.innerText = error.name === 'AbortError' || error instanceof TypeError
+                    ? "Network error, please try again."
+                    : error.message || "Network error, please try again.";
                 loginBtn.innerText = "Login";
                 loginBtn.disabled = false;
             }

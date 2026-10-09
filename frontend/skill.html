@@ -183,9 +183,12 @@
 
             let lastError = null;
             for (const base of candidates) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 try {
-                    return await fetch(`${base}${path}`, options);
+                    return await fetch(`${base}${path}`, { ...options, signal: controller.signal });
                 } catch (err) {
+                    clearTimeout(timeoutId);
                     lastError = err;
                 }
             }
@@ -212,7 +215,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const result = await response.json().catch(() => ({}));
+                const result = await response.json().catch((err) => {
+                    if (err.name === 'AbortError') throw err;
+                    return {};
+                });
                 if (!response.ok) {
                     alert(result.message || 'Skills could not be saved.');
                     if (nextBtn) {
@@ -224,7 +230,9 @@
                 window.location.href = 'verification.html';
             } catch (err) {
                 console.error('Server error:', err);
-                alert('Server waliin wal quunnamuun hin danda\'amne. Irra deebi\'ii yaali.');
+                alert(err.name === 'AbortError' || err instanceof TypeError
+                    ? 'Network error, please try again.'
+                    : err.message || 'Network error, please try again.');
                 if (nextBtn) {
                     nextBtn.disabled = false;
                     nextBtn.innerText = 'Next';

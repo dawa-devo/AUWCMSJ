@@ -1663,9 +1663,12 @@
 
             let lastError = null;
             for (const base of candidates) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 try {
-                    return await fetch(`${base}${path}`, { ...options, headers });
+                    return await fetch(`${base}${path}`, { ...options, headers, signal: controller.signal });
                 } catch (err) {
+                    clearTimeout(timeoutId);
                     lastError = err;
                 }
             }
@@ -2077,10 +2080,15 @@
 
         // ===== 7. PRAYER =====
         async function fetchPrayerTimes() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
             try {
                 const locStatus = document.getElementById('loc-status');
-                const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Woliso&country=Ethiopia&method=3`);
+                const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Woliso&country=Ethiopia&method=3`, {
+                    signal: controller.signal
+                });
                 const json = await res.json();
+                clearTimeout(timeoutId);
 
                 const t = json.data.timings;
                 const h = json.data.date.hijri;
@@ -2095,6 +2103,7 @@
                 if (locStatus) locStatus.innerText = "Woliso, Ethiopia";
 
             } catch {
+                clearTimeout(timeoutId);
                 console.log("Prayer error");
                 const locStatus = document.getElementById('loc-status');
                 if (locStatus) locStatus.innerText = "Prayer times unavailable";

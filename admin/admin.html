@@ -1400,14 +1400,17 @@
 
             let lastError = null;
             for (const base of candidates) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 try {
-                    const res = await fetch(`${base}${path}`, { ...options, headers });
+                    const res = await fetch(`${base}${path}`, { ...options, headers, signal: controller.signal });
                     if (res.status === 401) {
                         sessionStorage.clear();
                         window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
                     }
                     return res;
                 } catch (err) {
+                    clearTimeout(timeoutId);
                     lastError = err;
                 }
             }
