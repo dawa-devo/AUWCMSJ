@@ -510,23 +510,27 @@
             resize: vertical;
         }
 
-        @media (max-width: 768px) {
-            .main {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
+        .table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Bilbila irratti akka dhokatuuf CSS kana dabaladhu */
+        .sidebar-backdrop {
+            display: none;
+        }
+
+        .hamburger-btn {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: min(280px, 86vw);
                 left: calc(-1 * min(280px, 86vw));
-                padding: 52px 18px 24px;
+                padding: 70px 18px 24px;
                 overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
@@ -538,23 +542,30 @@
             }
 
             .hamburger-btn {
-                display: block !important;
-                /* Bilbila irratti qofa mul'ata */
+                display: inline-flex;
                 position: fixed;
-                top: 15px;
-                left: 15px;
+                top: 12px;
+                left: 12px;
                 background: #064e3b;
                 color: white;
-                padding: 10px 15px;
-                border-radius: 5px;
+                width: 48px;
+                height: 48px;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 10px;
                 cursor: pointer;
-                z-index: 1100;
+                z-index: 1300;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             }
-        }
 
-        /* Computer irratti akka hin mul'anneef */
-        .hamburger-btn {
-            display: none;
+            .sidebar-backdrop.active {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.48);
+                z-index: 1150;
+            }
         }
 
         @media (max-width: 992px) {
@@ -572,6 +583,8 @@
         @media (max-width: 768px) {
             body {
                 display: block;
+                width: 100%;
+                overflow-x: hidden;
             }
 
             .main {
@@ -580,9 +593,27 @@
                 padding: 74px 14px 20px;
             }
 
+            .main > *,
+            .card,
+            .settings-panel,
+            .settings-card,
+            .quick-admin-grid,
+            .quick-admin-card {
+                min-width: 0;
+                max-width: 100%;
+            }
+
             .card {
                 padding: 18px 14px;
                 border-radius: 12px;
+            }
+
+            .stats-grid,
+            .settings-panel,
+            .settings-card .form-grid,
+            .quick-admin-grid,
+            #departmentsGrid {
+                grid-template-columns: minmax(0, 1fr) !important;
             }
 
             .controls {
@@ -592,19 +623,44 @@
 
             .search-wrapper {
                 width: 100%;
+                min-width: 0;
                 margin-right: 0;
             }
 
             .controls .btn,
             .button-group .btn,
             #addUserSection .btn,
-            #uploadSection .btn {
+            #uploadSection .btn,
+            .settings-actions .btn,
+            .card > .btn {
                 width: 100%;
+                min-height: 44px;
                 justify-content: center;
+            }
+
+            .controls select.search-bar,
+            .controls input.search-bar {
+                width: 100% !important;
+                min-height: 44px;
             }
 
             .stat-card p {
                 font-size: 20px;
+            }
+
+            .settings-card,
+            .quick-admin-card {
+                padding: 18px 14px;
+            }
+
+            .table-scroll {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            table {
+                width: max-content;
+                min-width: 100%;
             }
 
             th,
@@ -624,12 +680,35 @@
             }
 
             .access-grid {
-                grid-template-columns: 1fr !important;
+                grid-template-columns: minmax(0, 1fr) !important;
             }
 
             #progress-admin h2 {
                 font-size: 20px;
                 margin-bottom: 12px;
+            }
+
+            #progress-admin {
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            input,
+            select,
+            textarea,
+            .nav-item,
+            .btn,
+            .toggle-password {
+                min-height: 44px;
+            }
+
+            .nav-item {
+                padding: 12px;
+            }
+
+            .settings-actions {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
 
@@ -654,7 +733,6 @@
             .hamburger-btn {
                 top: 10px;
                 left: 10px;
-                padding: 9px 12px;
             }
 
             .search-bar,
@@ -663,15 +741,29 @@
             input {
                 font-size: 16px;
             }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            h3 {
+                font-size: 1.05rem;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="hamburger-btn" onclick="toggleMenu()">
+    <button class="hamburger-btn" type="button" aria-label="Open navigation menu" aria-controls="mySidebar"
+        aria-expanded="false" onclick="toggleMenu()">
         <i class="fa fa-bars"></i>
-    </div>
+    </button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMenu(false)" aria-hidden="true"></div>
 
     <div class="sidebar" id="mySidebar">
         <h2><i class="fa fa-shield-halved"></i> AUWCMSJ Admin</h2>
@@ -735,7 +827,7 @@
                     </div>
                 </div>
                 <p id="departmentStudentsSummary" class="settings-status" role="status" aria-live="polite"></p>
-                <div style="overflow-x:auto;">
+                <div class="table-scroll" style="overflow-x:auto;">
                     <table>
                         <thead>
                             <tr>
@@ -793,7 +885,7 @@
                 <button class="btn btn-export" onclick="exportToCSV()">Download Selected Columns</button>
             </div>
 
-            <div style="overflow-x: auto;">
+            <div class="table-scroll" style="overflow-x: auto;">
                 <table id="userTable">
                     <thead>
                         <tr>
@@ -872,7 +964,7 @@
             </div>
 
             <!-- Members Table -->
-            <div style="overflow-x: auto;">
+            <div class="table-scroll" style="overflow-x: auto;">
                 <table id="allMembersTable">
                     <thead>
                         <tr>
@@ -947,7 +1039,7 @@
             </div>
 
             <!-- Comments Table -->
-            <div style="overflow-x: auto;">
+            <div class="table-scroll" style="overflow-x: auto;">
                 <table id="commentsTable">
                     <thead>
                         <tr>
@@ -966,7 +1058,7 @@
 
         <div id="adminMessagesSection" class="card" style="display:none;">
             <h3><i class="fa fa-envelope-open-text"></i> Admin Message Center</h3><br>
-            <div style="overflow-x: auto;">
+            <div class="table-scroll" style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
@@ -1012,7 +1104,7 @@
                 </div>
 
                 <!-- Users Table for Role Management -->
-                <div style="overflow-x: auto;">
+                <div class="table-scroll" style="overflow-x: auto;">
                     <table id="roleUsersTable">
                         <thead>
                             <tr>
@@ -1179,19 +1271,21 @@
 
         <section id="progress-admin">
             <h2>Student Qirath Progress</h2>
-            <table border="10px" style="width:100%; border-collapse: collapse; margin-top: 20px; text-align: left;">
-                <thead style="background: #1b5e20; color: white;">
-                    <tr>
-                        <th style="padding: 10px;">Student Name</th>
-                        <th style="padding: 10px;">Level</th>
-                        <th style="padding: 10px;">Progress Detail</th>
-                        <th style="padding: 10px;">Time Sent</th>
-                        <th style="padding: 10px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="adminProgressTable">
-                </tbody>
-            </table>
+            <div class="table-scroll">
+                <table border="10px" style="width:100%; border-collapse: collapse; margin-top: 20px; text-align: left;">
+                    <thead style="background: #1b5e20; color: white;">
+                        <tr>
+                            <th style="padding: 10px;">Student Name</th>
+                            <th style="padding: 10px;">Level</th>
+                            <th style="padding: 10px;">Progress Detail</th>
+                            <th style="padding: 10px;">Time Sent</th>
+                            <th style="padding: 10px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminProgressTable">
+                    </tbody>
+                </table>
+            </div>
         </section>
         <div id="uploadSection" class="card" style="display:none;">
             <h3><i class="fa fa-file-upload"></i> Upload Resources</h3><br>
@@ -1212,7 +1306,7 @@
         </div>
         <div class="card" id="manageResourcesCard" style="display:none;">
             <h3><i class="fa fa-folder-open"></i> Manage Resources</h3><br>
-            <div style="overflow-x: auto;">
+            <div class="table-scroll" style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
@@ -1642,10 +1736,27 @@
         }
 
         // --- 2. SIDEBAR TOGGLE ---
-        function toggleMenu() {
+        function toggleMenu(forceOpen) {
             const sidebar = document.getElementById('mySidebar');
-            sidebar.classList.toggle('active');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const menuButton = document.querySelector('.hamburger-btn');
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const shouldOpen = isMobile && (typeof forceOpen === 'boolean'
+                ? forceOpen
+                : !sidebar.classList.contains('active'));
+
+            sidebar.classList.toggle('active', shouldOpen);
+            backdrop.classList.toggle('active', shouldOpen);
+            menuButton.setAttribute('aria-expanded', String(shouldOpen));
+            menuButton.setAttribute('aria-label', shouldOpen ? 'Close navigation menu' : 'Open navigation menu');
+            document.body.style.overflow = shouldOpen ? 'hidden' : '';
         }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && document.getElementById('mySidebar').classList.contains('active')) {
+                toggleMenu(false);
+            }
+        });
 
         // --- 3. SECTIONS DHOKSUU FI AGARSIISUU ---
         function toggleAddUser() {
