@@ -1961,22 +1961,27 @@
                 }
 
                 resources.forEach(r => {
-                    const target = lists[r.category];
+                    const target = lists[r.category] || lists.General;
                     if (target) {
                         const title = escapeConversationHtml(r.title || 'Untitled resource');
-                        let resourceUrl = '#';
+                        let resourceUrl = '';
                         try {
                             const parsedUrl = new URL(r.fileUrl || '', window.location.href);
                             if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
                                 resourceUrl = escapeConversationHtml(parsedUrl.href);
                             }
                         } catch {
-                            resourceUrl = '#';
+                            resourceUrl = '';
                         }
+                        const links = resourceUrl
+                            ? `<a href="${resourceUrl}" target="_blank" rel="noopener noreferrer">View</a>
+                               <a href="${resourceUrl}" target="_blank" rel="noopener noreferrer"
+                                  download="${escapeConversationHtml(r.fileName || '')}">Download</a>`
+                            : '<span>File unavailable</span>';
                         target.innerHTML += `
                     <div style="margin:5px 0;">
                         ${title}
-                        <a href="${resourceUrl}" target="_blank" rel="noopener noreferrer">Download</a>
+                        ${links}
                     </div>`;
                     }
                 });

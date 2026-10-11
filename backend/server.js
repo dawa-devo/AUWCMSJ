@@ -1,11 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { Readable } = require('stream');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -33,8 +36,18 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
+const MAX_RESOURCE_FILE_SIZE = 25 * 1024 * 1024;
 const ALLOWED_ROLES = ['student', 'admin', 'teacher'];
 const ALLOWED_STATUS = ['pending', 'active', 'blocked'];
+const RESOURCE_FILE_TYPES = new Map([
+    ['application/pdf', ['.pdf']],
+    ['application/msword', ['.doc']],
+    ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', ['.docx']],
+    ['image/jpeg', ['.jpg', '.jpeg']],
+    ['image/png', ['.png']],
+    ['image/gif', ['.gif']],
+    ['image/webp', ['.webp']]
+]);
 
 app.disable('x-powered-by');
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -59,6 +72,78 @@ app.use(cors({
     }
 }));
 app.use('/api', connectDatabase);
+
+const resourceUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_RESOURCE_FILE_SIZE, files: 1, fields: 2 },
+    fileFilter(req, file, callback) {
+        const extensions = RESOURCE_FILE_TYPES.get(file.mimetype);
+        const extension = path.extname(file.originalname).toLowerCase();
+        if (!extensions || !extensions.includes(extension)) {
+            const error = new Error('Upload a PDF, Word document, or supported image file.');
+            error.status = 400;
+            return callback(error);
+        }
+        return callback(null, true);
+    }
+});
+
+function parseResourceUpload(req, res, next) {
+    resourceUpload.single('file')(req, res, (err) => {
+        if (!err) return next();
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({
+            message: status === 413
+                ? 'Resource files must be 25 MB or smaller.'
+                : err.message || 'Resource upload could not be processed.'
+        });
+    });
+}
+
+function configureCloudinary() {
+    const cloudName = String(process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+    const apiKey = String(process.env.CLOUDINARY_API_KEY || '').trim();
+    const apiSecret = String(process.env.CLOUDINARY_API_SECRET || '').trim();
+    if (!cloudName || !apiKey || !apiSecret) {
+        const error = new Error('Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
+        error.status = 503;
+        throw error;
+    }
+    cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+}
+
+function uploadResourceToCloudinary(file) {
+    configureCloudinary();
+    const resourceType = file.mimetype.startsWith('image/') ? 'image' : 'raw';
+    const extension = path.extname(file.originalname).toLowerCase();
+    const publicId = `${crypto.randomBytes(16).toString('hex')}${resourceType === 'raw' ? extension : ''}`;
+
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'digital-library', public_id: publicId, resource_type: resourceType },
+            (error, result) => {
+                if (error) return reject(error);
+                if (!result?.secure_url || !result.public_id) {
+                    return reject(new Error('Cloudinary did not return a secure file URL and public ID.'));
+                }
+                return resolve(result);
+            }
+        );
+        Readable.from([file.buffer]).pipe(stream);
+    });
+}
+
+async function deleteCloudinaryResource(resource) {
+    if (!resource.publicId) return;
+    configureCloudinary();
+    const result = await cloudinary.uploader.destroy(resource.publicId, {
+        resource_type: resource.resourceType || 'raw',
+        invalidate: true
+    });
+    if (result.result !== 'ok' && result.result !== 'not found') {
+        throw new Error(`Cloudinary deletion returned "${result.result || 'no result'}".`);
+    }
+}
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -208,7 +293,11 @@ const resourceSchema = new mongoose.Schema({
     title: String,
     category: String,
     fileName: String,
-    fileUrl: String
+    fileUrl: String,
+    publicId: String,
+    resourceType: String,
+    mimeType: String,
+    createdAt: { type: Date, default: Date.now }
 });
 const Resource = mongoose.model('Resource', resourceSchema);
 
@@ -267,58 +356,125 @@ async function countAdmins() {
     return User.countDocuments({ role: 'admin' });
 }
 
-app.post('/api/admin/resources', authenticate, requireAdmin, async (req, res) => {
+app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload, async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'Choose a PDF, Word document, or image file to upload.' });
+    }
+
+    const title = String(req.body.title || '').trim();
+    if (!title) {
+        return res.status(400).json({ message: 'Resource title is required.' });
+    }
+
+    let cloudAsset;
     try {
-        const title = String(req.body.title || '').trim();
-        if (!title) {
-            return res.status(400).json({ message: 'Resource title is required.' });
-        }
+        cloudAsset = await uploadResourceToCloudinary(req.file);
         const newRes = new Resource({
             title,
             category: String(req.body.category || '').trim(),
-            fileName: String(req.body.fileName || '').trim(),
-            fileUrl: String(req.body.fileUrl || '').trim()
+            fileName: String(req.file.originalname).replace(/^.*[\\/]/, '').slice(0, 255),
+            fileUrl: cloudAsset.secure_url,
+            publicId: cloudAsset.public_id,
+            resourceType: cloudAsset.resource_type,
+            mimeType: req.file.mimetype
         });
         await newRes.save();
-        res.json({ message: 'Uploaded' });
+        return res.status(201).json({ message: 'Resource uploaded successfully.', resource: newRes });
     } catch (err) {
-        res.status(500).json({ message: 'Upload failed' });
+        if (cloudAsset?.public_id) {
+            try {
+                await deleteCloudinaryResource({
+                    publicId: cloudAsset.public_id,
+                    resourceType: cloudAsset.resource_type
+                });
+            } catch (cleanupError) {
+                console.error('Cloudinary cleanup failed after resource upload error:', cleanupError);
+            }
+        }
+        console.error('Resource upload failed:', err);
+        const status = err.status === 503 ? 503 : cloudAsset ? 500 : 502;
+        return res.status(status).json({
+            message: status === 503
+                ? err.message
+                : status === 502
+                    ? 'The resource could not be uploaded to cloud storage.'
+                    : 'The resource was uploaded but could not be saved.'
+        });
     }
 });
 
+async function findResourcesWithUploadDates() {
+    const resources = await Resource.find().select('-__v').sort({ _id: -1 }).lean();
+    return resources.map((resource) => ({
+        _id: resource._id,
+        title: resource.title,
+        category: resource.category,
+        fileName: resource.fileName,
+        fileUrl: resource.fileUrl,
+        mimeType: resource.mimeType,
+        createdAt: resource.createdAt,
+        uploadedAt: resource.createdAt || resource._id.getTimestamp()
+    }));
+}
+
 app.get('/api/admin/resources', authenticate, requireAdmin, async (req, res) => {
     try {
-        const resources = await Resource.find().select('-__v');
-        return res.json(resources);
+        return res.json(await findResourcesWithUploadDates());
     } catch (err) {
         console.error('Admin resource list loading failed:', err);
         return res.status(500).json({ message: 'Resources could not be loaded.' });
     }
 });
 
-app.delete('/api/admin/resources/:id', authenticate, requireAdmin, async (req, res) => {
+async function deleteResourceHandler(req, res) {
     if (!mongoose.isValidObjectId(req.params.id)) {
         return res.status(400).json({ message: 'Invalid resource ID.' });
     }
 
+    let resource;
     try {
-        const resource = await Resource.findByIdAndDelete(req.params.id);
-        if (!resource) {
-            return res.status(404).json({ message: 'Resource not found.' });
-        }
+        resource = await Resource.findById(req.params.id);
+    } catch (err) {
+        console.error('Resource lookup failed before deletion:', err);
+        return res.status(500).json({ message: 'Resource could not be loaded for deletion.' });
+    }
+    if (!resource) return res.status(404).json({ message: 'Resource not found.' });
+
+    try {
+        await deleteCloudinaryResource(resource);
+    } catch (err) {
+        console.error('Cloudinary resource deletion failed:', err);
+        return res.status(err.status || 502).json({
+            message: err.status === 503
+                ? err.message
+                : 'Resource storage could not be deleted; the database record was retained.'
+        });
+    }
+
+    try {
+        await resource.deleteOne();
         return res.json({ message: 'Resource deleted successfully.' });
     } catch (err) {
-        console.error('Resource deletion failed:', err);
-        return res.status(500).json({ message: 'Resource could not be deleted.' });
+        console.error('Resource database deletion failed after cloud file removal:', err);
+        return res.status(500).json({
+            message: 'The cloud file was deleted, but its database record could not be removed.'
+        });
     }
-});
+}
+
+app.delete(
+    ['/api/admin/resources/:id', '/api/resources/:id'],
+    authenticate,
+    requireAdmin,
+    deleteResourceHandler
+);
 
 app.get('/api/resources', authenticate, requireActive, async (req, res) => {
     try {
-        const data = await Resource.find().select('-__v');
-        res.json(data);
+        return res.json(await findResourcesWithUploadDates());
     } catch (err) {
-        res.status(500).json({ message: 'Resources could not be loaded.' });
+        console.error('Resource list loading failed:', err);
+        return res.status(500).json({ message: 'Resources could not be loaded.' });
     }
 });
 

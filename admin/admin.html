@@ -152,6 +152,10 @@
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
         }
 
+        .settings-card.library-settings-card {
+            grid-column: 1 / -1;
+        }
+
         .settings-card h3 {
             font-size: 1.1rem;
             margin-bottom: 18px;
@@ -1358,8 +1362,9 @@
                     <option value="General">General</option>
                 </select>
 
-                <input type="file" id="fileInput" class="search-bar" style="padding: 8px;">
-                <button class="btn btn-primary" onclick="uploadResource()">Upload Now</button>
+                <input type="file" id="fileInput" class="search-bar" style="padding: 8px;"
+                    accept=".pdf,.doc,.docx,image/jpeg,image/png,image/gif,image/webp">
+                <button id="uploadResourceButton" class="btn btn-primary" onclick="uploadResource()">Upload Now</button>
             </div>
             <div id="uploadStatus" style="margin-top:10px; color: #059669;"></div>
         </div>
@@ -1491,6 +1496,37 @@
                     </div>
                 </div>
 
+                <div class="settings-card library-settings-card">
+                    <h3>Digital Library</h3>
+                    <p>View, download, and manage uploaded library resources.</p>
+                    <div class="settings-actions">
+                        <button id="openDigitalLibraryButton" class="btn btn-primary" type="button"
+                            aria-expanded="false" aria-controls="digitalLibraryManager"
+                            onclick="toggleDigitalLibraryManager()">
+                            <i class="fa fa-book-open" aria-hidden="true"></i>
+                            Manage Digital Library Resources
+                        </button>
+                    </div>
+                    <div id="digitalLibraryManager" style="display:none; margin-top:20px;">
+                        <div class="table-scroll" style="overflow-x:auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>File Type / Category</th>
+                                        <th>Upload Date</th>
+                                        <th>Download Link</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="digitalLibraryResourceList">
+                                    <tr><td colspan="5">Open the library manager to load resources.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-card">
                     <h3>Appearance</h3>
                     <div class="toggle-row">
@@ -1545,7 +1581,8 @@
         async function fetchWithApiFallback(path, options = {}) {
             const host = window.location.hostname;
             const token = sessionStorage.getItem('token') || '';
-            const headers = { ...(options.headers || {}) };
+            const { timeoutMs = 10000, ...requestOptions } = options;
+            const headers = { ...(requestOptions.headers || {}) };
             if (token && !headers.Authorization) {
                 headers.Authorization = `Bearer ${token}`;
             }
@@ -1555,9 +1592,10 @@
             let lastError = null;
             for (const base of candidates) {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
-                    const res = await fetch(`${base}${path}`, { ...options, headers, signal: controller.signal });
+                    const res = await fetch(`${base}${path}`, { ...requestOptions, headers, signal: controller.signal });
+                    clearTimeout(timeoutId);
                     if (res.status === 401) {
                         sessionStorage.clear();
                         window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
@@ -1632,6 +1670,103 @@
             el.className = 'settings-status';
             if (type === 'error') el.classList.add('error');
             if (type === 'success') el.classList.add('success');
+        }
+
+        function toggleDigitalLibraryManager() {
+            const manager = document.getElementById('digitalLibraryManager');
+            const button = document.getElementById('openDigitalLibraryButton');
+            const isOpening = manager.style.display === 'none';
+            manager.style.display = isOpening ? 'block' : 'none';
+            button.setAttribute('aria-expanded', String(isOpening));
+            if (isOpening) loadDigitalLibraryResources();
+        }
+
+        async function loadDigitalLibraryResources() {
+            const list = document.getElementById('digitalLibraryResourceList');
+            if (!list) return;
+
+            if (!list.dataset.deleteHandlerAttached) {
+                list.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-delete-resource]');
+                    if (button && list.contains(button)) {
+                        deleteResource(button.dataset.deleteResource, button);
+                    }
+                });
+                list.dataset.deleteHandlerAttached = 'true';
+            }
+
+            try {
+                const response = await fetchWithApiFallback('/api/admin/resources');
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || 'Resources could not be loaded.');
+                }
+
+                list.replaceChildren();
+                if (!Array.isArray(data) || data.length === 0) {
+                    const row = list.insertRow();
+                    const cell = row.insertCell();
+                    cell.colSpan = 5;
+                    cell.textContent = 'No digital library resources have been uploaded.';
+                    return;
+                }
+
+                data.forEach((resource) => {
+                    const row = list.insertRow();
+                    row.insertCell().textContent = resource.title || 'Untitled resource';
+
+                    const typeCell = row.insertCell();
+                    const fileExtension = String(resource.fileName || '').match(/\.([^.]+)$/)?.[1];
+                    typeCell.textContent = [
+                        resource.category || '',
+                        fileExtension ? fileExtension.toUpperCase() : ''
+                    ].filter(Boolean).join(' / ') || '---';
+
+                    const dateCell = row.insertCell();
+                    const uploadedAt = resource.uploadedAt || resource.createdAt;
+                    const uploadDate = uploadedAt ? new Date(uploadedAt) : null;
+                    dateCell.textContent = uploadDate && !Number.isNaN(uploadDate.getTime())
+                        ? uploadDate.toLocaleString()
+                        : '---';
+
+                    const downloadCell = row.insertCell();
+                    const fileUrl = String(resource.fileUrl || '').trim();
+                    if (fileUrl) {
+                        try {
+                            const downloadUrl = new URL(fileUrl, window.location.origin);
+                            if (downloadUrl.protocol === 'http:' || downloadUrl.protocol === 'https:') {
+                                const link = document.createElement('a');
+                                link.href = downloadUrl.href;
+                                link.target = '_blank';
+                                link.rel = 'noopener noreferrer';
+                                link.textContent = 'Download';
+                                downloadCell.appendChild(link);
+                            } else {
+                                downloadCell.textContent = 'Unavailable';
+                            }
+                        } catch {
+                            downloadCell.textContent = 'Unavailable';
+                        }
+                    } else {
+                        downloadCell.textContent = 'Unavailable';
+                    }
+
+                    const actionCell = row.insertCell();
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'btn btn-danger';
+                    deleteButton.dataset.deleteResource = String(resource._id || '');
+                    deleteButton.setAttribute('aria-label', `Delete ${resource.title || 'resource'}`);
+                    deleteButton.innerHTML = '<i class="fa fa-trash" aria-hidden="true"></i> Delete';
+                    actionCell.appendChild(deleteButton);
+                });
+            } catch (err) {
+                list.replaceChildren();
+                const row = list.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = err.message || 'Resources could not be loaded.';
+            }
         }
 
         async function loadAdminSettings() {
@@ -1907,8 +2042,8 @@
             button.disabled = true;
             try {
                 const response = await fetchWithApiFallback(
-                    `/api/admin/resources/${encodeURIComponent(resourceId)}`,
-                    { method: 'DELETE' }
+                    `/api/resources/${encodeURIComponent(resourceId)}`,
+                    { method: 'DELETE', timeoutMs: 30000 }
                 );
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
@@ -1916,10 +2051,13 @@
                 }
 
                 const row = button.closest('tr');
-                const list = document.getElementById('adminResourceList');
+                const list = button.closest('tbody');
                 row.remove();
                 if (!list.querySelector('tr')) {
-                    list.innerHTML = '<tr><td colspan="4">No resources uploaded yet.</td></tr>';
+                    const emptyRow = list.insertRow();
+                    const emptyCell = emptyRow.insertCell();
+                    emptyCell.colSpan = list.closest('table').querySelectorAll('thead th').length;
+                    emptyCell.textContent = 'No resources uploaded yet.';
                 }
                 showResourceToast(data.message || 'Resource deleted successfully.');
             } catch (err) {
@@ -1932,35 +2070,50 @@
             const title = document.getElementById('resourceTitle').value;
             const category = document.getElementById('resourceCategory').value;
             const file = document.getElementById('fileInput').files[0];
+            const status = document.getElementById('uploadStatus');
 
             if (!title.trim()) {
-                alert("Please enter a resource title.");
+                status.textContent = 'Please enter a resource title.';
                 return;
             }
 
             if (!file) {
-                alert("Please choose a file before uploading.");
+                status.textContent = 'Please choose a file before uploading.';
                 return;
             }
 
-            const res = await fetchWithApiFallback('/api/admin/resources', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    category,
-                    fileName: file.name
-                })
-            });
+            const formData = new FormData();
+            formData.append('title', title.trim());
+            formData.append('category', category);
+            formData.append('file', file);
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                alert(data.message || "Upload failed.");
-                return;
+            const uploadButton = document.getElementById('uploadResourceButton');
+            uploadButton.disabled = true;
+            status.textContent = 'Uploading resource...';
+            try {
+                const response = await fetchWithApiFallback('/api/admin/resources', {
+                    method: 'POST',
+                    body: formData,
+                    timeoutMs: 120000
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || 'Upload failed.');
+                }
+
+                status.textContent = data.message || 'Resource uploaded successfully.';
+                document.getElementById('resourceTitle').value = '';
+                document.getElementById('fileInput').value = '';
+                await loadResources();
+                if (document.getElementById('digitalLibraryManager').style.display === 'block') {
+                    await loadDigitalLibraryResources();
+                }
+            } catch (err) {
+                status.textContent = err.message || 'Upload failed.';
+                console.error('Digital library resource upload failed:', err);
+            } finally {
+                uploadButton.disabled = false;
             }
-
-            alert("Uploaded!");
-            await loadResources();
         }
 
         async function changeAdminPassword() {
