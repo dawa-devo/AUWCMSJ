@@ -69,8 +69,8 @@ const loginLimiter = rateLimit({
 });
 
 const registerLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: 20,
+    windowMs: 15 * 60 * 1000,
+    max: 400,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many registration attempts. Please try again later.' }
@@ -1320,7 +1320,7 @@ app.post('/api/admin/add-student', authenticate, requireAdmin, async (req, res) 
     }
 });
 
-let latestNews = "Beeksisni ammaan tana hin jiru.";
+let latestNews = "there is no announcement.";
 
 app.post('/api/admin/news', authenticate, requireAdmin, (req, res) => {
     latestNews = String(req.body.news || '');
