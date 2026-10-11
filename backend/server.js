@@ -286,6 +286,33 @@ app.post('/api/admin/resources', authenticate, requireAdmin, async (req, res) =>
     }
 });
 
+app.get('/api/admin/resources', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const resources = await Resource.find().select('-__v');
+        return res.json(resources);
+    } catch (err) {
+        console.error('Admin resource list loading failed:', err);
+        return res.status(500).json({ message: 'Resources could not be loaded.' });
+    }
+});
+
+app.delete('/api/admin/resources/:id', authenticate, requireAdmin, async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ message: 'Invalid resource ID.' });
+    }
+
+    try {
+        const resource = await Resource.findByIdAndDelete(req.params.id);
+        if (!resource) {
+            return res.status(404).json({ message: 'Resource not found.' });
+        }
+        return res.json({ message: 'Resource deleted successfully.' });
+    } catch (err) {
+        console.error('Resource deletion failed:', err);
+        return res.status(500).json({ message: 'Resource could not be deleted.' });
+    }
+});
+
 app.get('/api/resources', authenticate, requireActive, async (req, res) => {
     try {
         const data = await Resource.find().select('-__v');
