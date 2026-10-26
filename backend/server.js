@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { Readable } = require('stream');
 const bcrypt = require('bcryptjs');
@@ -15,12 +14,12 @@ require('dotenv').config();
 
 const { createAuth } = require('./middleware/auth');
 const connectDatabase = require('./middleware/database');
+const prisma = connectDatabase.prisma;
 const {
     createRawToken,
     hashToken,
     isStrongPassword,
     sanitizeUser,
-    escapeRegex,
     sanitizeRequest
 } = require('./utils/security');
 
@@ -161,51 +160,8 @@ const registerLimiter = rateLimit({
     message: { message: 'Too many registration attempts. Please try again later.' }
 });
 
-const userSchema = new mongoose.Schema({
-    studentId: { type: String, required: true, unique: true, trim: true },
-    name: { type: String, required: true, trim: true },
-    gender: { type: String, enum: ['Male', 'Female', ''], default: '' },
-    department: { type: String, default: '' },
-    yearOfEntry: { type: String, default: '' },
-    phone: { type: String, default: '' },
-    profilePic: { type: String, default: '' },
-    profile: {
-        fullName: { type: String, default: '' },
-        phone: { type: String, default: '' },
-        profileImage: { type: String, default: '' }
-    },
-    preferences: {
-        registrationNotifications: { type: Boolean, default: true },
-        approvalNotifications: { type: Boolean, default: true },
-        systemNotifications: { type: Boolean, default: true },
-        darkMode: { type: Boolean, default: false },
-        compactSidebar: { type: Boolean, default: false }
-    },
-    password: { type: String, required: true },
-    role: { type: String, enum: ALLOWED_ROLES, default: 'student' },
-    status: { type: String, enum: ALLOWED_STATUS, default: 'pending' },
-    registrationTokenHash: { type: String, default: '' },
-    registrationTokenExpires: { type: Date },
-    tokenVersion: { type: Number, default: 0 },
-    eName: { type: String },
-    ePhone: { type: String },
-    eRel: { type: String },
-    fName: { type: String },
-    fPhone: { type: String },
-    fRel: { type: String },
-    academicSkill: { type: String },
-    spiritualSkill: { type: String },
-    contribution: { type: String },
-    createdAt: { type: Date, default: Date.now }
-});
-
-userSchema.index({ role: 1, createdAt: -1 });
-userSchema.index({ role: 1, status: 1, createdAt: -1 });
-userSchema.index({ role: 1, gender: 1 });
-userSchema.index({ createdAt: -1 });
-
-const User = mongoose.model('User', userSchema);
-const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(User);
+const User = prisma.user;
+const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(prisma);
 
 function buildAdminSettingsPayload(user) {
     const plain = user && typeof user.toObject === 'function' ? user.toObject() : { ...(user || {}) };
@@ -213,7 +169,7 @@ function buildAdminSettingsPayload(user) {
     const preferences = plain.preferences || {};
 
     return {
-        userId: String(plain._id || ''),
+        userId: String(plain.id || ''),
         name: String(plain.name || profile.fullName || '').trim(),
         fullName: String(profile.fullName || plain.name || '').trim(),
         phone: String(profile.phone || plain.phone || '').trim(),
@@ -231,7 +187,7 @@ function buildAdminSettingsPayload(user) {
             applicationName: 'AUWCMSJ',
             userRole: 'Admin',
             backendStatus: 'online',
-            databaseStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+            databaseStatus: 'connected',
             applicationVersion: String(process.env.APP_VERSION || '1.0.0').trim() || '1.0.0'
         }
     };
@@ -243,7 +199,7 @@ function buildUserSettingsPayload(user) {
     const preferences = plain.preferences || {};
 
     return {
-        userId: String(plain._id || ''),
+        userId: String(plain.id || ''),
         fullName: String(profile.fullName || plain.name || '').trim(),
         name: String(plain.name || profile.fullName || '').trim(),
         phone: String(profile.phone || plain.phone || '').trim(),
@@ -268,43 +224,20 @@ function buildUserSettingsPayload(user) {
 
 let spamProtectionEnabled = false;
 
-const messageSchema = new mongoose.Schema({
-    studentId: { type: String, required: true, index: true },
-    studentName: { type: String, default: '' },
-    content: { type: String, required: true },
-    reply: { type: String, default: '' },
-    isReadByUser: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
-    repliedAt: { type: Date }
-});
-const Message = mongoose.model('Message', messageSchema);
+const Message = prisma.message;
+const ContactEmergency = prisma.contactEmergency;
+const Resource = prisma.resource;
 
-const ContactEmergency = mongoose.model('ContactEmergency', new mongoose.Schema({
-    universityId: { type: String, required: true, index: true },
-    eName: String,
-    ePhone: String,
-    eRel: String,
-    fName: String,
-    fPhone: String,
-    fRel: String
-}));
-
-const resourceSchema = new mongoose.Schema({
-    title: String,
-    category: String,
-    fileName: String,
-    fileUrl: String,
-    publicId: String,
-    resourceType: String,
-    mimeType: String,
-    createdAt: { type: Date, default: Date.now }
-});
-const Resource = mongoose.model('Resource', resourceSchema);
+function toApiRecord(record) {
+    if (!record) return record;
+    const { id, ...fields } = record;
+    return { _id: id, ...fields };
+}
 
 function signUserToken(user) {
     return jwt.sign(
         {
-            userId: String(user._id),
+            userId: String(user.id),
             studentId: user.studentId,
             role: String(user.role || '').toLowerCase(),
             tokenVersion: Number(user.tokenVersion || 0)
@@ -323,7 +256,7 @@ async function assertRegistrationToken(universityId, registrationToken) {
         throw error;
     }
 
-    const user = await User.findOne({ studentId });
+    const user = await User.findUnique({ where: { studentId } });
     if (!user) {
         const error = new Error('Barataan ID kanaan galmaa\'e User collection keessa hin jiru.');
         error.status = 404;
@@ -353,7 +286,7 @@ async function assertRegistrationToken(universityId, registrationToken) {
 }
 
 async function countAdmins() {
-    return User.countDocuments({ role: 'admin' });
+    return User.count({ where: { role: 'admin' } });
 }
 
 app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload, async (req, res) => {
@@ -369,7 +302,7 @@ app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload
     let cloudAsset;
     try {
         cloudAsset = await uploadResourceToCloudinary(req.file);
-        const newRes = new Resource({
+        const newRes = await Resource.create({ data: {
             title,
             category: String(req.body.category || '').trim(),
             fileName: String(req.file.originalname).replace(/^.*[\\/]/, '').slice(0, 255),
@@ -377,9 +310,8 @@ app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload
             publicId: cloudAsset.public_id,
             resourceType: cloudAsset.resource_type,
             mimeType: req.file.mimetype
-        });
-        await newRes.save();
-        return res.status(201).json({ message: 'Resource uploaded successfully.', resource: newRes });
+        } });
+        return res.status(201).json({ message: 'Resource uploaded successfully.', resource: toApiRecord(newRes) });
     } catch (err) {
         if (cloudAsset?.public_id) {
             try {
@@ -404,16 +336,16 @@ app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload
 });
 
 async function findResourcesWithUploadDates() {
-    const resources = await Resource.find().select('-__v').sort({ _id: -1 }).lean();
+    const resources = await Resource.findMany({ orderBy: { createdAt: 'desc' } });
     return resources.map((resource) => ({
-        _id: resource._id,
+        _id: resource.id,
         title: resource.title,
         category: resource.category,
         fileName: resource.fileName,
         fileUrl: resource.fileUrl,
         mimeType: resource.mimeType,
         createdAt: resource.createdAt,
-        uploadedAt: resource.createdAt || resource._id.getTimestamp()
+        uploadedAt: resource.createdAt
     }));
 }
 
@@ -427,13 +359,9 @@ app.get('/api/admin/resources', authenticate, requireAdmin, async (req, res) => 
 });
 
 async function deleteResourceHandler(req, res) {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-        return res.status(400).json({ message: 'Invalid resource ID.' });
-    }
-
     let resource;
     try {
-        resource = await Resource.findById(req.params.id);
+        resource = await Resource.findUnique({ where: { id: req.params.id } });
     } catch (err) {
         console.error('Resource lookup failed before deletion:', err);
         return res.status(500).json({ message: 'Resource could not be loaded for deletion.' });
@@ -452,7 +380,7 @@ async function deleteResourceHandler(req, res) {
     }
 
     try {
-        await resource.deleteOne();
+        await Resource.delete({ where: { id: resource.id } });
         return res.json({ message: 'Resource deleted successfully.' });
     } catch (err) {
         console.error('Resource database deletion failed after cloud file removal:', err);
@@ -494,13 +422,13 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
             return res.status(400).json({ message: 'One or more registration fields are too long.' });
         }
 
-        const existing = await User.findOne({ studentId: universityId });
+        const existing = await User.findUnique({ where: { studentId: universityId } });
         if (existing) return res.status(400).json({ message: 'ID is already registered!' });
 
         const registrationToken = createRawToken(24);
         const placeholderPassword = await bcrypt.hash(createRawToken(16), 10);
 
-        const newUser = new User({
+        await User.create({ data: {
             studentId: universityId,
             name: fullName,
             gender: gender === 'Male' || gender === 'Female' ? gender : '',
@@ -512,11 +440,10 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
             role: 'student',
             registrationTokenHash: hashToken(registrationToken),
             registrationTokenExpires: new Date(Date.now() + REGISTRATION_TTL_MS)
-        });
-        await newUser.save();
+        } });
         res.status(200).json({ message: 'Step 1 saved!', registrationToken });
     } catch (err) {
-        if (err.code === 11000) {
+        if (err.code === 'P2002') {
             return res.status(400).json({ message: 'ID is already registered.' });
         }
         res.status(500).json({ message: 'Registration could not be saved.' });
@@ -544,28 +471,29 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
 
         const generatedPassword = cryptoRandomPassword();
         const hashedPw = await bcrypt.hash(generatedPassword, 12);
-        updatedUser.password = hashedPw;
-        updatedUser.eName = data.eName || '';
-        updatedUser.ePhone = data.ePhone || '';
-        updatedUser.eRel = data.eRel || '';
-        updatedUser.fName = data.fName || '';
-        updatedUser.fPhone = data.fPhone || '';
-        updatedUser.fRel = data.fRel || '';
-        await updatedUser.save();
-
-        await ContactEmergency.findOneAndUpdate(
-            { universityId: String(data.universityId).trim() },
-            {
-                universityId: String(data.universityId).trim(),
-                eName: data.eName || '',
-                ePhone: data.ePhone || '',
-                eRel: data.eRel || '',
-                fName: data.fName || '',
-                fPhone: data.fPhone || '',
-                fRel: data.fRel || ''
-            },
-            { upsert: true, new: true }
-        );
+        const universityId = String(data.universityId).trim();
+        const contactData = {
+            eName: data.eName || '',
+            ePhone: data.ePhone || '',
+            eRel: data.eRel || '',
+            fName: data.fName || '',
+            fPhone: data.fPhone || '',
+            fRel: data.fRel || ''
+        };
+        await prisma.$transaction([
+            User.update({
+                where: { id: updatedUser.id },
+                data: { password: hashedPw, ...contactData }
+            }),
+            ContactEmergency.upsert({
+                where: { universityId },
+                update: contactData,
+                create: {
+                    universityId,
+                    ...contactData
+                }
+            })
+        ]);
 
         console.info('[REGISTER STEP2] User data saved');
         return res.status(200).json({
@@ -595,10 +523,14 @@ app.post('/api/skills', async (req, res) => {
         if ([academicSkill, spiritualSkill, contribution].some((value) => String(value || '').length > 4000)) {
             return res.status(400).json({ message: 'Skill details are too long.' });
         }
-        user.academicSkill = academicSkill || '';
-        user.spiritualSkill = spiritualSkill || '';
-        user.contribution = contribution || '';
-        await user.save();
+        await User.update({
+            where: { id: user.id },
+            data: {
+                academicSkill: academicSkill || '',
+                spiritualSkill: spiritualSkill || '',
+                contribution: contribution || ''
+            }
+        });
 
         res.status(200).json({ message: 'Skills saved successfully.' });
     } catch (err) {
@@ -615,7 +547,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
             return res.status(400).json({ message: 'Student ID and password are required.' });
         }
 
-        const user = await User.findOne({ studentId });
+        const user = await User.findUnique({ where: { studentId } });
         if (!user) return res.status(400).json({ message: 'Student ID was not found.' });
         if (user.status === 'blocked') return res.status(403).json({ message: 'This account is blocked.' });
         if (user.status !== 'active') return res.status(403).json({ message: 'Admin mirkaneessuu eagi!' });
@@ -639,10 +571,10 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 
 app.post('/api/logout', authenticate, async (req, res) => {
     try {
-        await User.updateOne(
-            { _id: req.user._id },
-            { $inc: { tokenVersion: 1 } }
-        );
+        await User.update({
+            where: { id: req.user.id },
+            data: { tokenVersion: { increment: 1 } }
+        });
         res.json({ message: 'Logged out successfully.' });
     } catch (err) {
         res.status(500).json({ message: 'Could not log out securely.' });
@@ -651,11 +583,18 @@ app.post('/api/logout', authenticate, async (req, res) => {
 
 app.get('/api/user/me', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('name studentId profilePic role status profile preferences department yearOfEntry phone createdAt');
+        const user = await User.findUnique({
+            where: { id: req.user.id },
+            select: {
+                id: true, name: true, studentId: true, profilePic: true, role: true,
+                status: true, profile: true, preferences: true, department: true,
+                yearOfEntry: true, phone: true, createdAt: true
+            }
+        });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
-        res.json(user);
+        res.json(toApiRecord(user));
     } catch (err) {
         res.status(500).json({ message: 'User profile could not be loaded.' });
     }
@@ -663,7 +602,7 @@ app.get('/api/user/me', authenticate, async (req, res) => {
 
 app.get('/api/user/settings', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -679,7 +618,7 @@ app.get('/api/user/settings', authenticate, async (req, res) => {
 
 app.put('/api/user/settings/profile', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -697,21 +636,25 @@ app.put('/api/user/settings/profile', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Profile image must be a valid image URL or base64 image.' });
         }
 
+        let updatedUser = user;
         if (user.role !== 'admin') {
-            user.name = fullName;
-            user.phone = phone;
-            user.department = department;
-            user.yearOfEntry = yearOfEntry;
-            user.profilePic = profileImage || user.profilePic || '';
-            user.profile = {
-                ...(user.profile || {}),
-                fullName,
-                phone,
-                profileImage: profileImage || user.profile?.profileImage || user.profilePic || ''
-            };
+            updatedUser = await User.update({
+                where: { id: user.id },
+                data: {
+                    name: fullName,
+                    phone,
+                    department,
+                    yearOfEntry,
+                    profilePic: profileImage || user.profilePic || '',
+                    profile: {
+                        ...(user.profile || {}),
+                        fullName,
+                        phone,
+                        profileImage: profileImage || user.profile?.profileImage || user.profilePic || ''
+                    }
+                }
+            });
         }
-
-        const updatedUser = await user.save();
 
         res.json({
             message: 'Profile updated successfully.',
@@ -738,7 +681,7 @@ app.put('/api/user/settings/password', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Password does not meet security requirements.' });
         }
 
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -748,11 +691,15 @@ app.put('/api/user/settings/password', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Incorrect current password.' });
         }
 
-        user.password = await bcrypt.hash(newPassword, 12);
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
+        const updatedUser = await User.update({
+            where: { id: user.id },
+            data: {
+                password: await bcrypt.hash(newPassword, 12),
+                tokenVersion: { increment: 1 }
+            }
+        });
 
-        const token = signUserToken(user);
+        const token = signUserToken(updatedUser);
         res.json({ message: 'Password changed successfully.', token });
     } catch (err) {
         res.status(500).json({ message: 'Password could not be changed.' });
@@ -761,13 +708,13 @@ app.put('/api/user/settings/password', authenticate, async (req, res) => {
 
 app.put('/api/user/settings/notifications', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
         const previous = user.preferences || {};
-        user.preferences = {
+        const preferences = {
             ...previous,
             eventNotifications: Boolean(req.body.eventNotifications ?? previous.eventNotifications ?? true),
             resourceNotifications: Boolean(req.body.resourceNotifications ?? previous.resourceNotifications ?? true),
@@ -775,11 +722,11 @@ app.put('/api/user/settings/notifications', authenticate, async (req, res) => {
             systemNotifications: Boolean(req.body.systemNotifications ?? previous.systemNotifications ?? true),
             language: String(req.body.language || previous.language || 'en').trim() || 'en'
         };
-        await user.save();
+        const updatedUser = await User.update({ where: { id: user.id }, data: { preferences } });
 
         res.json({
             message: 'Notification settings updated successfully.',
-            settings: buildUserSettingsPayload(user)
+            settings: buildUserSettingsPayload(updatedUser)
         });
     } catch (err) {
         res.status(500).json({ message: 'Notification settings could not be updated.' });
@@ -788,22 +735,22 @@ app.put('/api/user/settings/notifications', authenticate, async (req, res) => {
 
 app.put('/api/user/settings/appearance', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
         const previous = user.preferences || {};
-        user.preferences = {
+        const preferences = {
             ...previous,
             darkMode: Boolean(req.body.darkMode ?? previous.darkMode ?? false),
             compactSidebar: Boolean(req.body.compactSidebar ?? previous.compactSidebar ?? false)
         };
-        await user.save();
+        const updatedUser = await User.update({ where: { id: user.id }, data: { preferences } });
 
         res.json({
             message: 'Appearance settings updated successfully.',
-            settings: buildUserSettingsPayload(user)
+            settings: buildUserSettingsPayload(updatedUser)
         });
     } catch (err) {
         res.status(500).json({ message: 'Appearance settings could not be updated.' });
@@ -812,7 +759,7 @@ app.put('/api/user/settings/appearance', authenticate, async (req, res) => {
 
 app.put('/api/user/settings/language', authenticate, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -823,15 +770,15 @@ app.put('/api/user/settings/language', authenticate, async (req, res) => {
         }
 
         const previous = user.preferences || {};
-        user.preferences = {
+        const preferences = {
             ...previous,
             language
         };
-        await user.save();
+        const updatedUser = await User.update({ where: { id: user.id }, data: { preferences } });
 
         res.json({
             message: 'Language preference updated successfully.',
-            settings: buildUserSettingsPayload(user)
+            settings: buildUserSettingsPayload(updatedUser)
         });
     } catch (err) {
         res.status(500).json({ message: 'Language preference could not be updated.' });
@@ -840,7 +787,7 @@ app.put('/api/user/settings/language', authenticate, async (req, res) => {
 
 app.get('/api/admin/settings', authenticate, requireAdmin, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
@@ -855,7 +802,7 @@ app.get('/api/admin/settings', authenticate, requireAdmin, async (req, res) => {
 
 app.put('/api/admin/settings/profile', authenticate, requireAdmin, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
@@ -886,7 +833,10 @@ app.put('/api/admin/settings/profile', authenticate, requireAdmin, async (req, r
             ...(phone || !user.phone ? {} : {})
         };
 
-        const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
+        const updatedUser = await User.update({
+            where: { id: req.user.id },
+            data: updateData
+        });
         res.json({
             message: 'Profile updated successfully.',
             settings: buildAdminSettingsPayload(updatedUser)
@@ -912,7 +862,7 @@ app.put('/api/admin/settings/password', authenticate, requireAdmin, async (req, 
             return res.status(400).json({ message: 'New password must be at least 8 characters and include a letter and a number.' });
         }
 
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
@@ -922,11 +872,15 @@ app.put('/api/admin/settings/password', authenticate, requireAdmin, async (req, 
             return res.status(400).json({ message: 'Current password is incorrect.' });
         }
 
-        user.password = await bcrypt.hash(newPassword, 12);
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
+        const updatedUser = await User.update({
+            where: { id: user.id },
+            data: {
+                password: await bcrypt.hash(newPassword, 12),
+                tokenVersion: { increment: 1 }
+            }
+        });
 
-        const token = signUserToken(user);
+        const token = signUserToken(updatedUser);
         res.json({ message: 'Password changed successfully.', token });
     } catch (err) {
         res.status(500).json({ message: 'Password could not be changed.' });
@@ -935,7 +889,7 @@ app.put('/api/admin/settings/password', authenticate, requireAdmin, async (req, 
 
 app.put('/api/admin/settings/notifications', authenticate, requireAdmin, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
@@ -947,15 +901,18 @@ app.put('/api/admin/settings/notifications', authenticate, requireAdmin, async (
             systemNotifications: Boolean(req.body.systemNotifications ?? preferences.systemNotifications ?? true)
         };
 
-        user.preferences = {
+        const nextPreferences = {
             ...preferences,
             ...updates
         };
-        await user.save();
+        const updatedUser = await User.update({
+            where: { id: user.id },
+            data: { preferences: nextPreferences }
+        });
 
         res.json({
             message: 'Notification settings updated.',
-            settings: buildAdminSettingsPayload(user)
+            settings: buildAdminSettingsPayload(updatedUser)
         });
     } catch (err) {
         res.status(500).json({ message: 'Notification settings could not be updated.' });
@@ -964,7 +921,7 @@ app.put('/api/admin/settings/notifications', authenticate, requireAdmin, async (
 
 app.put('/api/admin/settings/appearance', authenticate, requireAdmin, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
@@ -976,12 +933,14 @@ app.put('/api/admin/settings/appearance', authenticate, requireAdmin, async (req
             compactSidebar: Boolean(req.body.compactSidebar ?? preferences.compactSidebar ?? false)
         };
 
-        user.preferences = nextPreferences;
-        await user.save();
+        const updatedUser = await User.update({
+            where: { id: user.id },
+            data: { preferences: nextPreferences }
+        });
 
         res.json({
             message: 'Appearance settings updated.',
-            settings: buildAdminSettingsPayload(user)
+            settings: buildAdminSettingsPayload(updatedUser)
         });
     } catch (err) {
         res.status(500).json({ message: 'Appearance settings could not be updated.' });
@@ -990,13 +949,15 @@ app.put('/api/admin/settings/appearance', authenticate, requireAdmin, async (req
 
 app.put('/api/admin/settings/logout-all-sessions', authenticate, requireAdmin, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'Admin user not found.' });
         }
 
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
+        await User.update({
+            where: { id: user.id },
+            data: { tokenVersion: { increment: 1 } }
+        });
 
         res.json({ message: 'All sessions were logged out successfully.' });
     } catch (err) {
@@ -1022,11 +983,11 @@ app.put('/api/user/profile-photo', authenticate, requireActive, async (req, res)
             return res.status(400).json({ message: 'Profile image must be 550 KB or smaller and contain valid image data.' });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            req.user._id,
-            { profilePic },
-            { new: true }
-        ).select('profilePic');
+        const updatedUser = await User.update({
+            where: { id: req.user.id },
+            data: { profilePic },
+            select: { profilePic: true }
+        });
 
         if (!updatedUser) {
             return res.status(404).json({ message: 'User not found.' });
@@ -1049,7 +1010,7 @@ app.put('/api/user/change-password', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'New password must be at least 8 characters and include a letter and a number.' });
         }
 
-        const user = await User.findById(req.user._id);
+        const user = await User.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -1059,11 +1020,15 @@ app.put('/api/user/change-password', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Current password is incorrect.' });
         }
 
-        user.password = await bcrypt.hash(newPassword, 12);
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
+        const updatedUser = await User.update({
+            where: { id: user.id },
+            data: {
+                password: await bcrypt.hash(newPassword, 12),
+                tokenVersion: { increment: 1 }
+            }
+        });
 
-        const token = signUserToken(user);
+        const token = signUserToken(updatedUser);
         res.json({ message: 'Password changed successfully.', token });
     } catch (err) {
         res.status(500).json({ message: 'Password could not be changed.' });
@@ -1083,14 +1048,14 @@ app.post('/api/user/messages', authenticate, requireActive, async (req, res) => 
             return res.status(400).json({ message: 'Message is too long.' });
         }
 
-        const created = await Message.create({
+        const created = await Message.create({ data: {
             studentId,
             studentName,
             content,
             isReadByUser: false
-        });
+        } });
 
-        res.status(201).json({ message: 'Comment sent to admin.', messageId: created._id });
+        res.status(201).json({ message: 'Comment sent to admin.', messageId: created.id });
     } catch (err) {
         res.status(500).json({ message: 'Message could not be sent.' });
     }
@@ -1099,14 +1064,14 @@ app.post('/api/user/messages', authenticate, requireActive, async (req, res) => 
 app.get('/api/user/messages', authenticate, requireActive, async (req, res) => {
     try {
         const studentId = String(req.user.studentId || '').trim();
-        const rows = await Message.find({ studentId }).sort({ createdAt: -1 }).lean();
+        const rows = await Message.findMany({ where: { studentId }, orderBy: { createdAt: 'desc' } });
         const notifications = rows.filter((item) => item.reply && !item.isReadByUser);
 
         res.json({
-            messages: rows,
+            messages: rows.map(toApiRecord),
             unreadCount: notifications.length,
             notifications: notifications.map((item) => ({
-                id: String(item._id),
+                id: String(item.id),
                 text: `Admin replied: ${item.reply}`,
                 repliedAt: item.repliedAt || item.createdAt
             }))
@@ -1119,7 +1084,10 @@ app.get('/api/user/messages', authenticate, requireActive, async (req, res) => {
 app.put('/api/user/messages/mark-read', authenticate, requireActive, async (req, res) => {
     try {
         const studentId = String(req.user.studentId || '').trim();
-        await Message.updateMany({ studentId, isReadByUser: false }, { isReadByUser: true });
+        await Message.updateMany({
+            where: { studentId, isReadByUser: false },
+            data: { isReadByUser: true }
+        });
         res.json({ message: 'Notifications marked as read.' });
     } catch (err) {
         res.status(500).json({ message: 'Could not update notifications.' });
@@ -1134,16 +1102,14 @@ async function deleteOwnedUserMessage(req, res) {
         if (!studentId || !messageId) {
             return res.status(400).json({ message: 'Message ID is required.' });
         }
-        if (!mongoose.Types.ObjectId.isValid(messageId)) {
-            return res.status(400).json({ message: 'Invalid message ID.' });
-        }
-
-        const deleted = await Message.findOneAndDelete({
-            _id: messageId,
-            studentId
+        const deleted = await Message.deleteMany({
+            where: {
+                id: messageId,
+                studentId
+            }
         });
 
-        if (!deleted) {
+        if (deleted.count === 0) {
             return res.status(404).json({ message: 'Message not found or access denied.' });
         }
 
@@ -1159,8 +1125,8 @@ app.delete('/api/user/messages/:messageId', authenticate, requireActive, deleteO
 
 app.get('/api/admin/messages', authenticate, requireAdmin, async (req, res) => {
     try {
-        const rows = await Message.find().sort({ createdAt: -1 }).lean();
-        res.json({ messages: rows });
+        const rows = await Message.findMany({ orderBy: { createdAt: 'desc' } });
+        res.json({ messages: rows.map(toApiRecord) });
     } catch (err) {
         res.status(500).json({ message: 'Messages could not be loaded.' });
     }
@@ -1173,21 +1139,16 @@ app.put('/api/admin/messages/reply', authenticate, requireAdmin, async (req, res
         if (!messageId || !reply) {
             return res.status(400).json({ message: 'Message ID and reply are required.' });
         }
-        if (!mongoose.Types.ObjectId.isValid(messageId)) {
-            return res.status(400).json({ message: 'Invalid message ID.' });
-        }
-
         if (reply.length > 4000) {
             return res.status(400).json({ message: 'Reply is too long.' });
         }
 
-        const updated = await Message.findByIdAndUpdate(
-            messageId,
-            { reply, isReadByUser: false, repliedAt: new Date() },
-            { new: true }
-        );
+        const updated = await Message.updateMany({
+            where: { id: messageId },
+            data: { reply, isReadByUser: false, repliedAt: new Date() }
+        });
 
-        if (!updated) {
+        if (updated.count === 0) {
             return res.status(404).json({ message: 'Message not found.' });
         }
 
@@ -1207,16 +1168,15 @@ function buildAdminStudentFilters(query = {}) {
     const role = String(query.role || '').trim().toLowerCase();
     const year = String(query.year || '').trim();
 
-    if (department) filters.department = new RegExp(`^\\s*${escapeRegex(department)}\\s*$`, 'i');
+    if (department) filters.department = { equals: department };
     if (status && ALLOWED_STATUS.includes(status)) filters.status = status;
     if (role && ALLOWED_ROLES.includes(role)) filters.role = role;
-    if (year) filters.yearOfEntry = new RegExp(`^${escapeRegex(year)}$`, 'i');
+    if (year) filters.yearOfEntry = { equals: year };
     if (search) {
-        const searchRegex = new RegExp(escapeRegex(search), 'i');
-        filters.$or = [
-            { studentId: searchRegex },
-            { name: searchRegex },
-            { phone: searchRegex }
+        filters.OR = [
+            { studentId: { contains: search } },
+            { name: { contains: search } },
+            { phone: { contains: search } }
         ];
     }
 
@@ -1225,19 +1185,18 @@ function buildAdminStudentFilters(query = {}) {
 
 app.get('/api/admin/departments', authenticate, requireAdmin, async (req, res) => {
     try {
-        const departments = await User.aggregate([
-            { $project: { department: { $trim: { input: { $ifNull: ['$department', ''] } } } } },
-            { $match: { department: { $ne: '' } } },
-            {
-                $group: {
-                    _id: { $toLower: '$department' },
-                    department: { $first: '$department' },
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { department: 1 } },
-            { $project: { _id: 0, department: 1, count: 1 } }
-        ]);
+        const users = await User.findMany({ select: { department: true } });
+        const departmentsByName = new Map();
+        users.forEach(({ department }) => {
+            const name = String(department || '').trim();
+            if (!name) return;
+            const key = name.toLowerCase();
+            const entry = departmentsByName.get(key);
+            if (entry) entry.count += 1;
+            else departmentsByName.set(key, { department: name, count: 1 });
+        });
+        const departments = [...departmentsByName.values()]
+            .sort((left, right) => left.department.localeCompare(right.department));
 
         res.json(departments);
     } catch (err) {
@@ -1254,11 +1213,12 @@ app.get('/api/admin/departments/:department/students', authenticate, requireAdmi
         }
 
         const filters = buildAdminStudentFilters({ ...req.query, department });
-        const students = await User.find(filters)
-            .sort({ createdAt: -1 })
-            .select('studentId name phone yearOfEntry status')
-            .lean();
-        res.json(students);
+        const students = await User.findMany({
+            where: filters,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, studentId: true, name: true, phone: true, yearOfEntry: true, status: true }
+        });
+        res.json(students.map(toApiRecord));
     } catch (err) {
         console.error('Department students load error:', err);
         res.status(500).json({ message: 'Department students could not be loaded.' });
@@ -1270,16 +1230,22 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
         if (!ExcelJS) {
             return res.status(503).json({ message: 'Excel export is unavailable. Run npm install in the backend directory.' });
         }
-        const students = await User.find(buildAdminStudentFilters(req.query))
-            .sort({ createdAt: -1 })
-            .select('studentId name phone department yearOfEntry eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution role status createdAt')
-            .lean();
+        const students = await User.findMany({
+            where: buildAdminStudentFilters(req.query),
+            orderBy: { createdAt: 'desc' },
+            select: {
+                studentId: true, name: true, phone: true, department: true, yearOfEntry: true,
+                eName: true, ePhone: true, eRel: true, fName: true, fPhone: true, fRel: true,
+                academicSkill: true, spiritualSkill: true, contribution: true, role: true,
+                status: true, createdAt: true
+            }
+        });
         const contactIds = students
             .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
             .map((student) => student.studentId)
             .filter(Boolean);
         const contacts = contactIds.length
-            ? await ContactEmergency.find({ universityId: { $in: contactIds } }).lean()
+            ? await ContactEmergency.findMany({ where: { universityId: { in: contactIds } } })
             : [];
         const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
         const workbook = new ExcelJS.Workbook();
@@ -1343,19 +1309,29 @@ app.get('/api/admin/students/export', authenticate, requireAdmin, async (req, re
 
 app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
     try {
-        const students = await User.find(buildAdminStudentFilters(req.query))
-            .sort({ createdAt: -1 })
-            .select('studentId name gender department yearOfEntry phone role status eName ePhone eRel fName fPhone fRel academicSkill spiritualSkill contribution createdAt')
-            .lean();
+        const students = await User.findMany({
+            where: buildAdminStudentFilters(req.query),
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true, studentId: true, name: true, gender: true, department: true, yearOfEntry: true,
+                phone: true, role: true, status: true, eName: true, ePhone: true, eRel: true,
+                fName: true, fPhone: true, fRel: true, academicSkill: true,
+                spiritualSkill: true, contribution: true, createdAt: true
+            }
+        });
 
         const contactIds = students
             .filter((student) => !student.eName && !student.ePhone && !student.fName && !student.fPhone)
             .map((student) => student.studentId)
             .filter(Boolean);
         const contacts = contactIds.length
-            ? await ContactEmergency.find({ universityId: { $in: contactIds } })
-                .select('universityId eName ePhone eRel fName fPhone fRel')
-                .lean()
+            ? await ContactEmergency.findMany({
+                where: { universityId: { in: contactIds } },
+                select: {
+                    universityId: true, eName: true, ePhone: true, eRel: true,
+                    fName: true, fPhone: true, fRel: true
+                }
+            })
             : [];
         const contactsById = new Map(contacts.map((contact) => [String(contact.universityId), contact]));
         const merged = students.map((student) => {
@@ -1371,7 +1347,7 @@ app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
             };
         });
 
-        res.json(merged);
+        res.json(merged.map(toApiRecord));
     } catch (err) {
         res.status(500).json({ message: "Ragaa fiduun hin danda'amne" });
     }
@@ -1383,26 +1359,19 @@ app.delete('/api/admin/delete/:id', authenticate, requireAdmin, async (req, res)
         if (!rawId) {
             return res.status(400).json({ message: 'Student ID is required.' });
         }
-        const idRegex = new RegExp(`^${escapeRegex(rawId)}$`, 'i');
-
-        const target = await User.findOne({
-            $or: [
-                { studentId: rawId },
-                { studentId: idRegex }
-            ]
-        });
+        const target = await User.findFirst({ where: { studentId: rawId } });
 
         if (!target) {
             return res.status(404).json({ message: 'Barataan hin argamne' });
         }
-        if (String(target._id) === String(req.user._id)) {
+        if (String(target.id) === String(req.user.id)) {
             return res.status(400).json({ message: 'You cannot delete your own account from this screen.' });
         }
         if (target.role === 'admin' && (await countAdmins()) <= 1) {
             return res.status(400).json({ message: 'Cannot delete the last admin account.' });
         }
 
-        await User.deleteOne({ _id: target._id });
+        await User.delete({ where: { id: target.id } });
         res.json({ message: 'Barataa ID ' + target.studentId + ' qabu haqameera!' });
     } catch (err) {
         res.status(500).json({ message: 'Haqqii irratti rakkoon uumame' });
@@ -1416,21 +1385,14 @@ async function approveStudentHandler(req, res) {
             return res.status(400).json({ message: 'Student ID is required.' });
         }
 
-        const idRegex = new RegExp(`^${escapeRegex(studentId)}$`, 'i');
-        const updatedUser = await User.findOneAndUpdate(
-            {
-                $or: [
-                    { studentId },
-                    { studentId: idRegex }
-                ]
-            },
-            { status: 'active', $inc: { tokenVersion: 1 } },
-            { new: true }
-        );
-
-        if (!updatedUser) {
+        const target = await User.findFirst({ where: { studentId } });
+        if (!target) {
             return res.status(404).json({ message: 'Barataan hin argamne' });
         }
+        const updatedUser = await User.update({
+            where: { id: target.id },
+            data: { status: 'active', tokenVersion: { increment: 1 } }
+        });
 
         res.json({ message: "Barataan mirkanaa'eera!", user: sanitizeUser(updatedUser) });
     } catch (err) {
@@ -1448,18 +1410,18 @@ app.post('/api/admin/block', authenticate, requireAdmin, async (req, res) => {
             return res.status(400).json({ message: 'Student ID is required.' });
         }
 
-        const target = await User.findOne({ studentId });
+        const target = await User.findUnique({ where: { studentId } });
         if (!target) {
             return res.status(404).json({ message: 'Barataan hin argamne' });
         }
-        if (String(target._id) === String(req.user._id)) {
+        if (String(target.id) === String(req.user.id)) {
             return res.status(400).json({ message: 'You cannot block your own account.' });
         }
 
-        target.status = 'blocked';
-        target.tokenVersion = Number(target.tokenVersion || 0) + 1;
-        await target.save();
-        const updatedUser = target;
+        const updatedUser = await User.update({
+            where: { id: target.id },
+            data: { status: 'blocked', tokenVersion: { increment: 1 } }
+        });
 
         res.json({ message: 'Member blocked successfully!', user: sanitizeUser(updatedUser) });
     } catch (err) {
@@ -1482,21 +1444,19 @@ app.post('/api/admin/add-student', authenticate, requireAdmin, async (req, res) 
             return res.status(400).json({ error: 'Password must be at least 8 characters and include a letter and a number.' });
         }
 
-        const existingUser = await User.findOne({ studentId });
+        const existingUser = await User.findUnique({ where: { studentId } });
         if (existingUser) {
             return res.status(400).json({ error: 'Student ID already exists.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
-        const newUser = new User({
+        await User.create({ data: {
             studentId,
             name,
             password: hashedPassword,
             status,
             role
-        });
-
-        await newUser.save();
+        } });
         res.status(200).json({ message: "Barataan galmaa'eera" });
     } catch (err) {
         res.status(500).json({ error: 'Student could not be added.' });
@@ -1516,22 +1476,7 @@ app.get('/api/news', authenticate, requireActive, (req, res) => {
 
 app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
     try {
-        const [stats] = await User.aggregate([
-            { $match: { role: 'student' } },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: 1 },
-                    active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
-                    pending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
-                    male: { $sum: { $cond: [{ $eq: ['$gender', 'Male'] }, 1, 0] } },
-                    female: { $sum: { $cond: [{ $eq: ['$gender', 'Female'] }, 1, 0] } }
-                }
-            },
-            { $project: { _id: 0, total: 1, active: 1, pending: 1, male: 1, female: 1 } }
-        ]);
-
-        res.json(stats || { total: 0, active: 0, pending: 0, male: 0, female: 0 });
+        res.json(await getStudentStatistics(true));
     } catch (err) {
         console.error('Admin statistics error:', err);
         res.status(500).json({ message: 'Statistics could not be loaded.' });
@@ -1540,25 +1485,29 @@ app.get('/api/admin/stats', authenticate, requireAdmin, async (req, res) => {
 
 app.get('/api/statistics', authenticate, requireActive, async (req, res) => {
     try {
-        const [stats] = await User.aggregate([
-            { $match: { role: 'student' } },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: 1 },
-                    active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
-                    male: { $sum: { $cond: [{ $eq: ['$gender', 'Male'] }, 1, 0] } },
-                    female: { $sum: { $cond: [{ $eq: ['$gender', 'Female'] }, 1, 0] } }
-                }
-            },
-            { $project: { _id: 0, total: 1, active: 1, male: 1, female: 1 } }
-        ]);
-
-        res.json(stats || { total: 0, active: 0, male: 0, female: 0 });
+        res.json(await getStudentStatistics(false));
     } catch (err) {
         res.status(500).json({ message: "Statistics hin fe'amne" });
     }
 });
+
+async function getStudentStatistics(includePending) {
+    const where = { role: 'student' };
+    const [total, active, pending, genderCounts] = await Promise.all([
+        User.count({ where }),
+        User.count({ where: { ...where, status: 'active' } }),
+        includePending ? User.count({ where: { ...where, status: 'pending' } }) : Promise.resolve(0),
+        User.groupBy({ by: ['gender'], where, _count: { _all: true } })
+    ]);
+    const countsByGender = new Map(genderCounts.map((row) => [row.gender, row._count._all]));
+    return {
+        total,
+        active,
+        ...(includePending ? { pending } : {}),
+        male: countsByGender.get('Male') || 0,
+        female: countsByGender.get('Female') || 0
+    };
+}
 
 const progressFile = path.join(__dirname, 'progress.json');
 
@@ -1629,7 +1578,10 @@ app.delete('/api/progress/:index', authenticate, requireAdmin, (req, res) => {
 
 async function deleteProfilePhotoHandler(req, res) {
     try {
-        await User.updateOne({ _id: req.user._id }, { $unset: { profilePic: 1 } });
+        await User.update({
+            where: { id: req.user.id },
+            data: { profilePic: '' }
+        });
         res.json({ message: 'Profile photo deleted successfully.' });
     } catch (err) {
         console.error('Profile photo deletion error:', err);
@@ -1652,20 +1604,21 @@ app.put('/api/admin/change-role', authenticate, requireAdmin, async (req, res) =
             return res.status(400).json({ message: 'Invalid role. Must be student, admin, or teacher.' });
         }
 
-        const user = await User.findOne({ studentId });
+        const user = await User.findUnique({ where: { studentId } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
-        if (String(user._id) === String(req.user._id) && newRole !== 'admin') {
+        if (String(user.id) === String(req.user.id) && newRole !== 'admin') {
             return res.status(400).json({ message: 'You cannot remove your own admin role.' });
         }
         if (user.role === 'admin' && newRole !== 'admin' && (await countAdmins()) <= 1) {
             return res.status(400).json({ message: 'Cannot demote the last admin.' });
         }
 
-        user.role = newRole;
-        user.tokenVersion = Number(user.tokenVersion || 0) + 1;
-        await user.save();
+        await User.update({
+            where: { id: user.id },
+            data: { role: newRole, tokenVersion: { increment: 1 } }
+        });
 
         res.json({ message: `Role changed to ${newRole} successfully.` });
     } catch (err) {
@@ -1685,7 +1638,7 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
             return res.status(400).json({ message: 'Student ID is required.' });
         }
 
-        const user = await User.findOne({ studentId });
+        const user = await User.findUnique({ where: { studentId } });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
@@ -1702,7 +1655,7 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
             if (!ALLOWED_ROLES.includes(role)) {
                 return res.status(400).json({ message: 'Invalid role.' });
             }
-            if (String(user._id) === String(req.user._id) && role !== 'admin') {
+            if (String(user.id) === String(req.user.id) && role !== 'admin') {
                 return res.status(400).json({ message: 'You cannot remove your own admin role.' });
             }
             if (user.role === 'admin' && role !== 'admin' && (await countAdmins()) <= 1) {
@@ -1715,7 +1668,12 @@ app.put('/api/admin/update-user', authenticate, requireAdmin, async (req, res) =
             updateData.tokenVersion = Number(user.tokenVersion || 0) + 1;
         }
 
-        await User.updateOne({ studentId }, updateData);
+        if (Object.keys(updateData).length > 0) {
+            await User.update({
+                where: { studentId },
+                data: updateData
+            });
+        }
         res.json({ message: 'User information updated successfully.' });
     } catch (err) {
         console.error('Update user error:', err);
@@ -1732,11 +1690,11 @@ app.put('/api/admin/reset-password', authenticate, requireAdmin, async (req, res
 
         const generatedPassword = cryptoRandomPassword();
         const hashedPassword = await bcrypt.hash(generatedPassword, 12);
-        const user = await User.findOneAndUpdate(
-            { studentId },
-            { $set: { password: hashedPassword }, $inc: { tokenVersion: 1 } },
-            { new: true }
-        ).select('studentId').lean();
+        const user = await User.update({
+            where: { studentId },
+            data: { password: hashedPassword, tokenVersion: { increment: 1 } },
+            select: { studentId: true }
+        });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }

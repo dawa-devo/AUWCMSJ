@@ -17,15 +17,15 @@ function isStrongPassword(password) {
 function sanitizeUser(user) {
     if (!user) return null;
     const plain = typeof user.toObject === 'function' ? user.toObject() : { ...user };
+    if (plain.id) {
+        plain._id = plain.id;
+        delete plain.id;
+    }
     delete plain.password;
     delete plain.registrationTokenHash;
     delete plain.tokenVersion;
     delete plain.__v;
     return plain;
-}
-
-function escapeRegex(value) {
-    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function stripDangerousKeys(value) {
@@ -55,6 +55,5 @@ module.exports = {
     hashToken,
     isStrongPassword,
     sanitizeUser,
-    escapeRegex,
     sanitizeRequest
 };

@@ -8,7 +8,7 @@ function getJwtSecret() {
     return secret;
 }
 
-function createAuth(User) {
+function createAuth(prisma) {
     async function authenticate(req, res, next) {
         const authHeader = req.headers.authorization || '';
         const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
@@ -19,7 +19,7 @@ function createAuth(User) {
 
         try {
             const decoded = jwt.verify(token, getJwtSecret());
-            const user = await User.findById(decoded.userId);
+            const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
             if (!user) {
                 return res.status(401).json({ message: 'Invalid or expired token.' });
             }
@@ -35,7 +35,7 @@ function createAuth(User) {
 
             req.user = user;
             req.auth = {
-                userId: String(user._id),
+                userId: String(user.id),
                 studentId: user.studentId,
                 role: user.role,
                 status: user.status
@@ -45,7 +45,10 @@ function createAuth(User) {
             if (err.name === 'TokenExpiredError') {
                 return res.status(401).json({ message: 'Session expired. Please log in again.' });
             }
-            return res.status(401).json({ message: 'Invalid or expired token.' });
+            if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+                return res.status(401).json({ message: 'Invalid or expired token.' });
+            }
+            return next(err);
         }
     }
 

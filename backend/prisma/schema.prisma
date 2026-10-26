@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(cuid()) @map("_id")
+  studentId               String    @unique @db.VarChar(80)
+  name                    String    @db.VarChar(160)
+  gender                  String    @default("")
+  department              String    @default("")
+  yearOfEntry             String    @default("")
+  phone                   String    @default("")
+  profilePic              String    @default("") @db.MediumText
+  profile                 Json?
+  preferences             Json?
+  password                String    @db.VarChar(255)
+  role                    String    @default("student")
+  status                  String    @default("pending")
+  registrationTokenHash   String    @default("") @db.VarChar(255)
+  registrationTokenExpires DateTime?
+  tokenVersion            Int       @default(0)
+  eName                   String?   @db.VarChar(160)
+  ePhone                  String?   @db.VarChar(160)
+  eRel                    String?   @db.VarChar(160)
+  fName                   String?   @db.VarChar(160)
+  fPhone                  String?   @db.VarChar(160)
+  fRel                    String?   @db.VarChar(160)
+  academicSkill           String?   @db.Text
+  spiritualSkill          String?   @db.Text
+  contribution            String?   @db.Text
+  createdAt               DateTime  @default(now())
+
+  @@index([role, createdAt])
+  @@index([role, status, createdAt])
+  @@index([role, gender])
+  @@index([createdAt])
+}
+
+model Resource {
+  id           String   @id @default(cuid()) @map("_id")
+  title        String?  @db.Text
+  category     String?
+  fileName     String?  @db.VarChar(255)
+  fileUrl      String?  @db.Text
+  publicId     String?
+  resourceType String?
+  mimeType     String?
+  createdAt    DateTime @default(now())
+}
+
+model Message {
+  id          String    @id @default(cuid()) @map("_id")
+  studentId   String    @db.VarChar(80)
+  studentName String    @default("")
+  content     String    @db.Text
+  reply       String    @default("") @db.Text
+  isReadByUser Boolean @default(false)
+  createdAt   DateTime  @default(now())
+  repliedAt   DateTime?
+
+  @@index([studentId])
+}
+
+model ContactEmergency {
+  id           String  @id @default(cuid()) @map("_id")
+  universityId String @unique @db.VarChar(80)
+  eName        String?
+  ePhone       String?
+  eRel         String?
+  fName        String?
+  fPhone       String?
+  fRel         String?
+}
