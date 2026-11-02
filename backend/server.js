@@ -1736,7 +1736,7 @@ app.put('/api/admin/spam-protection', authenticate, requireAdmin, (req, res) => 
 app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     console.error(err);
-    res.status(500).json({ message: 'Unexpected server error.' })
+    res.status(500).json({ message: 'Unexpected server error.' });
 });
 
 if (require.main === module) {
