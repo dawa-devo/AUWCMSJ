@@ -32,7 +32,11 @@ try {
 }
 
 const app = express();
-const PORT = Number(process.env.PORT) || 5000;
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
 const MAX_RESOURCE_FILE_SIZE = 25 * 1024 * 1024;
@@ -302,15 +306,17 @@ app.post('/api/admin/resources', authenticate, requireAdmin, parseResourceUpload
     let cloudAsset;
     try {
         cloudAsset = await uploadResourceToCloudinary(req.file);
-        const newRes = await Resource.create({ data: {
-            title,
-            category: String(req.body.category || '').trim(),
-            fileName: String(req.file.originalname).replace(/^.*[\\/]/, '').slice(0, 255),
-            fileUrl: cloudAsset.secure_url,
-            publicId: cloudAsset.public_id,
-            resourceType: cloudAsset.resource_type,
-            mimeType: req.file.mimetype
-        } });
+        const newRes = await Resource.create({
+            data: {
+                title,
+                category: String(req.body.category || '').trim(),
+                fileName: String(req.file.originalname).replace(/^.*[\\/]/, '').slice(0, 255),
+                fileUrl: cloudAsset.secure_url,
+                publicId: cloudAsset.public_id,
+                resourceType: cloudAsset.resource_type,
+                mimeType: req.file.mimetype
+            }
+        });
         return res.status(201).json({ message: 'Resource uploaded successfully.', resource: toApiRecord(newRes) });
     } catch (err) {
         if (cloudAsset?.public_id) {
@@ -428,19 +434,21 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
         const registrationToken = createRawToken(24);
         const placeholderPassword = await bcrypt.hash(createRawToken(16), 10);
 
-        await User.create({ data: {
-            studentId: universityId,
-            name: fullName,
-            gender: gender === 'Male' || gender === 'Female' ? gender : '',
-            department,
-            yearOfEntry,
-            phone,
-            password: placeholderPassword,
-            status: 'pending',
-            role: 'student',
-            registrationTokenHash: hashToken(registrationToken),
-            registrationTokenExpires: new Date(Date.now() + REGISTRATION_TTL_MS)
-        } });
+        await User.create({
+            data: {
+                studentId: universityId,
+                name: fullName,
+                gender: gender === 'Male' || gender === 'Female' ? gender : '',
+                department,
+                yearOfEntry,
+                phone,
+                password: placeholderPassword,
+                status: 'pending',
+                role: 'student',
+                registrationTokenHash: hashToken(registrationToken),
+                registrationTokenExpires: new Date(Date.now() + REGISTRATION_TTL_MS)
+            }
+        });
         res.status(200).json({ message: 'Step 1 saved!', registrationToken });
     } catch (err) {
         if (err.code === 'P2002') {
@@ -1048,12 +1056,14 @@ app.post('/api/user/messages', authenticate, requireActive, async (req, res) => 
             return res.status(400).json({ message: 'Message is too long.' });
         }
 
-        const created = await Message.create({ data: {
-            studentId,
-            studentName,
-            content,
-            isReadByUser: false
-        } });
+        const created = await Message.create({
+            data: {
+                studentId,
+                studentName,
+                content,
+                isReadByUser: false
+            }
+        });
 
         res.status(201).json({ message: 'Comment sent to admin.', messageId: created.id });
     } catch (err) {
@@ -1450,13 +1460,15 @@ app.post('/api/admin/add-student', authenticate, requireAdmin, async (req, res) 
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
-        await User.create({ data: {
-            studentId,
-            name,
-            password: hashedPassword,
-            status,
-            role
-        } });
+        await User.create({
+            data: {
+                studentId,
+                name,
+                password: hashedPassword,
+                status,
+                role
+            }
+        });
         res.status(200).json({ message: "Barataan galmaa'eera" });
     } catch (err) {
         res.status(500).json({ error: 'Student could not be added.' });
