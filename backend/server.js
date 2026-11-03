@@ -1169,13 +1169,6 @@ app.put('/api/admin/messages/reply', authenticate, requireAdmin, async (req, res
     }
 });
 
-app.get('/', (req, res) => {
-    res.json({
-        status: 'success',
-        message: 'API is running successfully'
-    });
-});
-
 function buildAdminStudentFilters(query = {}) {
     const filters = {};
     const department = String(query.department || '').trim();
@@ -1744,6 +1737,12 @@ app.use((err, req, res, next) => {
     console.error(err);
     res.status(500).json({ message: 'Unexpected server error.' });
 });
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => console.log(`Server on port ${PORT}`));
