@@ -34,9 +34,6 @@ try {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
 const MAX_RESOURCE_FILE_SIZE = 25 * 1024 * 1024;
