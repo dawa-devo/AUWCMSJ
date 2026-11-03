@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const crypto = require('crypto');
 const { Readable } = require('stream');
@@ -10,7 +12,6 @@ const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
 
 const { createAuth } = require('./middleware/auth');
 const connectDatabase = require('./middleware/database');
@@ -71,6 +72,9 @@ app.use(cors({
         return callback(new Error('Not allowed by CORS'));
     }
 }));
+
+app.get('/health', (req, res) => res.send('OK'));
+
 app.use('/api', connectDatabase);
 
 const resourceUpload = multer({
