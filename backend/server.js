@@ -1165,7 +1165,12 @@ app.put('/api/admin/messages/reply', authenticate, requireAdmin, async (req, res
     }
 });
 
-app.get('/', (req, res) => res.send('Server is running'));
+app.get('/', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'API is running successfully'
+    });
+});
 
 function buildAdminStudentFilters(query = {}) {
     const filters = {};
