@@ -73,13 +73,14 @@ app.use(cors({
     }
 }));
 
-const frontendPath = path.resolve(__dirname, '..', 'frontend');
-app.use(express.static(frontendPath));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/login.html'), (err) => {
-        if (err && !res.headersSent) {
-            res.status(200).send('<h2>AUWCMS App Server Active</h2><p>Please navigate directly to frontend login page.</p>');
+    const loginPath = path.join(__dirname, '../frontend/login.html');
+    res.sendFile(loginPath, (err) => {
+        if (err) {
+            console.error("Error serving login.html:", err);
+            res.status(200).send("AUWCMS Backend is active. Access login.html directly.");
         }
     });
 });
