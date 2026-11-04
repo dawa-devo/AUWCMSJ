@@ -74,16 +74,10 @@ app.use(cors({
 }));
 
 app.get('/', (req, res) => {
-    const filePath = path.resolve(__dirname, '..', 'frontend', 'login.html');
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            console.error('Error sending login.html:', err);
-            if (!res.headersSent) {
-                res.status(500).send('Frontend static file not found on server.');
-            }
-        }
-    });
+    res.sendFile(path.resolve(__dirname, '../frontend/login.html'));
 });
+
+app.use(express.static(path.resolve(__dirname, '../frontend')));
 
 app.get('/health', (req, res) => res.send('OK'));
 
@@ -1749,8 +1743,6 @@ app.use((err, req, res, next) => {
     console.error(err);
     res.status(500).json({ message: 'Unexpected server error.' });
 });
-
-app.use(express.static(path.join(__dirname, '../frontend')));
 
 if (require.main === module) {
     app.listen(PORT, () => {
