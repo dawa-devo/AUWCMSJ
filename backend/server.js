@@ -33,7 +33,6 @@ try {
 }
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 app.disable('x-powered-by');
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -1786,10 +1785,13 @@ app.use((err, req, res, next) => {
     res.status(500).send('Backend runtime error: ' + err.message);
 });
 
+// Export app for Phusion Passenger
+module.exports = app;
+
+// Only listen locally if run directly (e.g., node server.js)
 if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        console.log(`Server running on port ${PORT}`);
     });
 }
-
-module.exports = app;
