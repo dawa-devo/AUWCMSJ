@@ -77,11 +77,11 @@ const frontendPath = path.resolve(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
 
 app.get('/', (req, res) => {
-    const loginFilePath = path.join(frontendPath, 'login.html');
-    if (fs.existsSync(loginFilePath)) {
-        return res.sendFile(loginFilePath);
-    }
-    return res.status(200).send(`<h2>AUWCMS App is Running!</h2><p>Login page file not found at: ${loginFilePath}</p>`);
+    res.sendFile(path.resolve(__dirname, '../frontend/login.html'), (err) => {
+        if (err && !res.headersSent) {
+            res.status(200).send('<h2>AUWCMS App Server Active</h2><p>Please navigate directly to frontend login page.</p>');
+        }
+    });
 });
 
 app.get('/health', (req, res) => res.send('OK'));
