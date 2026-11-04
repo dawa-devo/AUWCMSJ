@@ -73,11 +73,16 @@ app.use(cors({
     }
 }));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/login.html'));
-});
+const frontendPath = path.resolve(__dirname, '..', 'frontend');
+app.use(express.static(frontendPath));
 
-app.use(express.static(path.resolve(__dirname, '../frontend')));
+app.get('/', (req, res) => {
+    const loginFilePath = path.join(frontendPath, 'login.html');
+    if (fs.existsSync(loginFilePath)) {
+        return res.sendFile(loginFilePath);
+    }
+    return res.status(200).send(`<h2>AUWCMS App is Running!</h2><p>Login page file not found at: ${loginFilePath}</p>`);
+});
 
 app.get('/health', (req, res) => res.send('OK'));
 
