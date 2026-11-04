@@ -35,6 +35,21 @@ try {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.disable('x-powered-by');
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+const frontendDir = path.resolve(__dirname, '../frontend');
+
+app.use(express.static(frontendDir));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendDir, 'login.html'), (err) => {
+        if (err) {
+            res.status(200).send("AUWCMS Server is Running. Please open /login.html");
+        }
+    });
+});
+
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
 const MAX_RESOURCE_FILE_SIZE = 25 * 1024 * 1024;
@@ -50,8 +65,6 @@ const RESOURCE_FILE_TYPES = new Map([
     ['image/webp', ['.webp']]
 ]);
 
-app.disable('x-powered-by');
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeRequest);
 
@@ -72,18 +85,6 @@ app.use(cors({
         return callback(new Error('Not allowed by CORS'));
     }
 }));
-
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-app.get('/', (req, res) => {
-    const loginPath = path.join(__dirname, '../frontend/login.html');
-    res.sendFile(loginPath, (err) => {
-        if (err) {
-            console.error("Error serving login.html:", err);
-            res.status(200).send("AUWCMS Backend is active. Access login.html directly.");
-        }
-    });
-});
 
 app.get('/health', (req, res) => res.send('OK'));
 
