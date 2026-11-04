@@ -73,6 +73,10 @@ app.use(cors({
     }
 }));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
 app.get('/health', (req, res) => res.send('OK'));
 
 app.use('/api', connectDatabase);
@@ -1736,10 +1740,6 @@ app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     console.error(err);
     res.status(500).json({ message: 'Unexpected server error.' });
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login.html'));
 });
 
 app.use(express.static(path.join(__dirname, '../frontend')));
