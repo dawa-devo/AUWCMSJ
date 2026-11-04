@@ -40,14 +40,49 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 const frontendDir = path.resolve(__dirname, '../frontend');
 
-app.use(express.static(frontendDir));
+let serveFrontend;
+try {
+    serveFrontend = express.static(frontendDir);
+} catch (err) {
+    console.error('Error configuring frontend static serving:', err);
+}
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(frontendDir, 'login.html'), (err) => {
-        if (err) {
-            res.status(200).send("AUWCMS Server is Running. Please open /login.html");
+if (serveFrontend) {
+    app.use((req, res, next) => {
+        try {
+            serveFrontend(req, res, (err) => {
+                if (err) {
+                    console.error('Error serving frontend static file:', err);
+                    return next(err);
+                }
+                return next();
+            });
+        } catch (err) {
+            console.error('Error serving frontend static file:', err);
+            next(err);
         }
     });
+}
+
+app.get('/', (req, res, next) => {
+    try {
+        res.sendFile(path.join(frontendDir, 'login.html'), (err) => {
+            try {
+                if (err) {
+                    console.error('Error serving login.html:', err);
+                    if (res.headersSent) return next(err);
+                    return res.status(200).send('AUWCMS Server is Running. Please open /login.html');
+                }
+            } catch (callbackError) {
+                console.error('Error handling login.html response:', callbackError);
+                next(callbackError);
+            }
+        });
+    } catch (err) {
+        console.error('Error serving login.html:', err);
+        if (res.headersSent) return next(err);
+        res.status(200).send('AUWCMS Server is Running. Please open /login.html');
+    }
 });
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
@@ -1747,8 +1782,8 @@ app.put('/api/admin/spam-protection', authenticate, requireAdmin, (req, res) => 
 
 app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
-    console.error(err);
-    res.status(500).json({ message: 'Unexpected server error.' });
+    console.error('Unhandled Server Error:', err);
+    res.status(500).send('Backend runtime error: ' + err.message);
 });
 
 if (require.main === module) {
