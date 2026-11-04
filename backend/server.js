@@ -74,7 +74,15 @@ app.use(cors({
 }));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+    const filePath = path.resolve(__dirname, '..', 'frontend', 'login.html');
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Error sending login.html:', err);
+            if (!res.headersSent) {
+                res.status(500).send('Frontend static file not found on server.');
+            }
+        }
+    });
 });
 
 app.get('/health', (req, res) => res.send('OK'));
