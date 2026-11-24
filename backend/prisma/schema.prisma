@@ -15,7 +15,7 @@ model User {
   department              String    @default("")
   yearOfEntry             String    @default("")
   phone                   String    @default("")
-  profilePic              String    @default("") @db.MediumText
+  profilePic              String?   @db.MediumText
   profile                 Json?
   preferences             Json?
   password                String    @db.VarChar(255)
@@ -58,7 +58,7 @@ model Message {
   studentId   String    @db.VarChar(80)
   studentName String    @default("")
   content     String    @db.Text
-  reply       String    @default("") @db.Text
+  reply       String?   @db.Text
   isReadByUser Boolean @default(false)
   createdAt   DateTime  @default(now())
   repliedAt   DateTime?

@@ -180,8 +180,7 @@
         sessionStorage.setItem('currentStep', 'skills');
 
         async function fetchWithApiFallback(path, options) {
-            const host = window.location.hostname;
-            const candidates = ['https://auwcmsj-backend.onrender.com'];
+            const candidates = [''];
 
             let lastError = null;
             for (const base of candidates) {

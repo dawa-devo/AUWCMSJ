@@ -1579,7 +1579,6 @@
     </div>
     <script>
         async function fetchWithApiFallback(path, options = {}) {
-            const host = window.location.hostname;
             const token = sessionStorage.getItem('token') || '';
             const { timeoutMs = 10000, ...requestOptions } = options;
             const headers = { ...(requestOptions.headers || {}) };
@@ -1587,7 +1586,7 @@
                 headers.Authorization = `Bearer ${token}`;
             }
 
-            const candidates = ['https://auwcmsj-backend.onrender.com'];
+            const candidates = [''];
 
             let lastError = null;
             for (const base of candidates) {
