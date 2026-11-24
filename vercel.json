@@ -1,4 +1,6 @@
 {
+    "installCommand": "npm --prefix backend ci",
+    "buildCommand": "npm --prefix backend run build",
     "redirects": [
         {
             "source": "/admin",
@@ -14,6 +16,10 @@
         {
             "source": "/admin/",
             "destination": "/admin/admin.html"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/api/index.js"
         }
     ]
 }

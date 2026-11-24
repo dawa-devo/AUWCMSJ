@@ -13,3 +13,7 @@ Run `node create-admin.js` to create or update the initial admin account after t
 ## Plesk deployment
 
 Set the application root to this `backend` directory and the startup file to `server.js`. Configure `DATABASE_URL` and `JWT_SECRET` in the Plesk Node.js environment settings, then run `npm install` and `npm run db:migrate:deploy`. Passenger imports and serves the exported Express app; `server.js` only opens a standalone listener when run directly.
+
+## Vercel deployment
+
+Deploy from the repository root so the root `api/index.js` function and existing frontend routes are included. The root `vercel.json` installs backend dependencies and runs `npm run build` in `backend`, then rewrites unmatched requests to the Express app. Configure `DATABASE_URL` and `JWT_SECRET` in Vercel's project environment. The API allows `https://auwcmsj.com.et` and `https://auwcmsj-flax.vercel.app`; set `CORS_ORIGINS` to a comma-separated list to allow additional frontend origins. CORS credentials are enabled for cookie-based requests.

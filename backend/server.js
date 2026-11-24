@@ -37,6 +37,25 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
+const configuredOrigins = String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+const allowedOrigins = new Set([
+    ...configuredOrigins,
+    'https://auwcmsj.com.et',
+    'https://auwcmsj-flax.vercel.app'
+]);
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.has(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
+
 const frontendDir = path.resolve(__dirname, '../frontend');
 
 let serveFrontend;
@@ -101,24 +120,6 @@ const RESOURCE_FILE_TYPES = new Map([
 
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeRequest);
-
-const configuredOrigins = String(process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-const allowedOrigins = new Set([
-    ...configuredOrigins,
-    'https://auwcmsj-flax.vercel.app'
-]);
-
-app.use(cors({
-    origin(origin, callback) {
-        if (!origin) return callback(null, true);
-        if (configuredOrigins.length === 0) return callback(null, true);
-        if (allowedOrigins.has(origin)) return callback(null, true);
-        return callback(new Error('Not allowed by CORS'));
-    }
-}));
 
 app.get('/health', (req, res) => res.send('OK'));
 
