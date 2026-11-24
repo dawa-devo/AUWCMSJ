@@ -1,6 +1,6 @@
 {
     "installCommand": "npm --prefix backend ci",
-    "buildCommand": "npm --prefix backend exec prisma generate",
+    "buildCommand": "npm --prefix backend run build",
     "outputDirectory": ".",
     "redirects": [
         {
