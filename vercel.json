@@ -1,5 +1,7 @@
 {
     "installCommand": "npm --prefix backend ci",
+    "buildCommand": "npm --prefix backend exec prisma generate",
+    "outputDirectory": ".",
     "redirects": [
         {
             "source": "/admin",
@@ -15,6 +17,22 @@
         {
             "source": "/register.html",
             "destination": "/frontend/register.html"
+        },
+        {
+            "source": "/login.html",
+            "destination": "/frontend/login.html"
+        },
+        {
+            "source": "/userdashboard.html",
+            "destination": "/frontend/userdashboard.html"
+        },
+        {
+            "source": "/skill.html",
+            "destination": "/frontend/skill.html"
+        },
+        {
+            "source": "/fcontact.html",
+            "destination": "/frontend/fcontact.html"
         },
         {
             "source": "/admin/",
