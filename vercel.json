@@ -11,10 +11,6 @@
     ],
     "rewrites": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api/index.js"
-        },
-        {
             "source": "/register.html",
             "destination": "/frontend/register.html"
         },
