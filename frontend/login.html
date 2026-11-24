@@ -251,7 +251,7 @@
                 let requestTimeoutId = null;
                 for (const base of apiBases) {
                     const controller = new AbortController();
-                    requestTimeoutId = setTimeout(() => controller.abort(), 10000);
+                    requestTimeoutId = setTimeout(() => controller.abort(), 20000);
                     try {
                         res = await fetch(`${base}/api/login`, {
                             method: 'POST',
@@ -286,8 +286,6 @@
                     if (!hasRequiredSessionData) {
                         noticeBox.style.display = "block";
                         noticeBox.innerText = "Server response guutuu miti. Maaloo irra deebi'ii yaali.";
-                        loginBtn.innerText = "Login";
-                        loginBtn.disabled = false;
                         return;
                     }
 
@@ -310,8 +308,6 @@
                     // Backend 'message' deebisa yoo ta'e data.message fayyadami
                     noticeBox.style.display = "block";
                     noticeBox.innerText = data.message || data.error || "Login hin milkoofne!";
-                    loginBtn.innerText = "Login";
-                    loginBtn.disabled = false;
                 }
             } catch (error) {
                 console.error("Error:", error);
@@ -319,6 +315,8 @@
                 noticeBox.innerText = error.name === 'AbortError' || error instanceof TypeError
                     ? "Network error, please try again."
                     : error.message || "Network error, please try again.";
+            } finally {
+                clearTimeout(requestTimeoutId);
                 loginBtn.innerText = "Login";
                 loginBtn.disabled = false;
             }

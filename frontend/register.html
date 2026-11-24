@@ -244,23 +244,6 @@
     </div>
 
     <script>
-        async function fetchWithApiFallback(path, options) {
-            const candidates = [''];
-
-            let lastError = null;
-            for (const base of candidates) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                try {
-                    return await fetch(`${base}${path}`, { ...options, signal: controller.signal });
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    lastError = err;
-                }
-            }
-            throw lastError || new Error('Server connection failed.');
-        }
-
         async function validateAndSave() {
             const nextBtn = document.getElementById('nextBtn');
 
@@ -282,39 +265,41 @@
 
             nextBtn.disabled = true;
             nextBtn.innerText = "Saving...";
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
 
             try {
-                const response = await fetchWithApiFallback('/api/register-step1', {
+                const response = await fetch('/api/register-step1', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
 
-                if (response.ok) {
-                    const result = await response.json().catch((err) => {
-                        if (err.name === 'AbortError') throw err;
-                        return {};
-                    });
-                    localStorage.setItem('tempStudentId', data.universityId);
-                    localStorage.setItem('fullName', data.fullName);
-                    if (result.registrationToken) {
-                        sessionStorage.setItem('registrationToken', result.registrationToken);
-                    }
-                    window.location.href = 'fcontact.html';
-                } else {
-                    const errorData = await response.json();
-                    const errorMessage = errorData.message || "Ragaan hin kuusamne";
-                    alert(errorMessage.startsWith('Error:') ? errorMessage : `Error: ${errorMessage}`);
-                    nextBtn.disabled = false;
-                    nextBtn.innerText = "Next";
+                const result = await response.json().catch((err) => {
+                    if (err.name === 'AbortError') throw err;
+                    return {};
+                });
+                if (!response.ok) {
+                    const errorMessage = result.message || `Registration failed (HTTP ${response.status}).`;
+                    throw new Error(errorMessage);
                 }
+
+                localStorage.setItem('tempStudentId', data.universityId);
+                localStorage.setItem('fullName', data.fullName);
+                if (result.registrationToken) {
+                    sessionStorage.setItem('registrationToken', result.registrationToken);
+                }
+                window.location.href = 'fcontact.html';
             } catch (err) {
                 console.error(err);
                 alert(err.name === 'AbortError' || err instanceof TypeError
                     ? "Network error, please try again."
                     : err.message || "Network error, please try again.");
+            } finally {
                 nextBtn.disabled = false;
                 nextBtn.innerText = "Next";
+                clearTimeout(timeoutId);
             }
         }
     </script>

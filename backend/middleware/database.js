@@ -8,10 +8,37 @@ function getPrisma() {
         if (!PrismaClient) {
             ({ PrismaClient } = require('@prisma/client'));
         }
+        const databaseUrl = new URL(process.env.DATABASE_URL);
+        const setDefault = (name, value) => {
+            if (!databaseUrl.searchParams.has(name)) {
+                databaseUrl.searchParams.set(name, value);
+            }
+        };
+        setDefault('connect_timeout', '5');
+        setDefault('pool_timeout', '5');
+        setDefault('socket_timeout', '10');
+        if (process.env.VERCEL) {
+            setDefault('connection_limit', '3');
+        }
+
         prisma = globalThis.__auwcmPrismaClient ||
-            (globalThis.__auwcmPrismaClient = new PrismaClient());
+            (globalThis.__auwcmPrismaClient = new PrismaClient({
+                datasources: { db: { url: databaseUrl.toString() } }
+            }));
     }
     return prisma;
+}
+
+function connectWithTimeout(client) {
+    let timeoutId;
+    const timeout = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Database connection timed out.')), 8000);
+    });
+
+    return Promise.race([
+        Promise.resolve().then(() => client.$connect()),
+        timeout
+    ]).finally(() => clearTimeout(timeoutId));
 }
 
 function createLazyPrismaProperty(property) {
@@ -43,7 +70,7 @@ async function connectDatabase(req, res, next) {
     try {
         const client = getPrisma();
         if (!connectionCache.promise) {
-            connectionCache.promise = client.$connect();
+            connectionCache.promise = connectWithTimeout(client);
         }
         await connectionCache.promise;
     } catch (err) {

@@ -179,23 +179,6 @@
     <script>
         sessionStorage.setItem('currentStep', 'skills');
 
-        async function fetchWithApiFallback(path, options) {
-            const candidates = [''];
-
-            let lastError = null;
-            for (const base of candidates) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                try {
-                    return await fetch(`${base}${path}`, { ...options, signal: controller.signal });
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    lastError = err;
-                }
-            }
-            throw lastError || new Error('Server connection failed.');
-        }
-
         async function saveSkillsAndContinue() {
             const data = {
                 universityId: localStorage.getItem('tempStudentId'),
@@ -206,27 +189,25 @@
             };
 
             const nextBtn = document.querySelector('.btn-next');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
             try {
                 if (nextBtn) {
                     nextBtn.disabled = true;
                     nextBtn.innerText = 'Saving...';
                 }
-                const response = await fetchWithApiFallback('/api/skills', {
+                const response = await fetch('/api/skills', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
                 const result = await response.json().catch((err) => {
                     if (err.name === 'AbortError') throw err;
                     return {};
                 });
                 if (!response.ok) {
-                    alert(result.message || 'Skills could not be saved.');
-                    if (nextBtn) {
-                        nextBtn.disabled = false;
-                        nextBtn.innerText = 'Next';
-                    }
-                    return;
+                    throw new Error(result.message || `Skills could not be saved (HTTP ${response.status}).`);
                 }
                 const generatedPassword = sessionStorage.getItem('pendingRegistrationPassword');
                 if (generatedPassword) {
@@ -240,6 +221,12 @@
                 alert(err.name === 'AbortError' || err instanceof TypeError
                     ? 'Network error, please try again.'
                     : err.message || 'Network error, please try again.');
+                if (nextBtn) {
+                    nextBtn.disabled = false;
+                    nextBtn.innerText = 'Next';
+                }
+            } finally {
+                clearTimeout(timeoutId);
                 if (nextBtn) {
                     nextBtn.disabled = false;
                     nextBtn.innerText = 'Next';

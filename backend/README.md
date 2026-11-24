@@ -17,3 +17,5 @@ Set the application root to this `backend` directory and the startup file to `se
 ## Vercel deployment
 
 Deploy from the repository root so the root `api/index.js` function and existing frontend routes are included. The root `vercel.json` installs backend dependencies and runs `npm run build` in `backend`, then rewrites unmatched requests to the Express app. Configure `DATABASE_URL` and `JWT_SECRET` in Vercel's project environment. The API allows `https://auwcmsj.com.et` and `https://auwcmsj-flax.vercel.app`; set `CORS_ORIGINS` to a comma-separated list to allow additional frontend origins. CORS credentials are enabled for cookie-based requests.
+
+The Express app trusts the single Vercel proxy hop so IP-based rate limiting uses the forwarded client address. Prisma adds MySQL connection, pool, and socket timeouts when they are not already present in `DATABASE_URL`, and defaults the Vercel connection pool to three connections per function instance. Keep any provider-required SSL parameters in `DATABASE_URL`; the app does not disable TLS.
