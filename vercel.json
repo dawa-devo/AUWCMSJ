@@ -1,6 +1,7 @@
 {
     "installCommand": "npm --prefix backend ci",
-    "buildCommand": "npm --prefix backend run build",
+    "buildCommand": "npm --prefix backend run build && node -e \"const fs=require('node:fs'); fs.mkdirSync('public',{recursive:true}); for (const p of ['index.html','robots.txt','sitemap.xml','frontend','admin']) fs.cpSync(p,'public/'+p,{recursive:true})\"",
+    "outputDirectory": "public",
     "redirects": [
         {
             "source": "/admin",
@@ -10,16 +11,16 @@
     ],
     "rewrites": [
         {
+            "source": "/api/(.*)",
+            "destination": "/api/index.js"
+        },
+        {
             "source": "/register.html",
             "destination": "/frontend/register.html"
         },
         {
             "source": "/admin/",
             "destination": "/admin/admin.html"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/api/index.js"
         }
     ]
 }
