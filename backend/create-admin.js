@@ -1,6 +1,6 @@
-const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
+const { ensureAdminAccount } = require("./utils/admin-account");
 const prisma = new PrismaClient();
 
 async function createAdmin() {
@@ -11,30 +11,10 @@ async function createAdmin() {
         await prisma.$connect();
         console.log("MySQL connected");
 
-        const adminId = "admin001";
-        const adminPassword = "Admin@12345";
-
-        const hashedPassword = await bcrypt.hash(adminPassword, 12);
-
-        await prisma.user.upsert({
-            where: { studentId: adminId },
-            update: {
-                name: "System Administrator",
-                password: hashedPassword,
-                role: "admin",
-                status: "active"
-            },
-            create: {
-                studentId: adminId,
-                name: "System Administrator",
-                password: hashedPassword,
-                role: "admin",
-                status: "active"
-            }
-        });
-        console.log("Admin account created or updated");
-
-        console.log("Admin ID:", adminId);
+        const result = await ensureAdminAccount(prisma);
+        if (result.skipped) {
+            throw new Error("Set ADMIN_ID and ADMIN_PASSWORD before creating the admin account.");
+        }
 
     } catch (error) {
         console.error("Error creating admin:", error);

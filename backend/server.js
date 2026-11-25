@@ -15,6 +15,7 @@ const path = require('path');
 
 const { createAuth } = require('./middleware/auth');
 const connectDatabase = require('./middleware/database');
+const { ensureAdminAccount } = require('./utils/admin-account');
 const prisma = connectDatabase.prisma;
 const {
     createRawToken,
@@ -125,6 +126,26 @@ app.use(sanitizeRequest);
 app.get('/health', (req, res) => res.send('OK'));
 
 app.use('/api', connectDatabase);
+
+let adminAccountInitialization;
+function initializeAdminAccount() {
+    if (!adminAccountInitialization) {
+        adminAccountInitialization = ensureAdminAccount(prisma);
+    }
+    return adminAccountInitialization;
+}
+
+app.use('/api', async (req, res, next) => {
+    try {
+        await initializeAdminAccount();
+        return next();
+    } catch (err) {
+        console.error('Admin account initialization failed:', err.message);
+        return res.status(503).json({
+            message: 'Admin account setup is unavailable. Check ADMIN_ID and ADMIN_PASSWORD configuration.'
+        });
+    }
+});
 
 const resourceUpload = multer({
     storage: multer.memoryStorage(),
@@ -1794,7 +1815,15 @@ module.exports = app;
 // Only listen locally if run directly (e.g., node server.js)
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+    prisma.$connect()
+        .then(initializeAdminAccount)
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`Server running on port ${PORT}`);
+            });
+        })
+        .catch((err) => {
+            console.error('Server startup failed:', err.message);
+            process.exitCode = 1;
+        });
 }
