@@ -557,6 +557,7 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
         return res.status(200).json({
             message: 'Registration completed. Save your generated password to log in after admin approval.',
             registrationComplete: true,
+            studentId: updatedUser.studentId,
             generatedPassword
         });
     } catch (err) {
@@ -608,7 +609,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
         const user = await User.findUnique({ where: { studentId } });
         if (!user) return res.status(400).json({ message: 'Student ID was not found.' });
         if (user.status === 'blocked') return res.status(403).json({ message: 'This account is blocked.' });
-        if (user.status !== 'active') return res.status(403).json({ message: 'Admin mirkaneessuu eagi!' });
+        if (user.status !== 'active') return res.status(403).json({ message: 'Wait for admin approval!' });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Password dogoggora!' });

@@ -319,6 +319,7 @@
                     throw new Error(responseMessage(result, 'Registration was not completed. Please try again.'));
                 }
 
+                sessionStorage.setItem('pendingRegistrationStudentId', String(result.studentId || data.universityId));
                 sessionStorage.setItem('pendingRegistrationPassword', result.generatedPassword);
                 sessionStorage.setItem('currentStep', 'skills');
                 window.location.href = 'skill.html';

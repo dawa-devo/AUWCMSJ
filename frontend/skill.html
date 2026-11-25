@@ -226,7 +226,9 @@
                 }
                 const generatedPassword = sessionStorage.getItem('pendingRegistrationPassword');
                 if (generatedPassword) {
-                    alert(`Registration complete. Your generated password is ${generatedPassword}. Save it to log in after admin approval.`);
+                    const studentId = sessionStorage.getItem('pendingRegistrationStudentId') || localStorage.getItem('tempStudentId') || 'Unavailable';
+                    alert(`from AUWCMSJ\n\nYour ID number is ${studentId}.\nYour generated password is ${generatedPassword}.\nSave them to log in after admin approval.`);
+                    sessionStorage.removeItem('pendingRegistrationStudentId');
                     sessionStorage.removeItem('pendingRegistrationPassword');
                 }
                 sessionStorage.setItem('currentStep', 'complete');
