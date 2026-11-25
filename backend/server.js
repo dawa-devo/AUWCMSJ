@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const crypto = require('crypto');
@@ -11,7 +12,6 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const fs = require('fs');
-const path = require('path');
 
 const { createAuth } = require('./middleware/auth');
 const connectDatabase = require('./middleware/database');
@@ -130,7 +130,10 @@ app.use('/api', connectDatabase);
 let adminAccountInitialization;
 function initializeAdminAccount() {
     if (!adminAccountInitialization) {
-        adminAccountInitialization = ensureAdminAccount(prisma);
+        adminAccountInitialization = ensureAdminAccount(prisma).catch((err) => {
+            adminAccountInitialization = null;
+            throw err;
+        });
     }
     return adminAccountInitialization;
 }
@@ -140,10 +143,8 @@ app.use('/api', async (req, res, next) => {
         await initializeAdminAccount();
         return next();
     } catch (err) {
-        console.error('Admin account initialization failed:', err.message);
-        return res.status(503).json({
-            message: 'Admin account setup is unavailable. Check ADMIN_ID and ADMIN_PASSWORD configuration.'
-        });
+        console.error('Admin account initialization failed:', err);
+        return next();
     }
 });
 
@@ -645,6 +646,10 @@ app.post('/api/login', loginLimiter, async (req, res) => {
             token
         });
     } catch (err) {
+        console.error('Login failed:', err);
+        if (err.message === 'JWT_SECRET is not configured.') {
+            return res.status(503).json({ message: 'Login service is not configured. Please contact an administrator.' });
+        }
         res.status(500).json({ message: 'Server Error' });
     }
 });

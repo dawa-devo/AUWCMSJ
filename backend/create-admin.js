@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const { PrismaClient } = require("@prisma/client");
 const { ensureAdminAccount } = require("./utils/admin-account");
 const prisma = new PrismaClient();
