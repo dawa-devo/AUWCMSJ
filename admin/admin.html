@@ -2468,14 +2468,15 @@
 
             try {
                 const response = await fetchWithApiFallback('/api/user/me');
-                const user = await response.json().catch(() => ({}));
+                const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    return { ok: false, message: user.message || 'Admin authentication failed.' };
+                    return { ok: false, message: data.message || 'Admin authentication failed.' };
                 }
-                if (String(user.role || '').toLowerCase() !== 'admin') {
+                const user = data.user && typeof data.user === 'object' ? data.user : data;
+                if (String(user.role || '').trim().toLowerCase() !== 'admin') {
                     return { ok: false, message: 'This account does not have the admin role.' };
                 }
-                if (user.status === 'blocked') {
+                if (String(user.status || '').trim().toLowerCase() === 'blocked') {
                     return { ok: false, message: 'This admin account is blocked.' };
                 }
                 return { ok: true };
