@@ -11,6 +11,10 @@
     ],
     "rewrites": [
         {
+            "source": "/api/:first/:rest*",
+            "destination": "/api/index?__api_path=:first/:rest*"
+        },
+        {
             "source": "/register.html",
             "destination": "/frontend/register.html"
         },
