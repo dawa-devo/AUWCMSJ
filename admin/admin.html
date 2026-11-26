@@ -1621,6 +1621,21 @@
             throw lastError || new Error('Server connection failed.');
         }
 
+        async function readApiResponse(response, fallbackMessage) {
+            const responseText = await response.text();
+            const errorMessage = `Request failed (HTTP ${response.status}).`;
+            if (!responseText) {
+                return response.ok ? {} : { message: errorMessage };
+            }
+            try {
+                const data = JSON.parse(responseText);
+                if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+            } catch {
+                return { message: response.ok ? fallbackMessage : errorMessage };
+            }
+            return { message: response.ok ? fallbackMessage : errorMessage };
+        }
+
         function formatProgressTime(value) {
             if (!value) return '---';
             const date = new Date(value);
@@ -2208,12 +2223,14 @@
 
             try {
                 console.log("Sending delete request for student:", id);
-                const res = await fetchWithApiFallback(`/api/admin/delete/${encodeURIComponent(id)}`, {
+                const res = await fetchWithApiFallback('/api/admin/delete', {
                     method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: String(id) })
                 });
 
                 console.log("Delete response status:", res.status);
-                const data = await res.json();
+                const data = await readApiResponse(res, 'Student deletion returned an invalid response.');
                 console.log("Delete response data:", data);
 
                 if (res.ok) {

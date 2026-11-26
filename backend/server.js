@@ -1438,9 +1438,9 @@ app.get('/api/admin/students', authenticate, requireAdmin, async (req, res) => {
     }
 });
 
-app.delete('/api/admin/delete/:id', authenticate, requireAdmin, async (req, res) => {
+async function deleteAdminStudentHandler(req, res) {
     try {
-        const rawId = decodeURIComponent(String(req.params.id || '')).trim();
+        const rawId = String(req.body?.studentId || req.query.studentId || req.params.id || '').trim();
         if (!rawId) {
             return res.status(400).json({ message: 'Student ID is required.' });
         }
@@ -1461,7 +1461,10 @@ app.delete('/api/admin/delete/:id', authenticate, requireAdmin, async (req, res)
     } catch (err) {
         res.status(500).json({ message: 'Haqqii irratti rakkoon uumame' });
     }
-});
+}
+
+app.delete('/api/admin/delete', authenticate, requireAdmin, deleteAdminStudentHandler);
+app.delete('/api/admin/delete/:id', authenticate, requireAdmin, deleteAdminStudentHandler);
 
 async function approveStudentHandler(req, res) {
     try {
