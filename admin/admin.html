@@ -1188,7 +1188,6 @@
                                 <th>Current Role</th>
                                 <th>Status</th>
                                 <th>Change Role</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="roleUsersList"></tbody>
@@ -1629,7 +1628,7 @@
             }
             try {
                 const data = JSON.parse(responseText);
-                if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+                if (data && typeof data === 'object') return data;
             } catch {
                 return { message: response.ok ? fallbackMessage : errorMessage };
             }
@@ -3224,22 +3223,29 @@
         async function loadRoleUsers() {
             try {
                 const res = await fetchWithApiFallback('/api/admin/students');
-                const users = await res.json();
+                const users = await readApiResponse(res, 'User list returned an invalid response.');
+                if (!res.ok) {
+                    throw new Error(users.message || `Could not load users (HTTP ${res.status}).`);
+                }
+                if (!Array.isArray(users)) {
+                    throw new Error('User list response was not a JSON array.');
+                }
 
                 const list = document.getElementById('roleUsersList');
                 list.innerHTML = "";
 
-                if (!Array.isArray(users) || users.length === 0) {
-                    list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No users found</td></tr>';
+                if (users.length === 0) {
+                    list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No users found</td></tr>';
                     return;
                 }
 
                 users.forEach(user => {
-                    const roleBadge = getRoleBadge(user.role || 'student');
+                    const currentRole = String(user.role || 'student').trim().toLowerCase();
+                    const roleBadge = getRoleBadge(currentRole);
                     const statusBadge = getStatusBadge(user.status || 'pending');
                     const studentId = String(user.studentId || '');
                     const encodedStudentId = encodeURIComponent(studentId);
-                    const encodedName = encodeURIComponent(String(user.name || ''));
+                    const displayName = String(user.name || '');
 
                     list.innerHTML += `
                 <tr>
@@ -3248,23 +3254,22 @@
                     <td>${roleBadge}</td>
                     <td>${statusBadge}</td>
                     <td>
-                        <select id="roleSelect_${encodedStudentId}" class="search-bar" style="width: 120px; padding: 5px;">
-                            <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
-                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                            <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>Teacher</option>
+                        <select id="roleSelect_${encodedStudentId}" class="search-bar" style="width: 120px; padding: 5px;"
+                            data-student-id="${safeTableText(studentId)}"
+                            data-user-name="${safeTableText(displayName)}"
+                            data-current-role="${safeTableText(currentRole)}"
+                            onchange="changeUserRole(this)">
+                            <option value="student" ${currentRole === 'student' ? 'selected' : ''}>Student</option>
+                            <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="teacher" ${currentRole === 'teacher' ? 'selected' : ''}>Teacher</option>
                         </select>
-                    </td>
-                    <td>
-                        <button class="btn btn-primary" onclick="changeUserRole(decodeURIComponent('${encodedStudentId}'), decodeURIComponent('${encodedName}'))">
-                            <i class="fa fa-save"></i> Update
-                        </button>
                     </td>
                 </tr>`;
                 });
 
             } catch (err) {
                 console.error("Role users load error:", err);
-                document.getElementById('roleUsersList').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Error loading users</td></tr>';
+                document.getElementById('roleUsersList').innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">${safeTableText(err.message || 'Error loading users')}</td></tr>`;
             }
         }
 
@@ -3286,14 +3291,19 @@
             return badges[status] || badges['pending'];
         }
 
-        async function changeUserRole(studentId, userName) {
-            const roleSelect = document.getElementById(`roleSelect_${encodeURIComponent(studentId)}`);
-            const newRole = roleSelect.value;
+        async function changeUserRole(roleSelect) {
+            const studentId = String(roleSelect.dataset.studentId || '').trim();
+            const userName = roleSelect.dataset.userName || studentId;
+            const previousRole = String(roleSelect.dataset.currentRole || 'student').trim().toLowerCase();
+            const newRole = String(roleSelect.value || '').trim().toLowerCase();
+            if (!studentId || !newRole || newRole === previousRole) return;
 
             if (!confirm(`Change role for ${userName} (${studentId}) to ${newRole}?`)) {
+                roleSelect.value = previousRole;
                 return;
             }
 
+            roleSelect.disabled = true;
             try {
                 const res = await fetchWithApiFallback('/api/admin/change-role', {
                     method: 'PUT',
@@ -3301,18 +3311,27 @@
                     body: JSON.stringify({ studentId, newRole })
                 });
 
-                const data = await res.json();
-
+                const data = await readApiResponse(res, 'Role update returned an invalid response.');
                 if (!res.ok) {
-                    throw new Error(data.message || "Failed to change role");
+                    throw new Error(data.message || `Role update failed (HTTP ${res.status}).`);
                 }
 
-                alert(`Role changed successfully for ${userName}`);
-                loadRoleUsers(); // Refresh the list
+                const savedRole = String(data.user?.role || '').trim().toLowerCase();
+                if (savedRole !== newRole) {
+                    throw new Error('The server did not confirm the requested role.');
+                }
+
+                roleSelect.dataset.currentRole = savedRole;
+                await loadRoleUsers();
+                await loadStudents();
+                alert(data.message || `Role changed successfully for ${userName}.`);
 
             } catch (err) {
+                roleSelect.value = previousRole;
                 console.error("Role change error:", err);
                 alert("Failed to change role: " + err.message);
+            } finally {
+                roleSelect.disabled = false;
             }
         }
 

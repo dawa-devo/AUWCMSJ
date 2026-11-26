@@ -1684,8 +1684,8 @@ app.delete('/api/user/delete-profile-photo', authenticate, requireActive, delete
 
 app.put('/api/admin/change-role', authenticate, requireAdmin, async (req, res) => {
     try {
-        const studentId = String(req.body.studentId || '').trim();
-        const newRole = String(req.body.newRole || '').trim();
+        const studentId = String(req.body?.studentId || '').trim();
+        const newRole = String(req.body?.newRole || req.body?.role || '').trim().toLowerCase();
 
         if (!studentId || !newRole) {
             return res.status(400).json({ message: 'Student ID and new role are required.' });
@@ -1705,12 +1705,16 @@ app.put('/api/admin/change-role', authenticate, requireAdmin, async (req, res) =
             return res.status(400).json({ message: 'Cannot demote the last admin.' });
         }
 
-        await User.update({
+        const updatedUser = await User.update({
             where: { id: user.id },
-            data: { role: newRole, tokenVersion: { increment: 1 } }
+            data: { role: newRole, tokenVersion: { increment: 1 } },
+            select: { id: true, studentId: true, name: true, role: true, status: true }
         });
 
-        res.json({ message: `Role changed to ${newRole} successfully.` });
+        res.json({
+            message: `Role changed to ${newRole} successfully.`,
+            user: toApiRecord(updatedUser)
+        });
     } catch (err) {
         console.error('Role change error:', err);
         res.status(500).json({ message: 'Error changing role: ' + err.message });
