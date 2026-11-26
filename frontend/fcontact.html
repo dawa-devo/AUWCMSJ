@@ -255,6 +255,8 @@
 
         const API_BASE_URL = '';
         const REQUEST_TIMEOUT_MS = 20000;
+        const registrationNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+        let registrationStep2InProgress = false;
 
         function responseMessage(result, fallback) {
             const message = result.error || result.message;
@@ -262,6 +264,7 @@
         }
 
         async function checkAndGo() {
+            if (registrationStep2InProgress) return;
             // 1. ID barataa localStorage irraa fiduu
             const studentId = localStorage.getItem('tempStudentId');
 
@@ -291,10 +294,11 @@
             const nextBtn = document.querySelector('.btn-next');
             const messageEl = document.getElementById('step2Message');
             const originalLabel = nextBtn.innerText;
+            registrationStep2InProgress = true;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
             nextBtn.disabled = true;
-            nextBtn.innerText = 'Sending...';
+            nextBtn.innerText = "Galmaa'aa jira... / Loading...";
             messageEl.textContent = '';
             messageEl.className = 'form-message';
 
@@ -326,12 +330,13 @@
             } catch (error) {
                 messageEl.className = 'form-message error';
                 if (error.name === 'AbortError' || error instanceof TypeError) {
-                    messageEl.textContent = 'Network error, please try again.';
+                    messageEl.textContent = registrationNetworkError;
                 } else {
-                    messageEl.textContent = error.message || 'Network error, please try again.';
+                    messageEl.textContent = error.message || registrationNetworkError;
                 }
             } finally {
                 clearTimeout(timeoutId);
+                registrationStep2InProgress = false;
                 nextBtn.disabled = false;
                 nextBtn.innerText = originalLabel;
             }

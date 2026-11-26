@@ -20,7 +20,6 @@
     <script type="application/ld+json">
         {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/"},{"@type":"Organization","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/","logo":"https://auwcmsj.com.et/frontend/logo.jpg"}]}
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -259,7 +258,11 @@
     </div>
 
     <script>
+        const registrationNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+        let registrationRequestInProgress = false;
+
         async function validateAndSave() {
+            if (registrationRequestInProgress) return;
             const nextBtn = document.getElementById('nextBtn');
 
             const data = {
@@ -268,8 +271,7 @@
                 department: document.getElementById('department').value.trim(),
                 year: document.getElementById('yearOfEntry').value.trim(),
                 gender: document.getElementById('gender').value,
-                phone: document.getElementById('phoneNumber').value.trim(),
-                status: 'pending'
+                phone: document.getElementById('phoneNumber').value.trim()
             };
 
             // --- VALIDATION: Check required fields ---
@@ -278,8 +280,9 @@
                 return;
             }
 
+            registrationRequestInProgress = true;
             nextBtn.disabled = true;
-            nextBtn.innerText = "Saving...";
+            nextBtn.innerText = "Galmaa'aa jira... / Loading...";
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 20000);
 
@@ -309,9 +312,10 @@
             } catch (err) {
                 console.error(err);
                 alert(err.name === 'AbortError' || err instanceof TypeError
-                    ? "Network error, please try again."
-                    : err.message || "Network error, please try again.");
+                    ? registrationNetworkError
+                    : err.message || registrationNetworkError);
             } finally {
+                registrationRequestInProgress = false;
                 nextBtn.disabled = false;
                 nextBtn.innerText = "Next";
                 clearTimeout(timeoutId);

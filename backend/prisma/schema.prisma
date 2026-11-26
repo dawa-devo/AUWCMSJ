@@ -38,6 +38,8 @@ model User {
   @@index([role, createdAt])
   @@index([role, status, createdAt])
   @@index([role, gender])
+  @@index([status])
+  @@index([department])
   @@index([createdAt])
 }
 

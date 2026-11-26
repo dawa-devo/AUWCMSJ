@@ -20,7 +20,8 @@
     <script type="application/ld+json">
         {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/"},{"@type":"Organization","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/","logo":"https://auwcmsj.com.et/frontend/logo.jpg"}]}
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
     <style>
         /* --- 1. GLOBAL STYLES --- */
         * {
@@ -1693,28 +1694,96 @@
     </footer>
     <script>
 
+        const dashboardNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+
+        function showNetworkNotice(message) {
+            let notice = document.getElementById('networkStatusNotice');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.id = 'networkStatusNotice';
+                notice.setAttribute('role', 'status');
+                notice.setAttribute('aria-live', 'polite');
+                notice.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;padding:10px 16px;background:#7f1d1d;color:#fff;text-align:center;font:14px sans-serif;';
+                document.body.appendChild(notice);
+            }
+            notice.textContent = message;
+        }
+
+        window.addEventListener('offline', () => showNetworkNotice(dashboardNetworkError));
+        window.addEventListener('online', () => {
+            const notice = document.getElementById('networkStatusNotice');
+            if (!notice) return;
+            notice.textContent = 'Connection restored. / Wal-qunnamtiin deebiʼeera.';
+            setTimeout(() => notice.remove(), 3000);
+        });
+
+        function readPublicDataCache(key, maxAgeMs) {
+            try {
+                const cached = JSON.parse(localStorage.getItem(`dashboard-cache:${key}`) || 'null');
+                if (!cached || !Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > maxAgeMs) return null;
+                return cached.data;
+            } catch {
+                return null;
+            }
+        }
+
+        function writePublicDataCache(key, data) {
+            try {
+                localStorage.setItem(`dashboard-cache:${key}`, JSON.stringify({ savedAt: Date.now(), data }));
+            } catch (error) {
+                console.warn('Dashboard cache could not be saved:', error);
+            }
+        }
+
         async function fetchWithApiFallback(path, options = {}) {
             const token = sessionStorage.getItem('token') || '';
-            const headers = { ...(options.headers || {}) };
+            const { timeoutMs = 20000, ...requestOptions } = options;
+            const headers = { ...(requestOptions.headers || {}) };
             if (token && !headers.Authorization) {
                 headers.Authorization = `Bearer ${token}`;
             }
 
             const candidates = [''];
-
+            const method = String(requestOptions.method || 'GET').toUpperCase();
+            const maxAttempts = method === 'GET' ? 3 : 1;
             let lastError = null;
             for (const base of candidates) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000);
-                try {
-                    return await fetch(`${base}${path}`, { ...options, headers, signal: controller.signal });
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    lastError = err;
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                    try {
+                        const response = await fetch(`${base}${path}`, {
+                            ...requestOptions,
+                            headers,
+                            signal: controller.signal
+                        });
+                        if ([408, 429, 500, 502, 503, 504].includes(response.status) && attempt + 1 < maxAttempts) {
+                            if (response.body) await response.body.cancel();
+                            await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1) + Math.random() * 250));
+                            continue;
+                        }
+                        if ([408, 429, 500, 502, 503, 504].includes(response.status)) {
+                            showNetworkNotice(dashboardNetworkError);
+                        }
+                        return response;
+                    } catch (err) {
+                        lastError = err;
+                        if (attempt + 1 < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1) + Math.random() * 250));
+                        } else {
+                            const message = err.name === 'AbortError' || err instanceof TypeError
+                                ? dashboardNetworkError
+                                : err.message || dashboardNetworkError;
+                            showNetworkNotice(message);
+                            throw new Error(message);
+                        }
+                    } finally {
+                        clearTimeout(timeoutId);
+                    }
                 }
             }
 
-            throw lastError || new Error('Server connection failed.');
+            throw lastError || new Error(dashboardNetworkError);
         }
 
         function getAuthHeaders(extraHeaders = {}) {
@@ -1753,14 +1822,17 @@
             if (!token) return null;
 
             try {
-                const response = await fetchWithApiFallback('/api/user/me', {
+                const response = await fetchWithApiFallback('/api/user/me?view=dashboard', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const user = await response.json().catch(() => ({}));
+                if (!response.ok && [408, 429, 500, 502, 503, 504].includes(response.status)) {
+                    return { networkError: true };
+                }
                 return response.ok ? user : null;
             } catch (err) {
                 console.error('Dashboard access verification failed:', err);
-                return null;
+                return { networkError: true };
             }
         }
 
@@ -1774,6 +1846,10 @@
             }
 
             const user = await verifyDashboardAccess();
+            if (user?.networkError) {
+                window.location.href = `login.html?reason=${encodeURIComponent(dashboardNetworkError)}`;
+                return;
+            }
             if (!user) {
                 sessionStorage.clear();
                 window.location.href = "login.html";
@@ -1798,13 +1874,12 @@
                 adminReturnBtn.style.display = 'block';
             }
 
-            setUser();
+            loadMyProfile(user);
             loadNews();
             loadResources();
             loadStats();
             fetchPrayerTimes();
             setupLibraryCards();
-            loadMyProfile();
             loadMessages();
 
             // Sidebar close when click main
@@ -1860,18 +1935,48 @@
             }
         }
 
-        function readImageFile(file) {
+        function blobToDataUrl(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(String(reader.result || ''));
                 reader.onerror = () => reject(new Error('The selected image could not be read.'));
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(blob);
             });
+        }
+
+        async function readImageFile(file) {
+            if (typeof createImageBitmap !== 'function') {
+                if (file.size <= 550 * 1024) return blobToDataUrl(file);
+                throw new Error('Image compression is unavailable in this browser. Choose an image under 550 KB.');
+            }
+
+            const bitmap = await createImageBitmap(file);
+            try {
+                const scale = Math.min(1, 320 / Math.max(bitmap.width, bitmap.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                const context = canvas.getContext('2d');
+                if (!context) throw new Error('Image compression is unavailable in this browser.');
+                context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+                let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.78));
+                if (!blob || blob.type !== 'image/webp') {
+                    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.78));
+                }
+                if (!blob) throw new Error('The selected image could not be compressed.');
+
+                const dataUrl = await blobToDataUrl(blob);
+                if (dataUrl.length > 700000) throw new Error('Compressed image is too large. Choose a smaller image.');
+                return dataUrl;
+            } finally {
+                bitmap.close?.();
+            }
         }
 
         async function uploadProfilePhoto(file) {
             const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-            const maxFileSize = 550 * 1024;
+            const maxFileSize = 5 * 1024 * 1024;
             const fileInput = document.getElementById('profileImageInput');
             const uploadButton = document.getElementById('profileAvatarButton');
             const status = document.getElementById('profileUploadStatus');
@@ -1884,7 +1989,7 @@
             }
             if (file.size > maxFileSize) {
                 status.dataset.state = 'error';
-                status.textContent = 'Image must be 550 KB or smaller.';
+                status.textContent = 'Image must be 5 MB or smaller.';
                 fileInput.value = '';
                 return;
             }
@@ -1917,17 +2022,23 @@
 
         // ===== 3. NEWS =====
         async function loadNews() {
+            const newsDisplay = document.getElementById('newsDisplay');
+            const cachedNews = readPublicDataCache('news', 7 * 24 * 60 * 60 * 1000);
+            if (cachedNews && typeof cachedNews.news === 'string') {
+                newsDisplay.innerText = cachedNews.news || "No announcements available at this time.";
+            }
+
             try {
                 const res = await fetchWithApiFallback('/api/news');
                 if (!res.ok) throw new Error("News API error");
 
                 const data = await res.json();
-                document.getElementById('newsDisplay').innerText =
-                    data.news || "No announcements available at this time.";
+                newsDisplay.innerText = data.news || "No announcements available at this time.";
+                writePublicDataCache('news', { news: String(data.news || '') });
 
             } catch (err) {
-                console.log(err);
-                document.getElementById('newsDisplay').innerText = "Announcements could not be loaded.";
+                console.warn('Announcements could not be refreshed:', err);
+                if (!cachedNews) newsDisplay.innerText = dashboardNetworkError;
             }
         }
 
@@ -2038,15 +2149,11 @@
             });
         }
 
-        async function loadMyProfile() {
-            try {
-                const res = await fetchWithApiFallback('/api/user/me', {
-                    headers: getAuthHeaders()
-                });
-                const user = await readApiResponse(res, 'Profile load failed.');
-                if (!res.ok) throw new Error(user.message || 'Profile load failed.');
-                const profilePic = user.profilePic || localStorage.getItem('currentProfilePic') || '';
+        function loadMyProfile(user) {
+            if (!user) return;
+            const profilePic = user.profilePic || '';
 
+            try {
                 sessionStorage.setItem('userName', user.name || sessionStorage.getItem('userName') || 'User');
                 sessionStorage.setItem('studentId', user.studentId || sessionStorage.getItem('studentId') || '');
                 localStorage.setItem('currentUser', user.name || 'User');
@@ -2056,8 +2163,8 @@
                     localStorage.removeItem('currentProfilePic');
                 }
                 setUser();
-            } catch (err) {
-                console.log(err);
+            } catch (error) {
+                console.warn('Profile data could not be cached:', error);
             }
         }
 
@@ -2125,34 +2232,69 @@
 
 
         // ===== 7. PRAYER =====
+        function getLocalCalendarDate() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function renderPrayerTimes(timings, hijri) {
+            document.getElementById('fajr').innerText = timings.Fajr;
+            document.getElementById('dhuhr').innerText = timings.Dhuhr;
+            document.getElementById('asr').innerText = timings.Asr;
+            document.getElementById('maghrib').innerText = timings.Maghrib;
+            document.getElementById('isha').innerText = timings.Isha;
+            document.getElementById('hijri-date').innerText = `${hijri.day} ${hijri.month.en} ${hijri.year} AH`;
+            const locStatus = document.getElementById('loc-status');
+            if (locStatus) locStatus.innerText = 'Woliso, Ethiopia';
+        }
+
         async function fetchPrayerTimes() {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const today = getLocalCalendarDate();
+            const cached = readPublicDataCache('prayer-times', 2 * 24 * 60 * 60 * 1000);
+            const hasCachedToday = cached?.day === today && cached.timings && cached.hijri;
+            if (hasCachedToday) renderPrayerTimes(cached.timings, cached.hijri);
+
             try {
                 const locStatus = document.getElementById('loc-status');
-                const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Woliso&country=Ethiopia&method=3`, {
-                    signal: controller.signal
-                });
-                const json = await res.json();
-                clearTimeout(timeoutId);
+                let result = null;
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    try {
+                        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Woliso&country=Ethiopia&method=3', {
+                            signal: controller.signal
+                        });
+                        if ([408, 429, 500, 502, 503, 504].includes(response.status) && attempt === 0) {
+                            if (response.body) await response.body.cancel();
+                            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 250));
+                            continue;
+                        }
+                        if (!response.ok) throw new Error(`Prayer times request failed (HTTP ${response.status}).`);
+                        result = await response.json();
+                        break;
+                    } catch (error) {
+                        if (attempt === 0 && (error.name === 'AbortError' || error instanceof TypeError)) {
+                            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 250));
+                            continue;
+                        }
+                        throw error;
+                    } finally {
+                        clearTimeout(timeoutId);
+                    }
+                }
 
-                const t = json.data.timings;
-                const h = json.data.date.hijri;
-
-                document.getElementById('fajr').innerText = t.Fajr;
-                document.getElementById('dhuhr').innerText = t.Dhuhr;
-                document.getElementById('asr').innerText = t.Asr;
-                document.getElementById('maghrib').innerText = t.Maghrib;
-                document.getElementById('isha').innerText = t.Isha;
-                document.getElementById('hijri-date').innerText =
-                    `${h.day} ${h.month.en} ${h.year} AH`;
-                if (locStatus) locStatus.innerText = "Woliso, Ethiopia";
-
-            } catch {
-                clearTimeout(timeoutId);
-                console.log("Prayer error");
-                const locStatus = document.getElementById('loc-status');
-                if (locStatus) locStatus.innerText = "Prayer times unavailable";
+                const timings = result?.data?.timings;
+                const hijri = result?.data?.date?.hijri;
+                if (!timings || !hijri?.month?.en) throw new Error('Prayer times response was incomplete.');
+                renderPrayerTimes(timings, hijri);
+                writePublicDataCache('prayer-times', { day: today, timings, hijri });
+            } catch (error) {
+                console.warn('Prayer times could not be refreshed:', error);
+                if (!hasCachedToday) {
+                    const locStatus = document.getElementById('loc-status');
+                    if (locStatus) locStatus.innerText = 'Prayer times unavailable / Yeroo salaataa hin argamne';
+                }
+                showNetworkNotice(error.name === 'AbortError' || error instanceof TypeError ? dashboardNetworkError : error.message);
             }
         }
 

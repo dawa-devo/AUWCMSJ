@@ -2,6 +2,17 @@
     "installCommand": "npm --prefix backend ci",
     "buildCommand": "npm --prefix backend run build",
     "outputDirectory": ".",
+    "headers": [
+        {
+            "source": "/(.*)\\.(css|js|mjs|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=86400"
+                }
+            ]
+        }
+    ],
     "redirects": [
         {
             "source": "/admin",

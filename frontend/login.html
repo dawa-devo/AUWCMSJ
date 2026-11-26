@@ -20,8 +20,8 @@
     <script type="application/ld+json">
         {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/"},{"@type":"Organization","name":"AUWCMSJ","alternateName":["auwcmsj","Ambo University Waliso Campus Muslim Student"],"url":"https://auwcmsj.com.et/","logo":"https://auwcmsj.com.et/frontend/logo.jpg"}]}
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
     <style>
         * {
             margin: 0;
@@ -224,6 +224,8 @@
     </div>
 
     <script>
+        const loginNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+        let loginRequestInProgress = false;
 
         // Password agarsiisuu fi dhoksuuf
         function togglePassword() {
@@ -248,6 +250,7 @@
         // Hojii Login raawwachuuf
         async function handleLogin(event) {
             event.preventDefault(); // Fuulli akka hin 'refresh' goone
+            if (loginRequestInProgress) return;
 
             const noticeBox = document.getElementById('notice-box');
             const loginBtn = document.getElementById('loginBtn');
@@ -256,14 +259,15 @@
             const identifier = document.getElementById('userId').value.trim();
             const password = document.getElementById('passwordField').value.trim();
 
-            loginBtn.innerText = "Checking...";
+            loginRequestInProgress = true;
+            loginBtn.innerText = "Seensa mirkaneessaa jira... / Signing in...";
             loginBtn.disabled = true;
 
+            let requestTimeoutId = null;
             try {
                 const apiBases = [''];
                 let res = null;
                 let lastFetchErr = null;
-                let requestTimeoutId = null;
                 for (const base of apiBases) {
                     const controller = new AbortController();
                     requestTimeoutId = setTimeout(() => controller.abort(), 20000);
@@ -271,7 +275,7 @@
                         res = await fetch(`${base}/api/login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ identifier, studentId: identifier, password }),
+                            body: JSON.stringify({ studentId: identifier, password }),
                             signal: controller.signal
                         });
                         break;
@@ -311,7 +315,7 @@
                     sessionStorage.setItem('token', data.token);
                     sessionStorage.setItem('studentId', data.studentId || '');
                     localStorage.setItem('currentUser', data.name);
-                    localStorage.setItem('currentProfilePic', data.profilePic || '');
+                    localStorage.removeItem('currentProfilePic');
 
                     // Gara Dashboard-itti dabarsuu
                     if (role === 'admin') {
@@ -328,10 +332,11 @@
                 console.error("Error:", error);
                 noticeBox.style.display = "block";
                 noticeBox.innerText = error.name === 'AbortError' || error instanceof TypeError
-                    ? "Network error, please try again."
-                    : error.message || "Network error, please try again.";
+                    ? loginNetworkError
+                    : error.message || loginNetworkError;
             } finally {
                 clearTimeout(requestTimeoutId);
+                loginRequestInProgress = false;
                 loginBtn.innerText = "Login";
                 loginBtn.disabled = false;
             }

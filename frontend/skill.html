@@ -193,8 +193,11 @@
 
     <script>
         sessionStorage.setItem('currentStep', 'skills');
+        const registrationNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+        let skillsRequestInProgress = false;
 
         async function saveSkillsAndContinue() {
+            if (skillsRequestInProgress) return;
             const data = {
                 universityId: localStorage.getItem('tempStudentId'),
                 registrationToken: sessionStorage.getItem('registrationToken') || '',
@@ -204,12 +207,13 @@
             };
 
             const nextBtn = document.querySelector('.btn-next');
+            skillsRequestInProgress = true;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 20000);
             try {
                 if (nextBtn) {
                     nextBtn.disabled = true;
-                    nextBtn.innerText = 'Saving...';
+                    nextBtn.innerText = "Galmaa'aa jira... / Loading...";
                 }
                 const response = await fetch('/api/skills', {
                     method: 'POST',
@@ -236,14 +240,15 @@
             } catch (err) {
                 console.error('Server error:', err);
                 alert(err.name === 'AbortError' || err instanceof TypeError
-                    ? 'Network error, please try again.'
-                    : err.message || 'Network error, please try again.');
+                    ? registrationNetworkError
+                    : err.message || registrationNetworkError);
                 if (nextBtn) {
                     nextBtn.disabled = false;
                     nextBtn.innerText = 'Next';
                 }
             } finally {
                 clearTimeout(timeoutId);
+                skillsRequestInProgress = false;
                 if (nextBtn) {
                     nextBtn.disabled = false;
                     nextBtn.innerText = 'Next';

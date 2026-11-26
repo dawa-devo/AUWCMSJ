@@ -2,6 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
+const compression = require('compression');
 const crypto = require('crypto');
 const { Readable } = require('stream');
 const bcrypt = require('bcryptjs');
@@ -37,6 +38,7 @@ const app = express();
 
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
+app.use(compression());
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 const configuredOrigins = String(process.env.CORS_ORIGINS || '')
@@ -500,9 +502,6 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
             return res.status(400).json({ message: 'One or more registration fields are too long.' });
         }
 
-        const existing = await User.findUnique({ where: { studentId: universityId } });
-        if (existing) return res.status(400).json({ message: 'ID is already registered!' });
-
         const registrationToken = createRawToken(24);
         const placeholderPassword = await bcrypt.hash(createRawToken(16), 10);
 
@@ -524,7 +523,7 @@ app.post('/api/register-step1', registerLimiter, async (req, res) => {
         res.status(200).json({ message: 'Step 1 saved!', registrationToken });
     } catch (err) {
         if (err.code === 'P2002') {
-            return res.status(400).json({ message: 'ID is already registered.' });
+            return res.status(409).json({ message: 'This university ID is already registered.' });
         }
         res.status(500).json({ message: 'Registration could not be saved.' });
     }
@@ -550,7 +549,7 @@ app.post('/api/register-step2', registerLimiter, async (req, res) => {
         const updatedUser = await assertRegistrationToken(data.universityId, data.registrationToken);
 
         const generatedPassword = cryptoRandomPassword();
-        const hashedPw = await bcrypt.hash(generatedPassword, 12);
+        const hashedPw = await bcrypt.hash(generatedPassword, 10);
         const universityId = String(data.universityId).trim();
         const contactData = {
             eName: data.eName || '',
@@ -628,7 +627,10 @@ app.post('/api/login', loginLimiter, async (req, res) => {
             return res.status(400).json({ message: 'Student ID and password are required.' });
         }
 
-        const user = await User.findUnique({ where: { studentId } });
+        const user = await User.findUnique({
+            where: { studentId },
+            select: { id: true, studentId: true, name: true, role: true, status: true, password: true, tokenVersion: true }
+        });
         if (!user) return res.status(400).json({ message: 'Student ID was not found.' });
         if (user.status === 'blocked') return res.status(403).json({ message: 'This account is blocked.' });
         if (user.status !== 'active') return res.status(403).json({ message: 'Wait for admin approval!' });
@@ -642,7 +644,6 @@ app.post('/api/login', loginLimiter, async (req, res) => {
             name: user.name,
             role: String(user.role || '').toLowerCase(),
             studentId: user.studentId,
-            profilePic: user.profilePic || '',
             token
         });
     } catch (err) {
@@ -668,13 +669,18 @@ app.post('/api/logout', authenticate, async (req, res) => {
 
 app.get('/api/user/me', authenticate, async (req, res) => {
     try {
+        const select = req.query.view === 'admin'
+            ? { id: true, role: true, status: true }
+            : req.query.view === 'dashboard'
+                ? { id: true, name: true, studentId: true, profilePic: true, role: true, status: true }
+                : {
+                    id: true, name: true, studentId: true, profilePic: true, role: true,
+                    status: true, profile: true, preferences: true, department: true,
+                    yearOfEntry: true, phone: true, createdAt: true
+                };
         const user = await User.findUnique({
             where: { id: req.user.id },
-            select: {
-                id: true, name: true, studentId: true, profilePic: true, role: true,
-                status: true, profile: true, preferences: true, department: true,
-                yearOfEntry: true, phone: true, createdAt: true
-            }
+            select
         });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });

@@ -17,7 +17,8 @@
     <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"WebSite","name":"Ambo University Waliso Campus Muslim Students Jema'a","alternateName":"AUWCMSJ","url":"https://auwcmsj.com.et/"}
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     <style>
         /* --- 1. MODERN DESIGN --- */
         * {
@@ -1598,27 +1599,70 @@
             }
 
             const candidates = [''];
-
+            const method = String(requestOptions.method || 'GET').toUpperCase();
+            const maxAttempts = method === 'GET' ? 3 : 1;
             let lastError = null;
             for (const base of candidates) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-                try {
-                    const res = await fetch(`${base}${path}`, { ...requestOptions, headers, signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (res.status === 401 && redirectOnUnauthorized) {
-                        sessionStorage.clear();
-                        window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                    try {
+                        const res = await fetch(`${base}${path}`, { ...requestOptions, headers, signal: controller.signal });
+                        if (res.status === 401 && redirectOnUnauthorized) {
+                            sessionStorage.clear();
+                            window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
+                        }
+                        if ([408, 429, 500, 502, 503, 504].includes(res.status) && attempt + 1 < maxAttempts) {
+                            if (res.body) await res.body.cancel();
+                            await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1) + Math.random() * 250));
+                            continue;
+                        }
+                        if ([408, 429, 500, 502, 503, 504].includes(res.status)) {
+                            showNetworkNotice(adminNetworkError);
+                        }
+                        return res;
+                    } catch (err) {
+                        lastError = err;
+                        if (attempt + 1 < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1) + Math.random() * 250));
+                        } else {
+                            const message = err.name === 'AbortError' || err instanceof TypeError
+                                ? adminNetworkError
+                                : err.message || adminNetworkError;
+                            showNetworkNotice(message);
+                            throw new Error(message);
+                        }
+                    } finally {
+                        clearTimeout(timeoutId);
                     }
-                    return res;
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    lastError = err;
                 }
             }
 
             throw lastError || new Error('Server connection failed.');
         }
+
+        const adminNetworkError = "Your connection is slow or unavailable. Check your internet and try again. / Intarneetiin suuta jira ykn hin hojjetu. Maaloo ilaalaa irra deebi'aa yaalaa.";
+
+        function showNetworkNotice(message) {
+            let notice = document.getElementById('networkStatusNotice');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.id = 'networkStatusNotice';
+                notice.setAttribute('role', 'status');
+                notice.setAttribute('aria-live', 'polite');
+                notice.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;padding:10px 16px;background:#7f1d1d;color:#fff;text-align:center;font:14px sans-serif;';
+                document.body.appendChild(notice);
+            }
+            notice.textContent = message;
+        }
+
+        window.addEventListener('offline', () => showNetworkNotice(adminNetworkError));
+        window.addEventListener('online', () => {
+            const notice = document.getElementById('networkStatusNotice');
+            if (!notice) return;
+            notice.textContent = 'Connection restored. / Wal-qunnamtiin deebiʼeera.';
+            setTimeout(() => notice.remove(), 3000);
+        });
 
         async function readApiResponse(response, fallbackMessage) {
             const responseText = await response.text();
@@ -2247,8 +2291,17 @@
         // --- 6. BARATTOOTA FIDUU (TABLE LOAD) ---
         async function loadStudents() {
             try {
-                const res = await fetchWithApiFallback('/api/admin/students');
-                const students = await res.json();
+                const [res, statsResult] = await Promise.all([
+                    fetchWithApiFallback('/api/admin/students'),
+                    fetchWithApiFallback('/api/admin/stats').catch(error => error)
+                ]);
+                const students = await readApiResponse(res, 'Student list returned an invalid response.');
+                if (!res.ok) {
+                    throw new Error(students.message || `Students could not be loaded (HTTP ${res.status}).`);
+                }
+                if (!Array.isArray(students)) {
+                    throw new Error('Student list response was not a JSON array.');
+                }
 
                 const list = document.getElementById('userList');
                 list.innerHTML = "";
@@ -2288,20 +2341,51 @@
                 </tr>`;
                 });
 
-                const statsResponse = await fetchWithApiFallback('/api/admin/stats');
-                const stats = await statsResponse.json();
+                if (statsResult instanceof Error) throw statsResult;
+                const statsResponse = statsResult;
+                const stats = await readApiResponse(statsResponse, 'Dashboard statistics returned an invalid response.');
                 if (!statsResponse.ok) {
                     throw new Error(stats.message || 'Statistics could not be loaded.');
                 }
 
-                document.getElementById('count-total').innerText = stats.total;
-                document.getElementById('count-active').innerText = stats.active;
-                document.getElementById('count-pending').innerText = stats.pending;
-                document.getElementById('count-male').innerText = stats.male;
-                document.getElementById('count-female').innerText = stats.female;
+                renderDashboardStats(stats);
+                try {
+                    sessionStorage.setItem(getDashboardStatsCacheKey(), JSON.stringify({ savedAt: Date.now(), stats }));
+                } catch (error) {
+                    console.warn('Dashboard statistics cache could not be saved:', error);
+                }
 
             } catch (err) {
                 console.error("Dashboard ragaa fiduu dadhabe:", err);
+            }
+        }
+
+        function renderDashboardStats(stats) {
+            const keys = {
+                total: 'count-total',
+                active: 'count-active',
+                pending: 'count-pending',
+                male: 'count-male',
+                female: 'count-female'
+            };
+            Object.entries(keys).forEach(([key, elementId]) => {
+                const element = document.getElementById(elementId);
+                const value = Number(stats?.[key]);
+                if (element) element.innerText = Number.isFinite(value) && value >= 0 ? String(value) : '0';
+            });
+        }
+
+        function getDashboardStatsCacheKey() {
+            return `adminDashboardStats:${sessionStorage.getItem('studentId') || 'admin'}`;
+        }
+
+        function restoreDashboardStats() {
+            try {
+                const cached = JSON.parse(sessionStorage.getItem(getDashboardStatsCacheKey()) || 'null');
+                if (!cached || !Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > 30 * 60 * 1000) return;
+                renderDashboardStats(cached.stats || {});
+            } catch (error) {
+                console.warn('Cached dashboard statistics could not be read:', error);
             }
         }
         // --- 7. MIRKANEESSUU (APPROVE) ---
@@ -2485,7 +2569,7 @@
             }
 
             try {
-                const response = await fetchWithApiFallback('/api/user/me', { redirectOnUnauthorized: false });
+                const response = await fetchWithApiFallback('/api/user/me?view=admin', { redirectOnUnauthorized: false });
                 const responseText = await response.text();
                 let data = {};
                 try {
@@ -2497,9 +2581,10 @@
                 if (!response.ok) {
                     const errorMessage = typeof data.message === 'string' ? data.message : responseText;
                     const statusText = response.statusText ? ` ${response.statusText}` : '';
+                    const isNetworkFailure = [408, 429, 500, 502, 503, 504].includes(response.status);
                     return {
                         ok: false,
-                        reason: `Authentication request failed (HTTP ${response.status}).`,
+                        reason: isNetworkFailure ? adminNetworkError : `Authentication request failed (HTTP ${response.status}).`,
                         diagnostic: `HTTP ${response.status}${statusText}${errorMessage ? `: ${errorMessage}` : ''}`
                     };
                 }
@@ -2522,7 +2607,7 @@
             } catch (err) {
                 return {
                     ok: false,
-                    reason: err.name === 'AbortError' ? 'Admin authentication request timed out.' : 'Admin access could not be verified.',
+                    reason: adminNetworkError,
                     diagnostic: err
                 };
             }
@@ -2543,6 +2628,7 @@
                 return;
             }
 
+            restoreDashboardStats();
             loadStudents();
             loadDepartments();
             loadProgressMessages();
