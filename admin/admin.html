@@ -1592,7 +1592,7 @@
     <script>
         async function fetchWithApiFallback(path, options = {}) {
             const token = sessionStorage.getItem('token') || '';
-            const { timeoutMs = 10000, ...requestOptions } = options;
+            const { timeoutMs = 10000, redirectOnUnauthorized = true, ...requestOptions } = options;
             const headers = { ...(requestOptions.headers || {}) };
             if (token && !headers.Authorization) {
                 headers.Authorization = `Bearer ${token}`;
@@ -1607,7 +1607,7 @@
                 try {
                     const res = await fetch(`${base}${path}`, { ...requestOptions, headers, signal: controller.signal });
                     clearTimeout(timeoutId);
-                    if (res.status === 401) {
+                    if (res.status === 401 && redirectOnUnauthorized) {
                         sessionStorage.clear();
                         window.location.href = '../frontend/login.html?reason=' + encodeURIComponent('Your admin session is invalid or expired. Please log in again.');
                     }
@@ -2464,25 +2464,51 @@
         // --- 9. INITIALIZE ON LOAD ---
         async function verifyAdminPageAccess() {
             const token = sessionStorage.getItem('token') || '';
-            if (!token) return false;
+            if (!token) {
+                return { ok: false, reason: 'Admin session token is missing.', diagnostic: 'No token was found in sessionStorage.' };
+            }
 
             try {
-                const response = await fetchWithApiFallback('/api/user/me');
-                const data = await response.json().catch(() => ({}));
+                const response = await fetchWithApiFallback('/api/user/me', { redirectOnUnauthorized: false });
+                const responseText = await response.text();
+                let data = {};
+                try {
+                    const parsedData = responseText ? JSON.parse(responseText) : {};
+                    data = parsedData && typeof parsedData === 'object' ? parsedData : {};
+                } catch {
+                    data = {};
+                }
                 if (!response.ok) {
-                    return { ok: false, message: data.message || 'Admin authentication failed.' };
+                    const errorMessage = typeof data.message === 'string' ? data.message : responseText;
+                    const statusText = response.statusText ? ` ${response.statusText}` : '';
+                    return {
+                        ok: false,
+                        reason: `Authentication request failed (HTTP ${response.status}).`,
+                        diagnostic: `HTTP ${response.status}${statusText}${errorMessage ? `: ${errorMessage}` : ''}`
+                    };
                 }
                 const user = data.user && typeof data.user === 'object' ? data.user : data;
                 if (String(user.role || '').trim().toLowerCase() !== 'admin') {
-                    return { ok: false, message: 'This account does not have the admin role.' };
+                    return {
+                        ok: false,
+                        reason: 'This account does not have the admin role.',
+                        diagnostic: `Admin role check failed; received role "${String(user.role || '')}".`
+                    };
                 }
                 if (String(user.status || '').trim().toLowerCase() === 'blocked') {
-                    return { ok: false, message: 'This admin account is blocked.' };
+                    return {
+                        ok: false,
+                        reason: 'This admin account is blocked.',
+                        diagnostic: 'Admin status check failed; account status is blocked.'
+                    };
                 }
                 return { ok: true };
             } catch (err) {
-                console.error('Admin access verification failed:', err);
-                return { ok: false, message: err.message || 'Admin authentication could not be verified.' };
+                return {
+                    ok: false,
+                    reason: err.name === 'AbortError' ? 'Admin authentication request timed out.' : 'Admin access could not be verified.',
+                    diagnostic: err
+                };
             }
         }
 
@@ -2495,8 +2521,9 @@
 
             const adminAccess = await verifyAdminPageAccess();
             if (!adminAccess.ok) {
+                console.error('Admin access check failed:', adminAccess.diagnostic);
                 sessionStorage.clear();
-                window.location.href = '../frontend/login.html?reason=' + encodeURIComponent(adminAccess.message);
+                window.location.href = '../frontend/login.html?reason=' + encodeURIComponent(adminAccess.reason);
                 return;
             }
 
