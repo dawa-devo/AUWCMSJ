@@ -3277,13 +3277,24 @@
                 </tr>
             `;
                 }).join('');
+
+                list.querySelectorAll('textarea.admin-reply-box, input.admin-reply-box').forEach((replyInput) => {
+                    replyInput.addEventListener('keydown', (event) => {
+                        if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey) return;
+                        event.preventDefault();
+                        sendAdminReply(replyInput.id.slice('reply_'.length));
+                    });
+                });
             } catch (err) {
                 console.error(err);
                 list.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 18px; color: #dc2626;">${escapeHtml(err.message || 'Message load failed.')}</td></tr>`;
             }
         }
 
+        const sendingAdminReplies = new Set();
+
         async function sendAdminReply(messageId) {
+            if (sendingAdminReplies.has(messageId)) return;
             const replyInput = document.getElementById(`reply_${messageId}`);
             const reply = String(replyInput?.value || '').trim();
 
@@ -3292,6 +3303,7 @@
                 return;
             }
 
+            sendingAdminReplies.add(messageId);
             try {
                 const res = await fetchWithApiFallback('/api/admin/messages/reply', {
                     method: 'PUT',
@@ -3306,6 +3318,8 @@
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Reply failed.');
+            } finally {
+                sendingAdminReplies.delete(messageId);
             }
         }
 
