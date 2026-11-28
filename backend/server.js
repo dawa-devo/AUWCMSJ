@@ -109,6 +109,8 @@ app.get('/', (req, res, next) => {
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REGISTRATION_TTL_MS = 2 * 60 * 60 * 1000;
 const MAX_RESOURCE_FILE_SIZE = 25 * 1024 * 1024;
+const DEFAULT_CONTACT_EMAIL = 'auwcmsj@gmail.com';
+const DEFAULT_CONTACT_PHONE = '+251712363603';
 const ALLOWED_ROLES = ['student', 'admin', 'teacher'];
 const ALLOWED_STATUS = ['pending', 'active', 'blocked'];
 const RESOURCE_FILE_TYPES = new Map([
@@ -239,6 +241,7 @@ const registerLimiter = rateLimit({
 
 const User = prisma.user;
 const ProgressEntry = prisma.progressEntry;
+const SiteSetting = prisma.siteSetting;
 const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(prisma);
 
 function buildAdminSettingsPayload(user) {
@@ -888,6 +891,44 @@ app.get('/api/admin/settings', authenticate, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: 'Admin settings could not be loaded.' });
+    }
+});
+
+app.get('/api/settings/contact', async (req, res) => {
+    try {
+        const phoneSetting = await SiteSetting.findUnique({ where: { key: 'contactPhone' } });
+        res.json({
+            email: DEFAULT_CONTACT_EMAIL,
+            phone: phoneSetting?.value || DEFAULT_CONTACT_PHONE
+        });
+    } catch (err) {
+        console.error('Public contact settings load error:', err);
+        res.status(500).json({ message: 'Contact information could not be loaded.' });
+    }
+});
+
+app.put('/api/admin/settings/contact', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const phone = String(req.body.phone || '').trim();
+        if (!phone) {
+            return res.status(400).json({ message: 'Contact phone number is required.' });
+        }
+        if (phone.length > 40) {
+            return res.status(400).json({ message: 'Contact phone number must be 40 characters or fewer.' });
+        }
+
+        const setting = await SiteSetting.upsert({
+            where: { key: 'contactPhone' },
+            update: { value: phone },
+            create: { key: 'contactPhone', value: phone }
+        });
+        res.json({
+            message: 'Contact information saved successfully.',
+            contact: { email: DEFAULT_CONTACT_EMAIL, phone: setting.value }
+        });
+    } catch (err) {
+        console.error('Admin contact settings update error:', err);
+        res.status(500).json({ message: 'Contact information could not be saved.' });
     }
 });
 

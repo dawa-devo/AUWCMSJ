@@ -1683,8 +1683,8 @@
                 <h4>Contact Info</h4>
                 <ul>
                     <li><i class="fas fa-map-marker-alt"></i> Woliso, Ethiopia</li>
-                    <li><i class="fas fa-envelope"></i> info@auwcm.com</li>
-                    <li><i class="fas fa-phone"></i> +251712363603</li>
+                    <li><i class="fas fa-envelope"></i> <span id="contactEmail">auwcmsj@gmail.com</span></li>
+                    <li><i class="fas fa-phone"></i> <span id="contactPhone">+251712363603</span></li>
                 </ul>
             </div>
         </div>
@@ -1732,6 +1732,46 @@
                 localStorage.setItem(`dashboard-cache:${key}`, JSON.stringify({ savedAt: Date.now(), data }));
             } catch (error) {
                 console.warn('Dashboard cache could not be saved:', error);
+            }
+        }
+
+        const defaultContactInfo = {
+            email: 'auwcmsj@gmail.com',
+            phone: '+251712363603'
+        };
+
+        function renderContactInfo(contact) {
+            const email = document.getElementById('contactEmail');
+            const phone = document.getElementById('contactPhone');
+            if (email) email.textContent = contact.email || defaultContactInfo.email;
+            if (phone) phone.textContent = contact.phone || defaultContactInfo.phone;
+        }
+
+        async function loadContactInfo() {
+            const cached = readPublicDataCache('contact-info', 7 * 24 * 60 * 60 * 1000);
+            if (cached && typeof cached.phone === 'string' && cached.phone.trim()) {
+                renderContactInfo(cached);
+            }
+
+            try {
+                const response = await fetchWithApiFallback('/api/settings/contact', { timeoutMs: 10000 });
+                const data = await readApiResponse(response, 'Contact information could not be loaded.');
+                if (!response.ok) {
+                    throw new Error(data.message || 'Contact information could not be loaded.');
+                }
+
+                const contact = {
+                    email: typeof data.email === 'string' && data.email.trim()
+                        ? data.email.trim()
+                        : defaultContactInfo.email,
+                    phone: typeof data.phone === 'string' && data.phone.trim()
+                        ? data.phone.trim()
+                        : defaultContactInfo.phone
+                };
+                renderContactInfo(contact);
+                writePublicDataCache('contact-info', contact);
+            } catch (error) {
+                console.warn('Contact information could not be refreshed:', error);
             }
         }
 
@@ -1834,6 +1874,7 @@
         }
 
         window.addEventListener("DOMContentLoaded", async () => {
+            loadContactInfo();
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             const adminViewingAsUser = sessionStorage.getItem('isAdminView') === 'true';
 

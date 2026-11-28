@@ -1491,6 +1491,22 @@
                 </div>
 
                 <div class="settings-card">
+                    <h3>Contact Information</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label for="settingsContactPhone">Contact Phone Number</label>
+                            <input id="settingsContactPhone" type="tel" autocomplete="tel" maxlength="40"
+                                value="+251712363603" placeholder="Contact phone number">
+                        </div>
+                    </div>
+                    <div class="settings-status" id="settingsContactStatus" role="status" aria-live="polite"></div>
+                    <div class="settings-actions">
+                        <button id="saveContactInfoButton" class="btn btn-primary" type="button"
+                            onclick="saveContactInfo()">Save Contact Info</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
                     <h3>Security Settings</h3>
                     <div class="toggle-row">
                         <span>Change Password</span>
@@ -1726,6 +1742,7 @@
             if (typeof loadAdminSettings === 'function') {
                 loadAdminSettings();
             }
+            loadContactSettings();
         }
 
         function togglePasswordVisibility(inputId) {
@@ -1897,6 +1914,61 @@
             } catch (err) {
                 console.error('Settings load failed:', err);
                 setSettingsStatus('settingsProfileStatus', err.message || 'Could not load settings.', 'error');
+            }
+        }
+
+        async function loadContactSettings() {
+            const phoneInput = document.getElementById('settingsContactPhone');
+            if (!phoneInput) return;
+
+            try {
+                const res = await fetchWithApiFallback('/api/settings/contact', { timeoutMs: 20000 });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Contact information could not be loaded.');
+                phoneInput.value = data.phone || '+251712363603';
+            } catch (err) {
+                setSettingsStatus('settingsContactStatus', err.message || 'Contact information could not be loaded.', 'error');
+            }
+        }
+
+        async function saveContactInfo() {
+            const phoneInput = document.getElementById('settingsContactPhone');
+            const saveButton = document.getElementById('saveContactInfoButton');
+            const phone = phoneInput.value.trim();
+
+            if (!phone) {
+                setSettingsStatus('settingsContactStatus', 'Contact phone number is required.', 'error');
+                return;
+            }
+
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+            try {
+                const res = await fetchWithApiFallback('/api/admin/settings/contact', {
+                    method: 'PUT',
+                    timeoutMs: 20000,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Contact information could not be saved.');
+
+                const savedPhone = data.contact?.phone || phone;
+                phoneInput.value = savedPhone;
+                try {
+                    localStorage.setItem('dashboard-cache:contact-info', JSON.stringify({
+                        savedAt: Date.now(),
+                        data: { email: 'auwcmsj@gmail.com', phone: savedPhone }
+                    }));
+                } catch (error) {
+                    console.warn('Contact information cache could not be updated:', error);
+                }
+                setSettingsStatus('settingsContactStatus', data.message || 'Contact information saved.', 'success');
+            } catch (err) {
+                setSettingsStatus('settingsContactStatus', err.message || 'Contact information could not be saved.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save Contact Info';
             }
         }
 

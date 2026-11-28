@@ -80,6 +80,13 @@ model ProgressEntry {
   @@index([createdAt])
 }
 
+model SiteSetting {
+  id        String   @id @default(cuid()) @map("_id")
+  key       String   @unique @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
 model ContactEmergency {
   id           String  @id @default(cuid()) @map("_id")
   universityId String @unique @db.VarChar(80)
