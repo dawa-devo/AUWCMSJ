@@ -973,12 +973,13 @@
                     style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px;">
                     <label><input type="checkbox" class="export-col" value="1" checked> Student ID</label>
                     <label><input type="checkbox" class="export-col" value="3" checked> Full Name</label>
-                    <label><input type="checkbox" class="export-col" value="4" checked> Emergency Contact</label>
-                    <label><input type="checkbox" class="export-col" value="5" checked> Family Contact</label>
-                    <label><input type="checkbox" class="export-col" value="6" checked> Academic Skills</label>
-                    <label><input type="checkbox" class="export-col" value="7" checked> Spiritual Skills</label>
-                    <label><input type="checkbox" class="export-col" value="8" checked> Contribution</label>
-                    <label><input type="checkbox" class="export-col" value="9" checked> Status</label>
+                    <label><input type="checkbox" class="export-col" value="4" checked> Department</label>
+                    <label><input type="checkbox" class="export-col" value="5" checked> Emergency Contact</label>
+                    <label><input type="checkbox" class="export-col" value="6" checked> Family Contact</label>
+                    <label><input type="checkbox" class="export-col" value="7" checked> Academic Skills</label>
+                    <label><input type="checkbox" class="export-col" value="8" checked> Spiritual Skills</label>
+                    <label><input type="checkbox" class="export-col" value="9" checked> Contribution</label>
+                    <label><input type="checkbox" class="export-col" value="10" checked> Status</label>
                 </div>
                 <button class="btn btn-export" onclick="exportToCSV()">Download Selected Columns</button>
             </div>
@@ -990,6 +991,7 @@
                             <th>Student ID</th>
                             <th>Actions</th>
                             <th>Full Name</th>
+                            <th>Department</th>
                             <th>Emergency Contact</th>
                             <th>Family Contact</th>
                             <th>Academic Skills</th>
@@ -2354,6 +2356,7 @@
                         </button>
                     </td>
                     <td>${safeTableText(displayName)}</td>
+                    <td>${safeTableText(user.department)}</td>
                     <td>${safeTableText(emergencyContact)}</td>
                     <td>${safeTableText(familyContact)}</td>
                     <td>${safeTableText(user.academicSkill)}</td>
