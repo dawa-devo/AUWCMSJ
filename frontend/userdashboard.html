@@ -613,6 +613,20 @@
             padding-left: 5px;
         }
 
+        .footer-col ul li a.contact-link {
+            color: inherit;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-col ul li a.contact-link:hover,
+        .footer-col ul li a.contact-link:focus-visible {
+            color: white;
+            opacity: 0.85;
+            padding-left: 0;
+            text-decoration: underline;
+        }
+
         .social-links {
             display: flex;
             gap: 15px;
@@ -1683,8 +1697,10 @@
                 <h4>Contact Info</h4>
                 <ul>
                     <li><i class="fas fa-map-marker-alt"></i> Woliso, Ethiopia</li>
-                    <li><i class="fas fa-envelope"></i> <span id="contactEmail">auwcmsj@gmail.com</span></li>
-                    <li><i class="fas fa-phone"></i> <span id="contactPhone">+251712363603</span></li>
+                    <li><i class="fas fa-envelope"></i> <a id="contactEmail" class="contact-link"
+                            href="mailto:auwcmsj@gmail.com">auwcmsj@gmail.com</a></li>
+                    <li><i class="fas fa-phone"></i> <a id="contactPhone" class="contact-link"
+                            href="tel:+251712363603">+251712363603</a></li>
                 </ul>
             </div>
         </div>
@@ -1743,8 +1759,16 @@
         function renderContactInfo(contact) {
             const email = document.getElementById('contactEmail');
             const phone = document.getElementById('contactPhone');
-            if (email) email.textContent = contact.email || defaultContactInfo.email;
-            if (phone) phone.textContent = contact.phone || defaultContactInfo.phone;
+            const emailAddress = String(contact.email || defaultContactInfo.email);
+            const phoneNumber = String(contact.phone || defaultContactInfo.phone);
+            if (email) {
+                email.textContent = emailAddress;
+                email.href = `mailto:${emailAddress}`;
+            }
+            if (phone) {
+                phone.textContent = phoneNumber;
+                phone.href = `tel:${phoneNumber.replace(/[^+\d]/g, '')}`;
+            }
         }
 
         async function loadContactInfo() {
