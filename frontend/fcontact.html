@@ -298,7 +298,7 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
             nextBtn.disabled = true;
-            nextBtn.innerText = "Galmaa'aa jira... / Loading...";
+            nextBtn.innerText = "Submitting...";
             messageEl.textContent = '';
             messageEl.className = 'form-message';
 
