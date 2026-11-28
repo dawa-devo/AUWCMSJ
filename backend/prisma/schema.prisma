@@ -68,6 +68,18 @@ model Message {
   @@index([studentId])
 }
 
+model ProgressEntry {
+  id        String   @id @default(cuid()) @map("_id")
+  student   String   @db.VarChar(160)
+  studentId String   @db.VarChar(80)
+  level     String   @db.VarChar(32)
+  detail    String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([studentId, createdAt])
+  @@index([createdAt])
+}
+
 model ContactEmergency {
   id           String  @id @default(cuid()) @map("_id")
   universityId String @unique @db.VarChar(80)

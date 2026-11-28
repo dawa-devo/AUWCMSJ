@@ -1762,9 +1762,6 @@
                             await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1) + Math.random() * 250));
                             continue;
                         }
-                        if ([408, 429, 500, 502, 503, 504].includes(response.status)) {
-                            showNetworkNotice(dashboardNetworkError);
-                        }
                         return response;
                     } catch (err) {
                         lastError = err;
@@ -2174,10 +2171,6 @@
             const detail = document.getElementById('progressDetail').value.trim();
             const msg = document.getElementById('statusMsg');
             const submitBtn = document.getElementById('submitBtn');
-            const student =
-                sessionStorage.getItem('userName') ||
-                localStorage.getItem('currentUser') ||
-                "Unknown";
 
             if (!detail) {
                 msg.style.color = "red";
@@ -2191,20 +2184,20 @@
                 const res = await fetchWithApiFallback('/api/progress', {
                     method: 'POST',
                     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ student, level, detail })
+                    body: JSON.stringify({ level, detail })
                 });
 
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "Submit failed");
+                const data = await readApiResponse(res, 'Progress submission failed.');
+                if (!res.ok) throw new Error(data.message || 'Progress submission failed.');
 
                 msg.style.color = "green";
-                msg.innerText = data.message || "Sent successfully!";
+                msg.innerText = data.message || 'Progress submitted successfully.';
                 document.getElementById('progressDetail').value = "";
 
             } catch (err) {
-                console.log(err);
+                console.error('Progress submission failed:', err);
                 msg.style.color = "red";
-                msg.innerText = err.message || "Server hin hojjenne!";
+                msg.innerText = err.message || 'Progress submission failed. Please try again.';
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Send to Admin";

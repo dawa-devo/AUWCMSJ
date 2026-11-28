@@ -2539,8 +2539,8 @@
                     return;
                 }
 
-                rows.slice().reverse().forEach((item, index) => {
-                    const originalIndex = rows.length - 1 - index;
+                rows.slice().reverse().forEach((item) => {
+                    const progressId = encodeURIComponent(String(item.id || ''));
                     table.innerHTML += `
                 <tr>
                     <td style="padding: 10px;">${safeTableText(item.student, 'Unknown')}</td>
@@ -2548,7 +2548,7 @@
                     <td style="padding: 10px;">${safeTableText(item.detail)}</td>
                     <td style="padding: 10px;">${safeTableText(formatProgressTime(item.createdAt))}</td>
                     <td style="padding: 10px;">
-                        <button class="btn btn-danger" onclick="deleteProgressMessage(${originalIndex})">
+                        <button class="btn btn-danger" onclick="deleteProgressMessage('${progressId}')">
                             <i class="fa fa-trash"></i>
                         </button>
                     </td>
@@ -2561,16 +2561,16 @@
             }
         }
 
-        async function deleteProgressMessage(progressIndex) {
-            if (!Number.isInteger(progressIndex) || progressIndex < 0) {
-                alert("Progress index is missing.");
+        async function deleteProgressMessage(progressId) {
+            if (typeof progressId !== 'string' || !progressId) {
+                alert('Progress ID is missing.');
                 return;
             }
 
             if (!confirm("Delete this progress message?")) return;
 
             try {
-                const res = await fetchWithApiFallback(`/api/progress/${progressIndex}`, { method: 'DELETE' });
+                const res = await fetchWithApiFallback(`/api/progress/${progressId}`, { method: 'DELETE' });
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -3070,6 +3070,7 @@
                     const levelText = comment.level === '1' ? 'Basic' : comment.level === '2' ? 'Intermediate' : 'Advanced';
                     const status = 'reviewed'; // All comments are considered reviewed when loaded
                     const formattedDate = comment.createdAt ? new Date(comment.createdAt).toLocaleString() : '---';
+                    const progressId = encodeURIComponent(String(comment.id || ''));
 
                     list.innerHTML += `
                 <tr>
@@ -3082,7 +3083,7 @@
                         <button class="btn btn-primary" onclick="viewCommentDetail(${index})">
                             <i class="fa fa-eye"></i>
                         </button>
-                        <button class="btn btn-danger" onclick="deleteComment(${index})">
+                        <button class="btn btn-danger" onclick="deleteComment('${progressId}')">
                             <i class="fa fa-trash"></i>
                         </button>
                     </td>
@@ -3166,11 +3167,11 @@
             alert('Comment detail view would be implemented here');
         }
 
-        async function deleteComment(index) {
+        async function deleteComment(progressId) {
             if (!confirm("Delete this comment?")) return;
 
             try {
-                const res = await fetchWithApiFallback(`/api/progress/${index}`, { method: 'DELETE' });
+                const res = await fetchWithApiFallback(`/api/progress/${progressId}`, { method: 'DELETE' });
                 const data = await res.json();
 
                 if (!res.ok) {

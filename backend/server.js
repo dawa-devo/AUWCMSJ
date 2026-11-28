@@ -12,7 +12,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
-const fs = require('fs');
 
 const { createAuth } = require('./middleware/auth');
 const connectDatabase = require('./middleware/database');
@@ -239,6 +238,7 @@ const registerLimiter = rateLimit({
 });
 
 const User = prisma.user;
+const ProgressEntry = prisma.progressEntry;
 const { authenticate, requireAdmin, requireActive, getJwtSecret } = createAuth(prisma);
 
 function buildAdminSettingsPayload(user) {
@@ -1605,70 +1605,64 @@ async function getStudentStatistics(includePending) {
     };
 }
 
-const progressFile = path.join(__dirname, 'progress.json');
-
-function readProgressRows() {
-    if (!fs.existsSync(progressFile)) return [];
-    const data = fs.readFileSync(progressFile, 'utf8');
-    const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [];
-}
-
-app.post('/api/progress', authenticate, requireActive, (req, res) => {
+app.post('/api/progress', authenticate, requireActive, async (req, res) => {
     try {
         const level = String(req.body.level || '').trim();
         const detail = String(req.body.detail || '').trim();
         const student = String(req.user.name || req.user.studentId || '').trim();
+        const studentId = String(req.user.studentId || '').trim();
 
-        if (!student || !level || !detail) {
+        if (!student || !studentId || !level || !detail) {
             return res.status(400).json({ message: 'Student, level, and detail are required.' });
         }
 
-        const progress = {
-            student,
-            studentId: req.user.studentId,
-            level,
-            detail,
-            createdAt: new Date().toISOString()
-        };
+        const progress = await ProgressEntry.create({
+            data: {
+                student,
+                studentId,
+                level,
+                detail
+            }
+        });
 
-        const all = readProgressRows();
-        all.push(progress);
-        fs.writeFileSync(progressFile, JSON.stringify(all, null, 2));
-        res.json({ message: 'Saved' });
+        res.status(201).json({
+            message: 'Progress submitted successfully.',
+            progress
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Progress hin save goone' });
+        console.error('Progress submission error:', err);
+        res.status(500).json({ message: 'Progress could not be saved.' });
     }
 });
 
-app.get('/api/progress', authenticate, requireAdmin, (req, res) => {
+app.get('/api/progress', authenticate, requireAdmin, async (req, res) => {
     try {
-        res.json(readProgressRows());
+        const progress = await ProgressEntry.findMany({
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }]
+        });
+        res.json(progress);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Progress hin fe'amne" });
+        console.error('Progress list error:', err);
+        res.status(500).json({ message: 'Progress messages could not be loaded.' });
     }
 });
 
-app.delete('/api/progress/:index', authenticate, requireAdmin, (req, res) => {
+app.delete('/api/progress/:id', authenticate, requireAdmin, async (req, res) => {
     try {
-        const index = Number(req.params.index);
-        if (!Number.isInteger(index) || index < 0) {
-            return res.status(400).json({ message: 'Valid progress index is required.' });
+        const id = String(req.params.id || '').trim();
+        if (!id) {
+            return res.status(400).json({ message: 'Progress ID is required.' });
         }
 
-        const rows = readProgressRows();
-        if (index >= rows.length) {
+        const result = await ProgressEntry.deleteMany({ where: { id } });
+        if (result.count === 0) {
             return res.status(404).json({ message: 'Progress entry not found.' });
         }
 
-        rows.splice(index, 1);
-        fs.writeFileSync(progressFile, JSON.stringify(rows, null, 2));
         res.json({ message: 'Progress deleted successfully.' });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Progress delete hin danda'amne" });
+        console.error('Progress delete error:', err);
+        res.status(500).json({ message: 'Progress could not be deleted.' });
     }
 });
 
