@@ -73,6 +73,10 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
 
+        .top-nav.sidebar-menu-open {
+            z-index: 1300;
+        }
+
 
         .header-top-row {
             width: 100%;
@@ -122,6 +126,7 @@
         }
 
         .menu-icon {
+            position: relative;
             font-size: 22px;
             display: inline-flex;
             align-items: center;
@@ -136,6 +141,26 @@
             color: inherit;
             cursor: pointer;
             transition: color 0.3s, background-color 0.3s;
+        }
+
+        .menu-icon i {
+            position: absolute;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .menu-icon .menu-close-icon {
+            opacity: 0;
+            transform: rotate(-90deg) scale(0.75);
+        }
+
+        .menu-icon[aria-expanded="true"] .menu-open-icon {
+            opacity: 0;
+            transform: rotate(90deg) scale(0.75);
+        }
+
+        .menu-icon[aria-expanded="true"] .menu-close-icon {
+            opacity: 1;
+            transform: rotate(0) scale(1);
         }
 
         .menu-icon:hover,
@@ -1403,7 +1428,8 @@
                 </div>
                 <button type="button" class="menu-icon" id="sidebarToggle" aria-label="Open navigation menu"
                     aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">
-                    <i class="fas fa-bars" aria-hidden="true"></i>
+                    <i class="fas fa-bars menu-open-icon" aria-hidden="true"></i>
+                    <i class="fas fa-xmark menu-close-icon" aria-hidden="true"></i>
                 </button>
             </div>
             <div id="adminReturnBtn" style="display: none;">
@@ -2358,13 +2384,33 @@
 
 
         // ===== 8. SIDEBAR =====
-        function toggleSidebar() {
+        function toggleSidebar(forceOpen) {
             const sidebar = document.getElementById('sidebar');
             const menuButton = document.getElementById('sidebarToggle');
-            const isOpen = sidebar.classList.toggle('active');
+            const isOpen = typeof forceOpen === 'boolean'
+                ? forceOpen
+                : !sidebar.classList.contains('active');
+            const header = document.querySelector('.top-nav');
+            sidebar.classList.toggle('active', isOpen);
             menuButton.setAttribute('aria-expanded', String(isOpen));
             menuButton.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+            if (header) header.classList.toggle('sidebar-menu-open', isOpen);
         }
+
+        document.addEventListener('click', (event) => {
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.getElementById('sidebarToggle');
+            if (!sidebar.classList.contains('active')
+                || sidebar.contains(event.target)
+                || menuButton.contains(event.target)) return;
+            toggleSidebar(false);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && document.getElementById('sidebar').classList.contains('active')) {
+                toggleSidebar(false);
+            }
+        });
 
 
         // ===== 9. MESSAGES =====

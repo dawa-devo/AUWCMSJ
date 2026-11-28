@@ -640,6 +640,26 @@
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             }
 
+            .hamburger-btn i {
+                position: absolute;
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+
+            .hamburger-btn .menu-close-icon {
+                opacity: 0;
+                transform: rotate(-90deg) scale(0.75);
+            }
+
+            .hamburger-btn[aria-expanded="true"] .menu-open-icon {
+                opacity: 0;
+                transform: rotate(90deg) scale(0.75);
+            }
+
+            .hamburger-btn[aria-expanded="true"] .menu-close-icon {
+                opacity: 1;
+                transform: rotate(0) scale(1);
+            }
+
             .sidebar-backdrop.active {
                 display: block;
                 position: fixed;
@@ -851,7 +871,8 @@
 
     <button class="hamburger-btn" type="button" aria-label="Open navigation menu" aria-controls="mySidebar"
         aria-expanded="false" onclick="toggleMenu()">
-        <i class="fa fa-bars"></i>
+        <i class="fa fa-bars menu-open-icon" aria-hidden="true"></i>
+        <i class="fa fa-xmark menu-close-icon" aria-hidden="true"></i>
     </button>
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMenu(false)" aria-hidden="true"></div>
 
